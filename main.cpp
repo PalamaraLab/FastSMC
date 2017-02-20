@@ -104,11 +104,11 @@ int main(int argc, char *argv[]) {
     //     fout11.close();
     // }
  
-    cout << endl << "Upper-left 20 x 20 corner of sumOverPairs:" << endl;
-    for (uint i = 0; i < 20; i++) {
-        for (uint j = 0; j < 20; j++)
-            cout << sumOverPairs[i][j] << "\t";
-        cout << endl;
-    }
+    // cout << endl << "Upper-left 20 x 20 corner of sumOverPairs:" << endl;
+    // for (uint i = 0; i < 20; i++) {
+    //     for (uint j = 0; j < 20; j++)
+    //         cout << sumOverPairs[i][j] << "\t";
+    //     cout << endl;
+    // }
 }
 
