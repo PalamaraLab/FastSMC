@@ -22,10 +22,10 @@ using std::endl;
 void openOrExit(std::ifstream &stream, const string &file,
                 std::ios_base::openmode mode) {
   stream.open(file.c_str(), mode);
-  // if (!stream) {
-  //   cerr << "ERROR: Unable to open file: " << file << endl;
-  //   exit(1);
-  // }
+  if (!stream) {
+    cerr << "ERROR: Unable to open file: " << file << endl;
+    exit(1);
+  }
 }
 void openWritingOrExit(std::ofstream &stream, const string &file,
                        std::ios_base::openmode mode) {
@@ -39,10 +39,10 @@ void requireEmptyOrReadable(const std::string &file) {
   if (file.empty()) return;
   std::ifstream fin;
   fin.open(file.c_str());
-  // if (!fin) {
-  //   cerr << "ERROR: Unable to open file: " << file << endl;
-  //   exit(1);
-  // }
+  if (!fin) {
+    cerr << "ERROR: Unable to open file: " << file << endl;
+    exit(1);
+  }
   fin.close();
 }
 void requireEachEmptyOrReadable(const std::vector <std::string> &fileList) {
@@ -118,10 +118,10 @@ int AutoGzIfstream::lineCount(const std::string &file) {
 
 void AutoGzIfstream::openOrExit(const std::string &file, std::ios_base::openmode mode) {
   fin.open(file.c_str(), mode);
-  // if (!fin) {
-  //   cerr << "ERROR: Unable to open file: " << file << endl;
-  //   exit(1);
-  // }
+  if (!fin) {
+    cerr << "ERROR: Unable to open file: " << file << endl;
+    exit(1);
+  }
   if ((int) file.length() > 3 && file.substr(file.length() - 3) == ".gz")
     boost_in.push(boost::iostreams::gzip_decompressor());
   boost_in.push(fin);
@@ -168,10 +168,10 @@ AutoGzIfstream& getline(AutoGzIfstream& in, std::string &s) {
 
 void AutoGzOfstream::openOrExit(const std::string &file, std::ios_base::openmode mode) {
   fout.open(file.c_str(), mode);
-  // if (!fout) {
-  //   cerr << "ERROR: Unable to open file: " << file << endl;
-  //   exit(1);
-  // }
+  if (!fout) {
+    cerr << "ERROR: Unable to open file: " << file << endl;
+    exit(1);
+  }
   if ((int) file.length() > 3 && file.substr(file.length() - 3) == ".gz")
     boost_out.push(boost::iostreams::gzip_compressor());
   boost_out.push(fout);

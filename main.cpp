@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     std::string str(params.decodingQuantFile.c_str());
     DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
     printf("\n*** Read decoding quantities in %.3f seconds. ***\n\n", timer.update_time());
+    cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
     int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
     Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);

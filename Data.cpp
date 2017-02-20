@@ -89,7 +89,7 @@ void Data::makeUndistinguished(bool foldToMinorAlleles) {
       }
       undistinguishedCounts[i][distinguished] = undist;
       // cout << "result: " << undist << endl;
-      cout << i << "\t" << distinguished << "\t" << undist << endl;
+      // cout << i << "\t" << distinguished << "\t" << undist << endl;
     }
   }
   cout << " Done.\n" << endl;
