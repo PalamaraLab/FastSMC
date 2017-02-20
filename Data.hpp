@@ -29,7 +29,7 @@ public:
   int haploidSampleSize;
   int sites;
   int totalSamplesBound;
-  bool decodingUsesCSFS;
+  bool decodingUsesCSFS = false;
   vector<float> geneticPositions;
   vector<int> physicalPositions;
   vector<float> recRateAtMarker;

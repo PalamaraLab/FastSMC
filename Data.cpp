@@ -52,7 +52,6 @@ int Data::sampleHypergeometric(int populationSize, int numberOfSuccesses, int sa
   if (numberOfSuccesses < 0 || numberOfSuccesses > populationSize) {
     return -1;
   }
-  string key = populationSize + " " + numberOfSuccesses;
   vector<unsigned short> samplingVector;
   samplingVector = vector<unsigned short> (populationSize, 0);
   for (int i = 0; i < numberOfSuccesses; i++) {
@@ -83,13 +82,14 @@ void Data::makeUndistinguished(bool foldToMinorAlleles) {
     }
     for (int distinguished = 0; distinguished < 3; distinguished++) {
       // hypergeometric with (derivedAlleles - distinguished) derived alleles, (samples - 2) samples
-      // cout << "hypergeometric with " << (totalSamples - 2) << " samples, " << (derivedAlleles - distinguished) << " derived, " << (totalSamplesBound - 2) << " undistinguished to draw" << endl;
+      // cout << "At " << i << ", hypergeometric with " << (totalSamples - 2) << " samples, " << (derivedAlleles - distinguished) << " derived remaining after removing 2 samples with " << distinguished << " derived. We have " << (totalSamplesBound - 2) << " undistinguished to draw" << endl;
       int undist = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, totalSamplesBound - 2);
-      if (foldToMinorAlleles && undist + distinguished > totalSamplesBound / 2) {
+      if (foldToMinorAlleles && (undist + distinguished > totalSamplesBound / 2)) {
         undist = (totalSamplesBound - 2 - undist);
       }
       undistinguishedCounts[i][distinguished] = undist;
       // cout << "result: " << undist << endl;
+      cout << i << "\t" << distinguished << "\t" << undist << endl;
     }
   }
   cout << " Done.\n" << endl;

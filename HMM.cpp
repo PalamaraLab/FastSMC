@@ -76,6 +76,7 @@ vector <bool> xorVec(const vector <bool> &x, const vector <bool> &y) {
   vector <bool> ret(x.size());
   for (uint i = 0; i < x.size(); i++) {
     ret[i] = x[i] ^ y[i];
+    // cout << i << "\t" << ret[i] << " " << x[i] << " " << y[i] << endl;
   }
   return ret;
 }
@@ -232,21 +233,18 @@ public:
             else {
               emission1AtSite[pos][k] = 0.f;
             }
-            if (undistAtThisSiteFor1dist >= 0 && undistAtThisSiteFor0dist >= 0) {
-              emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
-                                              ? (decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k] - decodingQuant.foldedCSFSmap[undistAtThisSiteFor1dist][1][k])
-                                              : (decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k] - decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor1dist][1][k]);
-            }
-            else {
-              emission0minus1AtSite[pos][k] = 0.f;
-            }
-            if (undistAtThisSiteFor2dist >= 0 && undistAtThisSiteFor0dist >= 0) {
+            emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
+                                            ? (decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k] - emission1AtSite[pos][k])
+                                            : (decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k] - emission1AtSite[pos][k]);
+            if (undistAtThisSiteFor2dist >= 0) {
               emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
                                               ? (decodingQuant.foldedCSFSmap[undistAtThisSiteFor2dist][0][k] - decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
                                               : (decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor2dist][0][k] - decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]);
             }
             else {
-              emission2minus0AtSite[pos][k] = 0.f;
+              emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
+                                              ? (0 - decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
+                                              : (0 - decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]);
             }
           }
         } else {
@@ -256,25 +254,30 @@ public:
               emission1AtSite[pos][k] = decodingParams.decodingSequence
                                         ? decodingQuant.CSFSmap[undistAtThisSiteFor1dist][1][k]
                                         : decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor1dist][1][k];
-            }
-            else {
+            } else {
               emission1AtSite[pos][k] = 0.f;
             }
-            if (undistAtThisSiteFor0dist >= 0 && undistAtThisSiteFor1dist >= 0) {
-              emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
-                                              ? (decodingQuant.CSFSmap[undistAtThisSiteFor0dist][0][k] - decodingQuant.CSFSmap[undistAtThisSiteFor1dist][1][k])
-                                              : (decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor0dist][0][k] - decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor1dist][1][k]);
+            float emission0AtThisSiteAndState = 0.f;
+            if (undistAtThisSiteFor0dist >= 0) {
+              emission0AtThisSiteAndState = decodingParams.decodingSequence
+                                            ? decodingQuant.CSFSmap[undistAtThisSiteFor0dist][0][k]
+                                            : decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor0dist][0][k];
             }
-            else {
-              emission0minus1AtSite[pos][k] = 0.f;
-            }
-            if (undistAtThisSiteFor2dist >= 0 && undistAtThisSiteFor0dist >= 0) {
+            emission0minus1AtSite[pos][k] = emission0AtThisSiteAndState - emission1AtSite[pos][k];
+            if (undistAtThisSiteFor2dist >= 0) {
+              int dist = 2;
+              int undist = undistAtThisSiteFor2dist;
+              if (undistAtThisSiteFor2dist == data.totalSamplesBound - 2) {
+                // for monomorphic derived, fold to CSFS[0][0]
+                dist = 0;
+                undist = 0;
+              }
               emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
-                                              ? (decodingQuant.CSFSmap[undistAtThisSiteFor2dist][2][k] - decodingQuant.CSFSmap[undistAtThisSiteFor0dist][0][k])
-                                              : (decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor2dist][2][k] - decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor0dist][0][k]);
+                                              ? (decodingQuant.CSFSmap[undist][dist][k] - emission0AtThisSiteAndState)
+                                              : (decodingQuant.ascertainedCSFSmap[undist][dist][k] - emission0AtThisSiteAndState);
             }
             else {
-              emission2minus0AtSite[pos][k] = 0.f;
+              emission2minus0AtSite[pos][k] = 0 - emission0AtThisSiteAndState;
             }
           }
         }
@@ -301,7 +304,7 @@ public:
     uint64 t0 = Timer::rdtsc();
     Timer timer;
 
-    scalingBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * batchSize);
+    scalingBuffer = ALIGNED_MALLOC_FLOATS(batchSize);
     alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * batchSize);
     betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * batchSize);
     allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * batchSize);
@@ -536,7 +539,7 @@ private:
   }
 
   // compute scaling factor for an alpha vector
-  void scaleBatch(float *alpha, float *scalings, float *sums, int curBatchSize, int pos) {
+  void scaleBatch(float *alpha, float *scalings, float *sums, int curBatchSize) {
 #ifdef NO_SSE
     // compute scaling (sum of current alpha vector)
     for (int k = 0; k < states; k++) {
@@ -545,7 +548,7 @@ private:
       }
     }
     for (int v = 0; v < curBatchSize; v++) {
-      scalings[pos * curBatchSize + v] = 1.0f / sums[v];
+      scalings[v] = 1.0f / sums[v];
     }
 #else
     // compute scaling (sum of current alpha vector)
@@ -554,7 +557,7 @@ private:
         STORE(&sums[v], ADD(LOAD(&sums[v]), LOAD(&alpha[k * curBatchSize + v])));
       }
     for (int v = 0; v < curBatchSize; v++)
-      scalings[pos * curBatchSize + v] = 1.0f / sums[v];
+      scalings[v] = 1.0f / sums[v];
 #endif
 
   }
@@ -596,7 +599,7 @@ private:
 
     float *sums = AU; // reuse buffer but rename to be less confusing
     memset(sums, 0, curBatchSize * sizeof(sums[0]));
-    scaleBatch(alphaBuffer, scalingBuffer, sums, curBatchSize, 0);
+    scaleBatch(alphaBuffer, scalingBuffer, sums, curBatchSize);
     applyScaling(alphaBuffer, scalingBuffer, curBatchSize);
 
     // Induction Step:
@@ -622,8 +625,8 @@ private:
       float *sums = AU; // reuse buffer but rename to be less confusing
       memset(sums, 0, curBatchSize * sizeof(sums[0]));
       if (pos % scalingSkip == 0) {
-        scaleBatch(nextAlpha, scalingBuffer, sums, curBatchSize, pos);
-        applyScaling(nextAlpha, &scalingBuffer[pos * curBatchSize], curBatchSize);
+        scaleBatch(nextAlpha, scalingBuffer, sums, curBatchSize);
+        applyScaling(nextAlpha, scalingBuffer, curBatchSize);
       }
       // update distances
       lastGeneticPos = data.geneticPositions[pos];
@@ -729,7 +732,10 @@ private:
         betaBuffer[((sequenceLength - 1)*states + k)*curBatchSize + v] = 1.0f;
       }
     }
-    applyScaling(betaBuffer, &scalingBuffer[(sequenceLength - 1) * curBatchSize], curBatchSize);
+    float *sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
+    memset(sums, 0, curBatchSize * sizeof(sums[0]));
+    scaleBatch(betaBuffer, scalingBuffer, sums, curBatchSize);
+    applyScaling(betaBuffer, scalingBuffer, curBatchSize);
 
     // Induction Step:
     float *BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
@@ -757,7 +763,9 @@ private:
       }
       if (pos % scalingSkip == 0) {
         // normalize betas using alpha scaling
-        applyScaling(currentBeta, &scalingBuffer[pos * curBatchSize], curBatchSize);
+        memset(sums, 0, curBatchSize * sizeof(sums[0]));
+        scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize);
+        applyScaling(currentBeta, scalingBuffer, curBatchSize);
       }
       // update distances
       lastGeneticPos = data.geneticPositions[pos];
@@ -976,6 +984,15 @@ private:
 // non-batched computations (for debugging, will remove)
 // *****************************************************
 
+  float printVector(const vector <float> &vec) {
+    float sum = 0.f;
+    for (uint i = 0; i < vec.size(); i++) {
+      cout << vec[i] << "\t";
+    }
+    cout << endl;
+    return sum;
+  }
+
   float getSumOfVector(const vector <float> &vec) {
     float sum = 0.f;
     for (uint i = 0; i < vec.size(); i++) {
@@ -1043,6 +1060,7 @@ private:
 
     vector < vector <float> > posterior = elementWiseMultMatrixMatrix(forwardOut, backwardOut);
     posterior = normalizeMatrixColumns(posterior);
+
     uint64 t3 = Timer::rdtsc(); ticksCombine += t3 - t2;
 
     if (decodingParams.doPosteriorSums) {
@@ -1114,9 +1132,9 @@ private:
     vector <float> firstAlpha = elementWiseMultVectorVector(decodingQuant.initialStateProb, emission);
 
     // cumpute scaling (sum of current alpha vector)
-    scalingBuffer[0] = 1.f / getSumOfVector(firstAlpha);
+    float scalingBuffer = 1.f / getSumOfVector(firstAlpha);
     // normalize current alpha vector to 1
-    firstAlpha = elementWiseMultVectorScalar(firstAlpha, scalingBuffer[0]);
+    firstAlpha = elementWiseMultVectorScalar(firstAlpha, scalingBuffer);
 
     fillMatrixColumn(alpha, firstAlpha, 0);
     // Induction Step:
@@ -1134,6 +1152,10 @@ private:
       // if both samples are carriers, there are two distinguished, otherwise, it's the or (use previous xor). This affects the number of undistinguished for the site
       float obsIsZero = !observations.obsBits[pos] ? 1.0f : 0.0f;
       float obsIsHomMinor = observations.homMinorBits[pos] ? 1.0f : 0.0f;
+
+      // int distinguished = (1 - obsIsZero) + 2 * obsIsHomMinor;
+
+      // cout << (1 - obsIsZero) << " " << obsIsHomMinor << endl;
       if (decodingParams.decodingSequence) {
         int physDistFromPreviousMinusOne = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
         float recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
@@ -1144,12 +1166,13 @@ private:
       } else {
         getNextAlpha(recDistFromPrevious, alphaC, previousAlpha, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos], obsIsZero, obsIsHomMinor);
       }
+      // printVector(nextAlpha);
       unsigned long long t1 = Timer::rdtsc();
       if (pos % scalingSkip == 0) {
         // compute scaling (sum of current alpha vector)
-        scalingBuffer[pos] = 1.f / getSumOfVector(nextAlpha);
+        scalingBuffer = 1.f / getSumOfVector(nextAlpha);
         // normalize current alpha vector to 1
-        nextAlpha = elementWiseMultVectorScalar(nextAlpha, scalingBuffer[pos]);
+        nextAlpha = elementWiseMultVectorScalar(nextAlpha, scalingBuffer);
       }
       fillMatrixColumn(alpha, nextAlpha, pos);
       previousAlpha = nextAlpha;
@@ -1195,7 +1218,8 @@ private:
       lastBeta[i] = 1.f;
     }
     // normalize current alpha vector to 1
-    lastBeta = elementWiseMultVectorScalar(lastBeta, scalingBuffer[sequenceLength - 1]);
+    float scalingBuffer = 1.f / getSumOfVector(lastBeta);
+    lastBeta = elementWiseMultVectorScalar(lastBeta, scalingBuffer);
     fillMatrixColumn(beta, lastBeta, sequenceLength - 1);
     // Induction Step:
     vector <float> currentBeta(states);
@@ -1221,8 +1245,10 @@ private:
       } else {
         getPreviousBeta(recDistFromPrevious, lastComputedBeta, BL, BU, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1], emission2minus0AtSite[pos + 1], obsIsZero, obsIsHomMinor);
       }
+      // printVector(currentBeta);
       if (pos % scalingSkip == 0) {
-        currentBeta = elementWiseMultVectorScalar(currentBeta, scalingBuffer[pos]);
+        scalingBuffer = 1.f / getSumOfVector(currentBeta);
+        currentBeta = elementWiseMultVectorScalar(currentBeta, scalingBuffer);
       }
       fillMatrixColumn(beta, currentBeta, pos);
       lastComputedBeta = currentBeta;
@@ -1257,12 +1283,6 @@ private:
     for (int k = 0; k < states; k++) {
       currentBeta[k] = BL[k] + vec[k] * D[k] + BU[k];
     }
-  }
-
-  void printVector(const vector<float> &vec) {
-    for (uint i = 0; i < vec.size(); i++)
-      cout << vec[i] << ' ';
-    cout << '\n';
   }
 
 };

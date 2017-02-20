@@ -27,24 +27,24 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
    "output file for sum of posterior distribution over pairs")
   ("mode", po::value<string>(&decodingModeString)->default_value("array"),
    "Decoding mode. Choose from {sequence, array}.")
-  ("compress", po::bool_switch(&compress),
+  ("compress", po::bool_switch(&compress)->default_value(false),
    "Compress emission to binary (no CSFS)")
   // TODO: currently flipping major/minor when reading data. Instead, assume it's correctly coded to begin with
-  ("useAncestral", po::bool_switch(&useAncestral),
+  ("useAncestral", po::bool_switch(&useAncestral)->default_value(false),
    "Assume ancestral alleles are coded as 1 in input (will assume 1 = minor otherwise)")
   // TODO: for debug. remove?
-  ("noBatches", po::bool_switch(&noBatches),
+  ("noBatches", po::bool_switch(&noBatches)->default_value(false),
    "Do not decode in batches (for debugging, will remove)")
   ("skipCSFSdistance", po::value<float>(&skipCSFSdistance)->default_value(std::numeric_limits<float>::quiet_NaN()),
    "Genetic distance between two CSFS emissions (will remove?)")
   // TASKS
-  ("posteriorSums", po::bool_switch(&doPosteriorSums),
+  ("posteriorSums", po::bool_switch(&doPosteriorSums)->default_value(false),
    "output file for sum of posterior distribution over pairs. O(sitesxstates) output")
-  ("perPairMAP", po::bool_switch(&doPerPairMAP),
+  ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(false),
    "output per-pair MAP at each site. O(sitesxsamples^2) output")
   ("perPairPosteriorMeans", po::value<string>(&expectedCoalTimesFile),
    "output per-pair posterior means at each site. Input: file containing expected coalescent times within each interval, one per line. O(sitesxsamples^2) output")
-  ("withinOnly", po::bool_switch(&withinOnly),
+  ("withinOnly", po::bool_switch(&withinOnly)->default_value(false),
    "Only decode pairs within unphased individuals");
 
   po::options_description visible("Options");
@@ -100,7 +100,9 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
       doPerPairPosteriorMean = true;
     }
 
-    usingCSFS = (skipCSFSdistance != std::numeric_limits<float>::infinity());
+    if (skipCSFSdistance != std::numeric_limits<float>::infinity()) {
+      usingCSFS = true;
+    }
     cout << "skipCSFSdistance is " << skipCSFSdistance << endl;
     cout << "compress? " << compress << endl;
     cout << "useAncestral? " << useAncestral << endl;

@@ -1,8 +1,7 @@
 # for AVX512
 # CC = icc
 # all others
-# CC = g++
-CC = /usr/local/Cellar/gcc49/4.9.3/bin/g++-4.9
+CC = g++
 
 ifeq (${debug},true)
 	CFLAGS += -g
@@ -24,7 +23,7 @@ CFLAGS += -std=c++11 -msse -msse2 -msse3 -fopenmp -Wall
 
 LFLAGS += -fopenmp
 
-BOOST_INSTALL_DIR = /Users/pier/SOFTWARE/boost_1_58_0
+BOOST_INSTALL_DIR = /home/pp170/SOFTWARE/boost_1_58_0
 
 # add Boost include and lib paths
 ifneq ($(strip ${BOOST_INSTALL_DIR}),)

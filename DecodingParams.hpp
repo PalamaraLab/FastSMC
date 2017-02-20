@@ -19,20 +19,20 @@ public:
     int jobs;
     int jobInd;
     DecodingMode decodingMode;
-    bool decodingSequence;
-    bool foldData;
-    bool usingCSFS;
-    bool compress;
-    bool useAncestral;
+    bool decodingSequence = false;
+    bool foldData = false;
+    bool usingCSFS = false;
+    bool compress = false;
+    bool useAncestral = false;
     float skipCSFSdistance;
-    bool noBatches;
+    bool noBatches = false;
 
     // TASKS
-    bool doPosteriorSums;
-    bool doPerPairMAP; // output MAP for each pair
-    bool doPerPairPosteriorMean; // output posterior mean for each pair
+    bool doPosteriorSums = false;
+    bool doPerPairMAP = false; // output MAP for each pair
+    bool doPerPairPosteriorMean = false; // output posterior mean for each pair
     string expectedCoalTimesFile; // expected coalescent times to output MAP/posterior mean times
-    bool withinOnly; // only compute decoding within individuals
+    bool withinOnly = false; // only compute decoding within individuals
     //    float IBDthreshold;
     //    bool doMajorMinorPosteriorSums;
     //    bool doPerPairPosterior;
