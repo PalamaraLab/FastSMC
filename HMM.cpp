@@ -16,9 +16,9 @@
 
 using namespace std;
 
-#define NO_SSE
+// #define NO_SSE
 // #define SSE
-// #define AVX
+#define AVX
 // #define AVX512
 
 #ifdef NO_SSE
