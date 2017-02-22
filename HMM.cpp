@@ -136,9 +136,9 @@ PairObservations makePairObs(const Individual &iInd, int iHap, const Individual 
 // individual ids and XOR of genotypes
 struct DecodingReturnValues {
   vector < vector <float> > sumOverPairs; // output for sum over all pairs
-  // vector < vector <float> > sumOverPairs00; // output for sum over all pairs with genotype 00
-  // vector < vector <float> > sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
-  // vector < vector <float> > sumOverPairs11; // output for sum over all pairs with genotype 11
+  vector < vector <float> > sumOverPairs00; // output for sum over all pairs with genotype 00
+  vector < vector <float> > sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
+  vector < vector <float> > sumOverPairs11; // output for sum over all pairs with genotype 11
 };
 
 // does the linear-time decoding
@@ -321,11 +321,11 @@ public:
 
     // if (doPerPairPosterior) foutPerPair.openOrExit(outFileRoot + ".perPairCoalPosteriors.gz");
     decodingReturnValues.sumOverPairs = vector < vector <float> > (sequenceLength, vector <float> (states));
-    // if (doMajorMinorPosteriorSums) {
-    //   decodingReturnValues.sumOverPairs00 = vector < vector <float> > (sequenceLength, vector <float> (states));
-    //   decodingReturnValues.sumOverPairs01 = vector < vector <float> > (sequenceLength, vector <float> (states));
-    //   decodingReturnValues.sumOverPairs11 = vector < vector <float> > (sequenceLength, vector <float> (states));
-    // }
+    if (decodingParams.doMajorMinorPosteriorSums) {
+      decodingReturnValues.sumOverPairs00 = vector < vector <float> > (sequenceLength, vector <float> (states));
+      decodingReturnValues.sumOverPairs01 = vector < vector <float> > (sequenceLength, vector <float> (states));
+      decodingReturnValues.sumOverPairs11 = vector < vector <float> > (sequenceLength, vector <float> (states));
+    }
     const vector <Individual> &individuals = data.individuals;
     uint64 lastPercentage = -1;
     uint64 N = individuals.size();
@@ -874,35 +874,40 @@ private:
   // --posteriorSums
   void augmentSumOverPairs(vector <PairObservations> &obsBatch, int actualBatchSize, int paddedBatchSize) {
 
-    if (!decodingParams.doPosteriorSums) return;
+    uint64 t0 = Timer::rdtsc();
+
+    if (!decodingParams.doPosteriorSums && !decodingParams.doMajorMinorPosteriorSums) return;
 
     for (long int pos = 0; pos < sequenceLength; pos++) {
       for (int k = 0; k < states; k++) {
         float sum = 0;
-        // float sum00 = 0;
-        // float sum01 = 0;
-        // float sum11 = 0;
+        float sum00 = 0;
+        float sum01 = 0;
+        float sum11 = 0;
         for (int v = 0; v < actualBatchSize; v++) { // only loop over actual (not padding) pairs
           float posterior_pos_state_pair = alphaBuffer[(pos * states + k) * paddedBatchSize + v];
           if (decodingParams.doPosteriorSums) {
             sum += posterior_pos_state_pair;
           }
-          // if (doMajorMinorPosteriorSums) {
-          //   if (obsBatch[v].obsBits[pos] == 0 && obsBatch[v].homMinorBits[pos] == 0) sum00 += posterior_pos_state_pair;
-          //   if (obsBatch[v].obsBits[pos] == 1) sum01 += posterior_pos_state_pair;
-          //   if (obsBatch[v].homMinorBits[pos] == 1) sum11 += posterior_pos_state_pair;
-          // }
+          if (decodingParams.doMajorMinorPosteriorSums) {
+            if (obsBatch[v].homMinorBits[pos] == 1) sum11 += posterior_pos_state_pair;
+            else if (obsBatch[v].obsBits[pos] == 0) sum00 += posterior_pos_state_pair;
+            else sum01 += posterior_pos_state_pair;
+          }
         }
         if (decodingParams.doPosteriorSums) {
           decodingReturnValues.sumOverPairs[pos][k] += sum;
         }
-        // if (doMajorMinorPosteriorSums) {
-        //   decodingReturnValues.sumOverPairs00[pos][k] += sum00;
-        //   decodingReturnValues.sumOverPairs01[pos][k] += sum01;
-        //   decodingReturnValues.sumOverPairs11[pos][k] += sum11;
-        // }
+        if (decodingParams.doMajorMinorPosteriorSums) {
+          decodingReturnValues.sumOverPairs00[pos][k] += sum00;
+          decodingReturnValues.sumOverPairs01[pos][k] += sum01;
+          decodingReturnValues.sumOverPairs11[pos][k] += sum11;
+        }
       }
     }
+
+    uint64 t1 = Timer::rdtsc(); ticksSumOverPairs += t1 - t0;
+
   }
 
   // modify this function to change the output written to --outPerPairFile

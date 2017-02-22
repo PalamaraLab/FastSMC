@@ -65,45 +65,55 @@ int main(int argc, char *argv[]) {
         }
         fout.close();
     }
-    // if (params.doMajorMinorPosteriorSums) {
-    //     vector < vector <float> > sumOverPairs00 = decodingReturnValues.sumOverPairs00;
-    //     vector < vector <float> > sumOverPairs01 = decodingReturnValues.sumOverPairs01;
-    //     vector < vector <float> > sumOverPairs11 = decodingReturnValues.sumOverPairs11;
-    //     // Sum for 00
-    //     FileUtils::AutoGzOfstream fout00;
-    //     fout00.openOrExit(params.outFileRoot + ".00.sumOverPairs.gz");
-    //     for (int pos = 0; pos < data.sites; pos++) {
-    //         for (int k = 0; k < decodingQuantities.states; k++) {
-    //             if (k) fout00 << "\t";
-    //             fout00 << sumOverPairs00[pos][k];
-    //         }
-    //         fout00 << endl;
-    //     }
-    //     fout00.close();
-    //     // Sum for 01
-    //     FileUtils::AutoGzOfstream fout01;
-    //     fout01.openOrExit(params.outFileRoot + ".01.sumOverPairs.gz");
-    //     for (int pos = 0; pos < data.sites; pos++) {
-    //         for (int k = 0; k < decodingQuantities.states; k++) {
-    //             if (k) fout01 << "\t";
-    //             fout01 << sumOverPairs01[pos][k];
-    //         }
-    //         fout01 << endl;
-    //     }
-    //     fout01.close();
-    //     // Sum for 11
-    //     FileUtils::AutoGzOfstream fout11;
-    //     fout11.openOrExit(params.outFileRoot + ".11.sumOverPairs.gz");
-    //     for (int pos = 0; pos < data.sites; pos++) {
-    //         for (int k = 0; k < decodingQuantities.states; k++) {
-    //             if (k) fout11 << "\t";
-    //             fout11 << sumOverPairs11[pos][k];
-    //         }
-    //         fout11 << endl;
-    //     }
-    //     fout11.close();
-    // }
- 
+    if (params.doMajorMinorPosteriorSums) {
+        vector < vector <float> > sumOverPairs00 = decodingReturnValues.sumOverPairs00;
+        vector < vector <float> > sumOverPairs01 = decodingReturnValues.sumOverPairs01;
+        vector < vector <float> > sumOverPairs11 = decodingReturnValues.sumOverPairs11;
+        // Sum for 00
+        FileUtils::AutoGzOfstream fout00;
+        fout00.openOrExit(params.outFileRoot + ".00.sumOverPairs.gz");
+        for (int pos = 0; pos < data.sites; pos++) {
+            for (uint k = 0; k < decodingQuantities.states; k++) {
+                if (k) fout00 << "\t";
+                if (!data.siteWasFlippedDuringFolding[pos]) {
+                    fout00 << sumOverPairs00[pos][k];
+                }
+                else {
+                    fout00 << sumOverPairs11[pos][k];
+                }
+            }
+            fout00 << endl;
+        }
+        fout00.close();
+        // Sum for 01
+        FileUtils::AutoGzOfstream fout01;
+        fout01.openOrExit(params.outFileRoot + ".01.sumOverPairs.gz");
+        for (int pos = 0; pos < data.sites; pos++) {
+            for (uint k = 0; k < decodingQuantities.states; k++) {
+                if (k) fout01 << "\t";
+                fout01 << sumOverPairs01[pos][k];
+            }
+            fout01 << endl;
+        }
+        fout01.close();
+        // Sum for 11
+        FileUtils::AutoGzOfstream fout11;
+        fout11.openOrExit(params.outFileRoot + ".11.sumOverPairs.gz");
+        for (int pos = 0; pos < data.sites; pos++) {
+            for (uint k = 0; k < decodingQuantities.states; k++) {
+                if (k) fout11 << "\t";
+                if (!data.siteWasFlippedDuringFolding[pos]) {
+                    fout11 << sumOverPairs11[pos][k];
+                }
+                else {
+                    fout11 << sumOverPairs00[pos][k];
+                }
+            }
+            fout11 << endl;
+        }
+        fout11.close();
+    }
+
     // cout << endl << "Upper-left 20 x 20 corner of sumOverPairs:" << endl;
     // for (uint i = 0; i < 20; i++) {
     //     for (uint j = 0; j < 20; j++)

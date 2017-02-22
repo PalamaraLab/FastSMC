@@ -31,6 +31,7 @@ Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToM
   // now we have the sample sizes
   sampleSize = famAndIndNameList.size();
   haploidSampleSize = sampleSize * 2;
+  siteWasFlippedDuringFolding = vector<bool> (sites, false);
   // and the number of sites
   for (uint i = 0; i < famAndIndNameList.size(); i++) {
     individuals.push_back(Individual(FamIDList[i], IIDList[i], sites));
@@ -231,6 +232,8 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles) {
       }
     }
     bool minorAlleleValue = foldToMinorAlleles ? (DAcount <= totalSamples - DAcount) : true;
+    siteWasFlippedDuringFolding[pos] = !minorAlleleValue;
+    // cout << (DAcount <= totalSamples - DAcount) << "\t" << siteWasFlippedDuringFolding[pos] << endl;
     for (uint i = 0; i < 2 * famAndIndNameList.size(); i++) {
       int indIndex = i / 2;
       Individual &ind = individuals[indIndex];

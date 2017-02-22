@@ -32,6 +32,7 @@ public:
   bool decodingUsesCSFS = false;
   vector<float> geneticPositions;
   vector<int> physicalPositions;
+  vector<bool> siteWasFlippedDuringFolding;
   vector<float> recRateAtMarker;
   vector< vector<int> > undistinguishedCounts;
 

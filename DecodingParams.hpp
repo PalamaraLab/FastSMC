@@ -34,7 +34,7 @@ public:
     string expectedCoalTimesFile; // expected coalescent times to output MAP/posterior mean times
     bool withinOnly = false; // only compute decoding within individuals
     //    float IBDthreshold;
-    //    bool doMajorMinorPosteriorSums;
+    bool doMajorMinorPosteriorSums = false;
     //    bool doPerPairPosterior;
     //    bool doTrees;
     //    string indLabels;

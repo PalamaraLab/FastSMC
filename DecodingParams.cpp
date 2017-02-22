@@ -40,6 +40,8 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
   // TASKS
   ("posteriorSums", po::bool_switch(&doPosteriorSums)->default_value(false),
    "output file for sum of posterior distribution over pairs. O(sitesxstates) output")
+  ("majorMinorPosteriorSums", po::bool_switch(&doMajorMinorPosteriorSums)->default_value(false),
+    "output file for sum of posterior distribution over pairs, partitioned by major/minor alleles. O(sitesxstates) output")
   ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(false),
    "output per-pair MAP at each site. O(sitesxsamples^2) output")
   ("perPairPosteriorMeans", po::value<string>(&expectedCoalTimesFile),
@@ -162,8 +164,8 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
       }
     }
 
-    if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean) {
-      cerr << "ERROR: At least one of --posteriorSums, --doPerPairMAP, --doPerPairPosteriorMean, must be specified"
+    if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
+      cerr << "ERROR: At least one of --posteriorSums, --perPairMAP, --perPairPosteriorMean, --majorMinorPosteriorSums, must be specified"
            << endl;
       return false;
     }
