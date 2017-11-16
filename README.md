@@ -43,6 +43,10 @@ Once you have run ASMC on all batches (e.g. 10 out of 10), you can merge the fin
 ```
 sh merge.sh EXAMPLE/exampleFile.array 10
 ```
+A complete example analysis can be run using
+```
+sh runExample.sh
+```
 If you want to analyze the example's sequencing data, you can run
 ```
 sh prepare.sh EXAMPLE/exampleFile
