@@ -1,6 +1,11 @@
 ## ASMC
 Ascertained Sequentially Markovian Coalescent. Fast estimation of coalescence time along the genome for pairs of samples, using array or sequencing data.
 
+A complete example analysis can be run using
+```
+sh runExample.sh
+```
+
 ### Dependencies
 - install [SMC++](https://github.com/popgenmethods/smcpp) (used to generate CSFS).
 
@@ -42,10 +47,6 @@ sh decode.sh EXAMPLE/exampleFile.array array 1 10
 Once you have run ASMC on all batches (e.g. 10 out of 10), you can merge the final results using
 ```
 sh merge.sh EXAMPLE/exampleFile.array 10
-```
-A complete example analysis can be run using
-```
-sh runExample.sh
 ```
 If you want to analyze the example's sequencing data, you can run
 ```
