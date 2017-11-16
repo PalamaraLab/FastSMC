@@ -112,3 +112,6 @@ P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwi
 | 20 | 29471031 | 62915231 |
 | 21 | 14595742 | 48099610 |
 | 22 | 16057417 | 51193629 |
+
+### License
+ASMC is free software under the GNU General Public License v3.0 (GPLv3).
