@@ -16,3 +16,4 @@ ASMC is distributed under the GNU General Public License v3.0 (GPLv3). For any q
 If you use this software, please cite:
 
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
+
