@@ -20,7 +20,7 @@ arrayDisc=np.loadtxt(args.discretizationFile)
 arrayTimeAppend = np.append(arrayTime, arrayTime[-1]+100)
 
 # set n and N0
-n = args.samples # number of total haploids, distinguished+undistinguished
+n = args.samples # number of total haploids, distinguished+undistinguished 
 mu = 1.65E-8
 N0 = arraySize[0]
 # Population scaled mutation rate
