@@ -25,7 +25,7 @@ mu = 1.65E-8
 N0 = arraySize[0]
 # Population scaled mutation rate
 theta = mu * 2. * N0
-om = OldStyleModel(arraySize / (2. * N0), arraySize / (2. * N0), np.diff(arrayTimeAppend / (2. * N0)))
+om = OldStyleModel(arraySize / (2. * N0), arraySize / (2. * N0), np.diff(arrayTimeAppend / (2. * N0)), N0)
 arrayDiscOriginal = arrayDisc
 arrayDisc = arrayDisc / (2. * N0)
 
