@@ -18,7 +18,7 @@ class Plotter:
 
         import argparse, sys
 
-        parser = argparse.ArgumentParser(description='Polygenic selection')
+        parser = argparse.ArgumentParser(description='Plot ASMC posterior')
 
         parser._optionals.title = "help commands"
 
