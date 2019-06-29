@@ -40,14 +40,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #export compiler flags for code completion engines
 set( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
 # Set global compiler warnings
 if(MSVC)
     add_compile_options(/W3 /WX)
 else()
     add_compile_options(-Wall -pedantic)
 endif()
+
+# Set SIMD compiler options
+include(cmake/SIMD.cmake)
 
 set(ASMC_source_dir ASMC_SRC/SRC)
 set(ASMC_test_dir ASMC_SRC/TESTS)
@@ -62,6 +63,18 @@ set(ASMC_source
   ${ASMC_source_dir}/Timer.cpp
   )
 
+set(ASMC_headers
+  ${ASMC_source_dir}/HMM.hpp
+  ${ASMC_source_dir}/Data.hpp
+  ${ASMC_source_dir}/DecodingParams.hpp
+  ${ASMC_source_dir}/DecodingQuantities.hpp
+  ${ASMC_source_dir}/FileUtils.hpp
+  ${ASMC_source_dir}/Individual.hpp
+  ${ASMC_source_dir}/MemoryUtils.hpp
+  ${ASMC_source_dir}/StringUtils.hpp
+  ${ASMC_source_dir}/Timer.hpp
+  )
+
 set(ASMC_main
   ${ASMC_source_dir}/main.cpp
   )
@@ -73,7 +86,7 @@ set(ASMC_tests
   )
 
 
-add_library(ASMC ${ASMC_source})
+add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 add_executable(ASMC_exe ${ASMC_main})
 target_link_libraries(ASMC_exe PRIVATE ASMC)
