@@ -14,19 +14,11 @@
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#ifndef TYPES_HPP
-#define TYPES_HPP
+// This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
 
-#include <cstdint>
-#include <cinttypes>
+#include <limits>
+#include <type_traits>
 
-typedef unsigned char uchar;
-typedef unsigned int uint;
-typedef uint64_t uint64;
-typedef int64_t int64;
 
-struct uint64_masks {
-	uint64 is0, is2, is9;
-};
-
-#endif

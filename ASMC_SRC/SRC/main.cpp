@@ -25,7 +25,7 @@
 #include "FileUtils.hpp"
 #include "StringUtils.hpp"
 #include "Timer.hpp"
-#include "HMM.cpp"
+#include "HMM.hpp"
 
 using namespace std;
 

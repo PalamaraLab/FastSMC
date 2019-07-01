@@ -395,7 +395,7 @@ public:
 
     // uint64 t1 = Timer::rdtsc();
     // double ticksDecodeAll = t1 - t0;
-    printf("\nDecoded %Ld pairs in %.3f seconds.\n", pairsJob, timer.update_time());
+    printf("\nDecoded %" PRIu64 " pairs in %.3f seconds.\n", pairsJob, timer.update_time());
     // print some stats (will remove)
 //    printPctTime("forward", ticksForward / ticksDecodeAll);
 //    printPctTime("backward", ticksBackward / ticksDecodeAll);
