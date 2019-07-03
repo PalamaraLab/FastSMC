@@ -29,45 +29,27 @@
 
 using namespace std;
 
-int main(int argc, char *argv[]) {
+void run(string haps_file_root, string decoding_quant_file,
+        string out_file_root, DecodingMode mode,
+        int jobs = 0, int job_index = 0,
+        float skip_csfs_distance = 0,
+        bool compress = false, bool use_ancestral = false,
+        bool major_minor_posterior_sums = false,
+        bool posterior_sums = false) {
 
 
     srand(1234);
 
-    const char VERSION[] = "1.0";
-    const char VERSION_DATE[] = "July 1, 2018";
-    const char YEAR[] = "2018";
-    const char LICENSE[] = "GNU GPL v3";
-    const char WEBSITE[] = "www.palamaralab.org/software/ASMC";
-    const char PROGRAM[] = "Ascertained Sequentially Markovian Coalescent (ASMC)";
-
     DecodingParams params;
-
-    // parse input arguments
-    if (!params.processCommandLineArgs(argc, argv)) {
-        cerr << "Error processing command line; exiting." << endl;
-        exit(1);
-    }
-
-    cout << "\n";
-
-    // cout << "              _____   __  __    _____ \n";
-    // cout << "     /\\      / ____| |  \\/  |  / ____|\n";
-    // cout << "    /  \\    | (___   | \\  / | | |     \n";
-    // cout << "   / /\\ \\    \\___ \\  | |\\/| | | |     \n";
-    // cout << "  / ____ \\   ____) | | |  | | | |____ \n";
-    // cout << " /_/    \\_\\ |_____/  |_|  |_|  \\_____|\n";
-
-    cout << " █████╗   ███████╗  ███╗   ███╗   ██████╗\n";
-    cout << "██╔══██╗  ██╔════╝  ████╗ ████║  ██╔════╝\n";
-    cout << "███████║  ███████╗  ██╔████╔██║  ██║     \n";
-    cout << "██╔══██║  ╚════██║  ██║╚██╔╝██║  ██║     \n";
-    cout << "██║  ██║  ███████║  ██║ ╚═╝ ██║  ╚██████╗\n";
-    cout << "╚═╝  ╚═╝  ╚══════╝  ╚═╝     ╚═╝   ╚═════╝\n";
-
-    cout << "\n" << PROGRAM << " v." << VERSION << ", " << VERSION_DATE << "\n";
-    cout << LICENSE <<  ", Copyright (C) " << YEAR << " Pier Palamara" << "\n";
-    cout << "Manual: " << WEBSITE << "\n" << "\n";
+    params.hapsFileRoot = haps_file_root;
+    params.decodingQuantFile = decoding_quant_file;
+    params.outFileRoot = out_file_root;
+    params.decodingMode = mode;
+    params.compress = compress;
+    params.useAncestral = use_ancestral;
+    params.doMajorMinorPosteriorSums = major_minor_posterior_sums;
+    params.doPosteriorSums = posterior_sums;
+    params.skipCSFSdistance = skip_csfs_distance;
 
     cout << "Decoding batch " << params.jobInd << " of " << params.jobs << "\n\n";
 
@@ -178,3 +160,48 @@ int main(int argc, char *argv[]) {
 
 }
 
+
+int main(int argc, char *argv[]) {
+    const char VERSION[] = "1.0";
+    const char VERSION_DATE[] = "July 1, 2018";
+    const char YEAR[] = "2018";
+    const char LICENSE[] = "GNU GPL v3";
+    const char WEBSITE[] = "www.palamaralab.org/software/ASMC";
+    const char PROGRAM[] = "Ascertained Sequentially Markovian Coalescent (ASMC)";
+
+    DecodingParams params;
+
+    // parse input arguments
+    if (!params.processCommandLineArgs(argc, argv)) {
+        cerr << "Error processing command line; exiting." << endl;
+        exit(1);
+    }
+
+    cout << "\n";
+
+    // cout << "              _____   __  __    _____ \n";
+    // cout << "     /\\      / ____| |  \\/  |  / ____|\n";
+    // cout << "    /  \\    | (___   | \\  / | | |     \n";
+    // cout << "   / /\\ \\    \\___ \\  | |\\/| | | |     \n";
+    // cout << "  / ____ \\   ____) | | |  | | | |____ \n";
+    // cout << " /_/    \\_\\ |_____/  |_|  |_|  \\_____|\n";
+
+    cout << " █████╗   ███████╗  ███╗   ███╗   ██████╗\n";
+    cout << "██╔══██╗  ██╔════╝  ████╗ ████║  ██╔════╝\n";
+    cout << "███████║  ███████╗  ██╔████╔██║  ██║     \n";
+    cout << "██╔══██║  ╚════██║  ██║╚██╔╝██║  ██║     \n";
+    cout << "██║  ██║  ███████║  ██║ ╚═╝ ██║  ╚██████╗\n";
+    cout << "╚═╝  ╚═╝  ╚══════╝  ╚═╝     ╚═╝   ╚═════╝\n";
+
+    cout << "\n" << PROGRAM << " v." << VERSION << ", " << VERSION_DATE << "\n";
+    cout << LICENSE <<  ", Copyright (C) " << YEAR << " Pier Palamara" << "\n";
+    cout << "Manual: " << WEBSITE << "\n" << "\n";
+    run(params.hapsFileRoot, params.decodingQuantFile,
+        params.outFileRoot, params.decodingMode,
+        params.jobs, params.jobInd,
+        params.skipCSFSdistance,
+        params.compress, params.useAncestral,
+        params.doMajorMinorPosteriorSums,
+        params.doPosteriorSums);
+
+}
