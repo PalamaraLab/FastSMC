@@ -106,7 +106,7 @@ double readDoubleNanInf(std::istream &stream) {
   string str;
   stream >> str;
   double x;
-  sscanf(str.c_str(), "%lf", &x);
+  sscanf_s(str.c_str(), "%lf", &x);
   return x;
 }
 

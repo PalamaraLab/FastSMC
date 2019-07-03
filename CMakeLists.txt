@@ -85,8 +85,8 @@ add_test(test1 ASMC_tests)
 
 # boost as a required dependency for ASMC
 find_package(Boost REQUIRED COMPONENTS program_options iostreams)
-target_link_libraries(ASMC PRIVATE "${Boost_LIBRARIES}")
-target_include_directories(ASMC PRIVATE "${Boost_INCLUDE_DIR}")
+target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
+target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
 
 # openmp is a required dependency
 find_package(OpenMP REQUIRED)

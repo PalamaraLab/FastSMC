@@ -21,7 +21,7 @@
 
 #define MEM_ALIGNMENT 64
 
-void *ALIGNED_MALLOC(uint64 size);
+void *ALIGNED_MALLOC(size_t size);
 
 #ifdef USE_MKL_MALLOC
 #include <mkl.h>

@@ -21,9 +21,10 @@
 #include <iostream>
 #include <sstream>
 
-#include <sys/types.h>
+//#include <sys/types.h>
 
 #include "StringUtils.hpp"
+#include "Types.hpp"
 
 namespace StringUtils {
 using std::vector;
@@ -34,7 +35,7 @@ using std::endl;
 
 int stoi(const string &s) {
   int i;
-  if (sscanf(s.c_str(), "%d", &i) == 0) {
+  if (sscanf_s(s.c_str(), "%d", &i) == 0) {
     cerr << "ERROR: Could not parse integer from string: " << s << endl;
     exit(1);
   }
@@ -42,12 +43,12 @@ int stoi(const string &s) {
 }
 double stod(const string &s) {
   double d;
-  sscanf(s.c_str(), "%lf", &d);
+  sscanf_s(s.c_str(), "%lf", &d);
   return d;
 }
 float stof(const string &s) {
   float f;
-  sscanf(s.c_str(), "%f", &f);
+  sscanf_s(s.c_str(), "%f", &f);
   return f;
 }
 string itos(int i) {
