@@ -20,7 +20,7 @@
 #include "MemoryUtils.hpp"
 #include "Types.hpp"
 
-void *ALIGNED_MALLOC(uint64 size) {
+void *ALIGNED_MALLOC(size_t size) {
 #ifdef USE_MKL_MALLOC
   void *p = mkl_malloc(size, MEM_ALIGNMENT);
 #else

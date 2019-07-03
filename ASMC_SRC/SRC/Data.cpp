@@ -40,7 +40,7 @@ Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToM
 {
   readSamplesList(hapsFileRoot);
   // now we have the sample sizes
-  sampleSize = famAndIndNameList.size();
+  sampleSize = static_cast<int>(famAndIndNameList.size());
   haploidSampleSize = sampleSize * 2;
   siteWasFlippedDuringFolding = vector<bool> (sites, false);
   // and the number of sites
@@ -227,7 +227,7 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles) {
       cerr << "ERROR: haps line has wrong length." << endl;
       exit(1);
     }
-    int totalSamples = 2 * famAndIndNameList.size();
+    int totalSamples = static_cast<int>(2 * famAndIndNameList.size());
     totalSamplesCount[pos] = totalSamples;
     for (uint i = 0; i < 2 * famAndIndNameList.size(); i++) {
       if (line[2 * i + 1] == '1') {
