@@ -25,10 +25,23 @@ trigger:
 pool:
   vmImage: $(imageName)
 
+variables:
+  boostRequired: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math'
+
 steps:
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      architecture: 'x64'
+
   - script: |
-      vcpkg integrate install
-      vcpkg --triplet $(vcpkgTriplet) install boost-program-options boost-iostreams boost-algorithm boost-align
+      python -m pip install --upgrade pip
+      python -m pip install --upgrade cmake
+    displayName: Update cmake
+
+  - script: |
+      vcpkg --triplet $(vcpkgTriplet) install $(boostRequired)
     displayName: 'vcpkg install'
 
   - task: CMake@1
