@@ -24,7 +24,7 @@
 typedef std::tuple<DecodingReturnValues, DecodingQuantities, Data> ASMC;
 
 ASMC run(std::string haps_file_root, std::string decoding_quant_file,
-         string out_file_root, DecodingMode mode,
+         std::string out_file_root, DecodingMode mode,
          int jobs, int job_index,
          float skip_csfs_distance,
          bool compress, bool use_ancestral);
