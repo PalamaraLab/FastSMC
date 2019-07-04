@@ -48,7 +48,6 @@ steps:
       ./vcpkg integrate install
       export VCPKG_INSTALLATION_ROOT=`pwd`
       export PATH="$VCPKG_INSTALLATION_ROOT:$PATH"
-    workingDirectory: 'vcpkg_root'
     condition: eq(variables['installVcpkg'], 'true')
     displayName: 'install vcpkg'
 
