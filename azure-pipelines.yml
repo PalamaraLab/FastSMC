@@ -10,16 +10,19 @@ strategy:
     Ubuntu:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
+      cmakeArgs: ''
     # macOS
     macOS:
       imageName: 'macOS-10.14'
       vcpkgTriplet: 'x64-osx'
       installDeps: 'brew'
+      cmakeArgs: ''
     # Windows
     Windows:
       imageName: 'windows-2019'
       installDeps: 'vcpkg'
       vcpkgTriplet: 'x64-windows'
+      cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
 
 trigger:
   - master
@@ -57,14 +60,14 @@ steps:
     displayName: 'install dependencies (brew)'
 
   - script: |
-      vcpkg --triplet $(vcpkgTriplet) install $(boostRequired)
+      vcpkg --triplet $(vcpkgTriplet) install $(vcpkgDeps)
     condition: eq(variables['installDeps'], 'vcpkg')
     displayName: 'install dependencies (vcpkg)'
 
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
-      cmakeArgs: '.. -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      cmakeArgs: '.. $(cmakeArgs)'
     displayName: 'CMake'
 
   - task: CMake@1
