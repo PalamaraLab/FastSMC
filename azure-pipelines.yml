@@ -13,7 +13,7 @@ strategy:
       cmakeArgs: ''
     # macOS
     macOS:
-      imageName: 'macOS-10.14'
+      imageName: 'macOS-10.13'
       vcpkgTriplet: 'x64-osx'
       installDeps: 'brew'
       cmakeArgs: ''
