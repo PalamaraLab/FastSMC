@@ -33,11 +33,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-float stof(const string &s) {
-  float f;
-  sscanf_s(s.c_str(), "%f", &f);
-  return f;
-}
 string itos(int i) {
   std::ostringstream oss;
   oss << i;

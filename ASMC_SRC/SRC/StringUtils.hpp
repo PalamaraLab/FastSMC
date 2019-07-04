@@ -24,7 +24,6 @@ namespace StringUtils {
 
 const std::string RANGE_DELIMS = "{:}";
 
-float stof(const std::string &s);
 std::string itos(int i);
 std::string findDelimiters(const std::string &s, const std::string &c);
 
