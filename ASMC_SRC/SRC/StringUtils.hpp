@@ -24,7 +24,6 @@ namespace StringUtils {
 
 const std::string RANGE_DELIMS = "{:}";
 
-int stoi(const std::string &s);
 double stod(const std::string &s);
 float stof(const std::string &s);
 std::string itos(int i);
