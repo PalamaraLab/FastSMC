@@ -33,11 +33,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-double stod(const string &s) {
-  double d;
-  sscanf_s(s.c_str(), "%lf", &d);
-  return d;
-}
 float stof(const string &s) {
   float f;
   sscanf_s(s.c_str(), "%f", &f);
