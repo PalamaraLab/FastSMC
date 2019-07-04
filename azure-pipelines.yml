@@ -11,8 +11,9 @@ strategy:
       imageName: 'ubuntu-16.04'
       vcpkgTriplet: 'x64-linux'
     # macOS
-    macOS:
-      imageName: 'macOS-10.14'
+#    macOS:
+#      imageName: 'macOS-10.14'
+#      vcpkgTriplet: 'x64-osx'
     # Windows
     Windows:
       imageName: 'windows-2019'
