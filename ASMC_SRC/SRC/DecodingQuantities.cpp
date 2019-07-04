@@ -49,7 +49,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
     if (firstToken == string("states")) {
       currentType = DataType::States;
       getline(br, line);
-      states = StringUtils::stoi(line);
+      states = std::stoi(line);
       parsedStates = true;
       // cout << "Parsed states " << states << endl;
       continue;
@@ -62,7 +62,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
       currentType = DataType::CSFSSamples;
       parsedCSFSSamples = true;
       getline(br, line);
-      CSFSSamples = StringUtils::stoi(line);
+      CSFSSamples = std::stoi(line);
       // cout << "Parsed CSFSSamples " << CSFSSamples << endl;
       CSFSmap = vector < vector < vector <float> > > (CSFSSamples - 1);
       foldedCSFSmap = vector < vector < vector <float> > > (CSFSSamples - 1);
@@ -75,7 +75,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
       vector <string> inSplitString; istringstream iss(line); string buf; while (iss >> buf) inSplitString.push_back(buf);
       timeVector = vector <float> (inSplitString.size());
       for (unsigned int i = 0; i < inSplitString.size(); i++) {
-        timeVector[i] = StringUtils::stof(inSplitString[i]);
+        timeVector[i] = std::stof(inSplitString[i]);
       }
       // cout << "Parsed TimeVector " << timeVector.size() << endl;
       continue;
@@ -98,7 +98,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         exit(1);
       }
       for (unsigned int i = 0; i < inSplitString.size(); i++) {
-        expectedTimes[i] = StringUtils::stof(inSplitString[i]);
+        expectedTimes[i] = std::stof(inSplitString[i]);
       }
       // cout << "Parsed ExpectedTimes " << expectedTimes.size() << endl;
       continue;
@@ -116,7 +116,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         exit(1);
       }
       for (unsigned int i = 0; i < inSplitString.size(); i++) {
-        discretization[i] = StringUtils::stof(inSplitString[i]);
+        discretization[i] = std::stof(inSplitString[i]);
       }
       // cout << "Parsed Discretization " << discretization.size() << endl;
       continue;
@@ -136,7 +136,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         }
         vector <float> thisEmission = vector <float> (states);
         for (unsigned int i = 0; i < states; i++) {
-          thisEmission[i] = StringUtils::stof(inSplitString[i]);
+          thisEmission[i] = std::stof(inSplitString[i]);
         }
         classicEmissionTable[k] = thisEmission;
       }
@@ -158,7 +158,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         }
         vector <float> thisEmission = vector <float> (states);
         for (unsigned int i = 0; i < states; i++) {
-          thisEmission[i] = StringUtils::stof(inSplitString[i]);
+          thisEmission[i] = std::stof(inSplitString[i]);
         }
         compressedEmissionTable[k] = thisEmission;
       }
@@ -170,7 +170,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 3; k++) {
         getline(br, line);
@@ -182,7 +182,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         vector <float> CSFSline = vector <float> (states);
         thisCSFS.push_back(CSFSline);
         for (unsigned int i = 0; i < states; i++) {
-          thisCSFS[k][i] = StringUtils::stof(inSplitString[i]);
+          thisCSFS[k][i] = std::stof(inSplitString[i]);
         }
       }
       CSFSmap[undistinguishedIndex] = thisCSFS;
@@ -194,7 +194,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 2; k++) {
         getline(br, line);
@@ -206,7 +206,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         vector <float> CSFSline = vector <float> (states);
         thisCSFS.push_back(CSFSline);
         for (unsigned int i = 0; i < states; i++) {
-          thisCSFS[k][i] = StringUtils::stof(inSplitString[i]);
+          thisCSFS[k][i] = std::stof(inSplitString[i]);
         }
       }
       foldedCSFSmap[undistinguishedIndex] = thisCSFS;
@@ -217,7 +217,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 3; k++) {
         getline(br, line);
@@ -229,7 +229,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         vector <float> CSFSline = vector <float> (states);
         thisCSFS.push_back(CSFSline);
         for (unsigned int i = 0; i < states; i++) {
-          thisCSFS[k][i] = StringUtils::stof(inSplitString[i]);
+          thisCSFS[k][i] = std::stof(inSplitString[i]);
         }
       }
       ascertainedCSFSmap[undistinguishedIndex] = thisCSFS;
@@ -240,7 +240,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 2; k++) {
         getline(br, line);
@@ -252,7 +252,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         vector <float> CSFSline = vector <float> (states);
         thisCSFS.push_back(CSFSline);
         for (unsigned int i = 0; i < states; i++) {
-          thisCSFS[k][i] = StringUtils::stof(inSplitString[i]);
+          thisCSFS[k][i] = std::stof(inSplitString[i]);
         }
       }
       foldedAscertainedCSFSmap[undistinguishedIndex] = thisCSFS;
@@ -276,47 +276,47 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
       if (currentType == DataType::ColumnRatios) {
         columnRatios = vector <float> (states, 0.0);
         for (unsigned int i = 0; i < splitString.size(); i++) {
-          columnRatios[i] = StringUtils::stof(splitString[i]);
+          columnRatios[i] = std::stof(splitString[i]);
         }
       } else if (currentType == DataType::initialStateProb) {
         initialStateProb = vector <float> (states, 0.0);
         for (unsigned int i = 0; i < splitString.size(); i++) {
-          initialStateProb[i] = StringUtils::stof(splitString[i]);
+          initialStateProb[i] = std::stof(splitString[i]);
         }
       } else if (currentType == DataType::RowRatios) {
         vector <float> thisRow(states, 0.0);
         for (unsigned int i = 1; i < splitString.size(); i++) {
-          thisRow[i-1] = StringUtils::stof(splitString[i]);
+          thisRow[i-1] = std::stof(splitString[i]);
         }
-        float index = StringUtils::stof(splitString[0]);
+        float index = std::stof(splitString[0]);
         rowRatioVectors[index] = thisRow;
       } else if (currentType == DataType::Uvectors) {
         vector <float> thisRow(states, 0.0);
         for (unsigned int i = 1; i < splitString.size(); i++) {
-          thisRow[i-1] = StringUtils::stof(splitString[i]);
+          thisRow[i-1] = std::stof(splitString[i]);
         }
-        float index = StringUtils::stof(splitString[0]);
+        float index = std::stof(splitString[0]);
         Uvectors[index] = thisRow;
       } else if (currentType == DataType::Bvectors) {
         vector <float> thisRow(states, 0.0);
         for (unsigned int i = 1; i < splitString.size(); i++) {
-          thisRow[i-1] = StringUtils::stof(splitString[i]);
+          thisRow[i-1] = std::stof(splitString[i]);
         }
-        float index = StringUtils::stof(splitString[0]);
+        float index = std::stof(splitString[0]);
         Bvectors[index] = thisRow;
       } else if (currentType == DataType::Dvectors) {
         vector <float> thisRow(states, 0.0);
         for (unsigned int i = 1; i < splitString.size(); i++) {
-          thisRow[i-1] = StringUtils::stof(splitString[i]);
+          thisRow[i-1] = std::stof(splitString[i]);
         }
-        float index = StringUtils::stof(splitString[0]);
+        float index = std::stof(splitString[0]);
         Dvectors[index] = thisRow;
       } else if (currentType == DataType::HomozygousEmissions) {
         vector <float> thisRow(states, 0.0);
         for (unsigned int i = 1; i < splitString.size(); i++) {
-          thisRow[i-1] = StringUtils::stof(splitString[i]);
+          thisRow[i-1] = std::stof(splitString[i]);
         }
-        int index = StringUtils::stoi(splitString[0]);
+        int index = std::stoi(splitString[0]);
         homozygousEmissionMap[index] = thisRow;
       }
     }

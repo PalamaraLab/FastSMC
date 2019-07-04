@@ -105,9 +105,7 @@ int lookupColumnInd(const string &fileName, const string &delimiters, const stri
 double readDoubleNanInf(std::istream &stream) {
   string str;
   stream >> str;
-  double x;
-  sscanf_s(str.c_str(), "%lf", &x);
-  return x;
+  return std::stod(str);
 }
 
 vector < std::pair <string, string> > readFidIids(const string &file) {

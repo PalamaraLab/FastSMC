@@ -115,7 +115,7 @@ vector <float> readExpectedTimesFromIntervalsFil(const char *fileName) {
       cerr << fileName << " should have \"intervalStart\texpectedCoalescentTime\tintervalEnd\" at each line." << endl;
       exit(1);
     }
-    expCoalTimes.push_back(StringUtils::stof(splitString[1]));
+    expCoalTimes.push_back(std::stof(splitString[1]));
   }
   return expCoalTimes;
 }
