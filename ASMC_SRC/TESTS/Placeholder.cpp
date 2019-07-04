@@ -21,4 +21,13 @@
 #include <limits>
 #include <type_traits>
 
+#include "StringUtils.hpp"
+
+TEST_CASE("test SOME coverage", "[coverage]") {
+
+    auto s = StringUtils::findDelimiters("this;string;has;five;semi;colons", ";");
+
+    CHECK(s == ";;;;;");
+}
+
 

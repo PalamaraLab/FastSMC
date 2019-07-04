@@ -10,7 +10,8 @@ strategy:
     Ubuntu:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
-      cmakeArgs: ''
+      cmakeArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
+      runCoverage: 'true'
     # macOS
     macOS:
       imageName: 'macOS-10.13'
@@ -31,7 +32,7 @@ pool:
   vmImage: $(imageName)
 
 variables:
-  aptDeps: 'libboost-all-dev'
+  aptDeps: 'libboost-all-dev lcov'
   brewDeps: 'boost libomp'
   vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
 
@@ -79,3 +80,12 @@ steps:
   - script: ctest -V
     displayName: 'Test'
     workingDirectory: 'build'
+
+  - script: |
+      lcov --directory . --capture --output-file coverage.info
+      lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
+      lcov --list coverage.info
+      bash <(curl https://codecov.io/bash) -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
+    displayName: 'Upload coverage'
+    workingDirectory: 'build'
+    condition: eq(variables['runCoverage'], 'true')
