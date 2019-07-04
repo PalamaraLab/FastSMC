@@ -23,21 +23,23 @@ pool:
   vmImage: $(imageName)
 
 steps:
-  - task: CMake@1
-    inputs:
-      workingDirectory: 'build'
-      cmakeArgs: '..'
-    displayName: 'CMake'
-
-  - task: CMake@1
-    inputs:
-      workingDirectory: 'build'
-      cmakeArgs: '--build .'
-    displayName: 'Build'
-
-  - script: ctest -V
-    displayName: 'Test'
-    workingDirectory: 'build'
+  - script: vcpkg version
+    displayName: 'vcpkg version'
+#  - task: CMake@1
+#    inputs:
+#      workingDirectory: 'build'
+#      cmakeArgs: '..'
+#    displayName: 'CMake'
+#
+#  - task: CMake@1
+#    inputs:
+#      workingDirectory: 'build'
+#      cmakeArgs: '--build .'
+#    displayName: 'Build'
+#
+#  - script: ctest -V
+#    displayName: 'Test'
+#    workingDirectory: 'build'
 
 
 
