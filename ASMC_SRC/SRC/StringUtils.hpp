@@ -24,7 +24,6 @@ namespace StringUtils {
 
 const std::string RANGE_DELIMS = "{:}";
 
-std::string itos(int i);
 std::string findDelimiters(const std::string &s, const std::string &c);
 
 std::vector <std::string> tokenizeMultipleDelimiters(const std::string &s, const std::string &c);

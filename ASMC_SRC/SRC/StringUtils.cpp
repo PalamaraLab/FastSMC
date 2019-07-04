@@ -33,11 +33,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-string itos(int i) {
-  std::ostringstream oss;
-  oss << i;
-  return oss.str();
-}
 string findDelimiters(const string &s, const string &c) {
   string delims;
   for (uint p = 0; p < s.length(); p++)
@@ -98,7 +93,7 @@ vector <string> expandRangeTemplate(const string &str) {
       exit(1);
     }
     for (int i = start; i <= end; i++)
-      ret.push_back(prefix + itos(i) + suffix);
+      ret.push_back(prefix + std::to_string(i) + suffix);
   }
   else
     rangeErrorExit(str, delims);
