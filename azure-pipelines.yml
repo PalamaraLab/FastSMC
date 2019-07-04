@@ -9,12 +9,14 @@ strategy:
     # Ubuntu
     Ubuntu:
       imageName: 'ubuntu-16.04'
+      vcpkgTriplet: 'x64-linux'
     # macOS
     macOS:
       imageName: 'macOS-10.14'
     # Windows
     Windows:
       imageName: 'windows-2019'
+      vcpkgTriplet: 'x64-windows'
 
 trigger:
   - master
@@ -23,23 +25,24 @@ pool:
   vmImage: $(imageName)
 
 steps:
-  - script: vcpkg version
-    displayName: 'vcpkg version'
-#  - task: CMake@1
-#    inputs:
-#      workingDirectory: 'build'
-#      cmakeArgs: '..'
-#    displayName: 'CMake'
-#
-#  - task: CMake@1
-#    inputs:
-#      workingDirectory: 'build'
-#      cmakeArgs: '--build .'
-#    displayName: 'Build'
-#
-#  - script: ctest -V
-#    displayName: 'Test'
-#    workingDirectory: 'build'
+  - script: vcpkg --triplet $(vcpkgTriplet) install boost-program-options boost-iostreams boost-algorithm boost-align
+    displayName: 'vcpkg install'
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '.. -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+    displayName: 'CMake'
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '--build .'
+    displayName: 'Build'
+
+  - script: ctest -V
+    displayName: 'Test'
+    workingDirectory: 'build'
 
 
 
