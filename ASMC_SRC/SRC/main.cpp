@@ -34,9 +34,7 @@ ASMC run(string haps_file_root, string decoding_quant_file,
          string out_file_root, DecodingMode mode,
          int jobs = 0, int job_index = 0,
          float skip_csfs_distance = 0,
-         bool compress = false, bool use_ancestral = false,
-         bool major_minor_posterior_sums = false,
-         bool posterior_sums = false) {
+         bool compress = false, bool use_ancestral = false) {
 
     srand(1234);
 
@@ -47,8 +45,6 @@ ASMC run(string haps_file_root, string decoding_quant_file,
     params.decodingMode = mode;
     params.compress = compress;
     params.useAncestral = use_ancestral;
-    params.doMajorMinorPosteriorSums = major_minor_posterior_sums;
-    params.doPosteriorSums = posterior_sums;
     params.skipCSFSdistance = skip_csfs_distance;
 
     cout << "Decoding batch " << params.jobInd << " of " << params.jobs << "\n\n";
@@ -136,9 +132,7 @@ int main(int argc, char *argv[]) {
         params.outFileRoot, params.decodingMode,
         params.jobs, params.jobInd,
         params.skipCSFSdistance,
-        params.compress, params.useAncestral,
-        params.doMajorMinorPosteriorSums,
-        params.doPosteriorSums);
+        params.compress, params.useAncestral);
 
     DecodingReturnValues decodingReturnValues = get<0>(asmc);
     DecodingQuantities decodingQuantities = get<1>(asmc);
