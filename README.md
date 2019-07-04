@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/OxfordRSE/ASMC/_apis/build/status/OxfordRSE.ASMC?branchName=master)](https://dev.azure.com/OxfordRSE/ASMC/_build/latest?definitionId=4&branchName=master)
+
 ```
     █████╗   ███████╗  ███╗   ███╗   ██████╗
    ██╔══██╗  ██╔════╝  ████╗ ████║  ██╔════╝
