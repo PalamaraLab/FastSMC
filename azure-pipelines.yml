@@ -85,7 +85,7 @@ steps:
       lcov --directory . --capture --output-file coverage.info
       lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
       lcov --list coverage.info
-      bash <(curl https://codecov.io/bash) -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
+      bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
     displayName: 'Upload coverage'
     workingDirectory: 'build'
     condition: eq(variables['runCoverage'], 'true')
