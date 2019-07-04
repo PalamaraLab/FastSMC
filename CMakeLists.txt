@@ -29,7 +29,7 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 if(MSVC)
     add_compile_options(/W3 /WX)
 else()
-    add_compile_options(-Wall -pedantic)
+    add_compile_options(-Wall -pedantic -fPIC)
 endif()
 
 # Set SIMD compiler options
@@ -46,6 +46,7 @@ set(ASMC_source
   ${ASMC_source_dir}/MemoryUtils.cpp
   ${ASMC_source_dir}/StringUtils.cpp
   ${ASMC_source_dir}/Timer.cpp
+  ${ASMC_source_dir}/ASMC.cpp
   )
 
 set(ASMC_headers
@@ -58,6 +59,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/MemoryUtils.hpp
   ${ASMC_source_dir}/StringUtils.hpp
   ${ASMC_source_dir}/Timer.hpp
+  ${ASMC_source_dir}/ASMC.hpp
   )
 
 set(ASMC_main
@@ -70,10 +72,12 @@ set(ASMC_tests
   ${ASMC_test_dir}/Placeholder.cpp
   )
 
-
+add_subdirectory(pybind11)
+pybind11_add_module(asmc ${ASMC_source_dir}/pybind.cpp)
 add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 add_executable(ASMC_exe ${ASMC_main})
+target_link_libraries(asmc PRIVATE ASMC)
 target_link_libraries(ASMC_exe PRIVATE ASMC)
 
 enable_testing()
