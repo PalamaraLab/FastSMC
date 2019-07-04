@@ -11,9 +11,10 @@ strategy:
       imageName: 'ubuntu-16.04'
       vcpkgTriplet: 'x64-linux'
     # macOS
-#    macOS:
-#      imageName: 'macOS-10.14'
-#      vcpkgTriplet: 'x64-osx'
+    macOS:
+      imageName: 'macOS-10.14'
+      vcpkgTriplet: 'x64-osx'
+      installVcpkg: 'true'
     # Windows
     Windows:
       imageName: 'windows-2019'
@@ -39,6 +40,17 @@ steps:
       python -m pip install --upgrade pip
       python -m pip install --upgrade cmake
     displayName: Update cmake
+
+  - script: |
+      git clone https://github.com/Microsoft/vcpkg.git
+      cd vcpkg
+      ./bootstrap-vcpkg.sh
+      ./vcpkg integrate install
+      export VCPKG_INSTALLATION_ROOT=`pwd`
+      export PATH="$VCPKG_INSTALLATION_ROOT:$PATH"
+    workingDirectory: 'vcpkg_root'
+    condition: eq(variables['installVcpkg'], 'true')
+    displayName: 'install vcpkg'
 
   - script: |
       vcpkg --triplet $(vcpkgTriplet) install $(boostRequired)
