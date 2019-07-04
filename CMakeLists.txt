@@ -98,7 +98,7 @@ target_include_directories(ASMC PUBLIC ${ZLIB_INCLUDE_DIRS})
 # openmp is a required dependency
 find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
 
 # Clang tidy as optional static analyzer
 option(Template_USE_CLANG_TIDY "Use clang tidy for static analysis" OFF)

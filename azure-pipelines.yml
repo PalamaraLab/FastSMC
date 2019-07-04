@@ -32,7 +32,7 @@ pool:
 
 variables:
   aptDeps: 'libboost-all-dev'
-  brewDeps: 'boost'
+  brewDeps: 'boost libomp'
   vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
 
 steps:
