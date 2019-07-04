@@ -26,7 +26,9 @@ pool:
   vmImage: $(imageName)
 
 steps:
-  - script: vcpkg --triplet $(vcpkgTriplet) install boost-program-options boost-iostreams boost-algorithm boost-align
+  - script: |
+      vcpkg integrate install
+      vcpkg --triplet $(vcpkgTriplet) install boost-program-options boost-iostreams boost-algorithm boost-align
     displayName: 'vcpkg install'
 
   - task: CMake@1
