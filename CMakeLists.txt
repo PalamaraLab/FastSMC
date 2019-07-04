@@ -15,6 +15,8 @@
 
 
 cmake_minimum_required(VERSION 3.6)
+message(STATUS "CMake version: ${CMAKE_VERSION}")
+
 project(ASMC LANGUAGES CXX)
 
 # ensure C++11

@@ -9,15 +9,16 @@ strategy:
     # Ubuntu
     Ubuntu:
       imageName: 'ubuntu-16.04'
-      vcpkgTriplet: 'x64-linux'
+      installDeps: 'apt'
     # macOS
     macOS:
       imageName: 'macOS-10.14'
       vcpkgTriplet: 'x64-osx'
-      installVcpkg: 'true'
+      installDeps: 'brew'
     # Windows
     Windows:
       imageName: 'windows-2019'
+      installDeps: 'vcpkg'
       vcpkgTriplet: 'x64-windows'
 
 trigger:
@@ -27,7 +28,9 @@ pool:
   vmImage: $(imageName)
 
 variables:
-  boostRequired: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
+  aptDeps: 'libboost-all-dev'
+  brewDeps: 'boost'
+  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
 
 steps:
 
@@ -41,23 +44,22 @@ steps:
       python -m pip install --upgrade cmake
     displayName: Update cmake
 
-  - bash: sudo xcode-select --switch /Applications/Xcode_10.2.1.app/Contents/Developer
-    displayName: 'Select xcode'
-    condition: startsWith(variables['imageName'], 'macOS')
+  - script: |
+      sudo apt update
+      sudo apt install $(aptDeps)
+    condition: eq(variables['installDeps'], 'apt')
+    displayName: 'install dependencies (apt)'
 
   - script: |
-      git clone https://github.com/Microsoft/vcpkg.git
-      cd vcpkg
-      ./bootstrap-vcpkg.sh
-      ./vcpkg integrate install
-      export VCPKG_INSTALLATION_ROOT=`pwd`
-      export PATH="$VCPKG_INSTALLATION_ROOT:$PATH"
-    condition: eq(variables['installVcpkg'], 'true')
-    displayName: 'install vcpkg'
+      brew update
+      brew install $(brewDeps)
+    condition: eq(variables['installDeps'], 'brew')
+    displayName: 'install dependencies (brew)'
 
   - script: |
       vcpkg --triplet $(vcpkgTriplet) install $(boostRequired)
-    displayName: 'vcpkg install'
+    condition: eq(variables['installDeps'], 'vcpkg')
+    displayName: 'install dependencies (vcpkg)'
 
   - task: CMake@1
     inputs:
@@ -74,7 +76,3 @@ steps:
   - script: ctest -V
     displayName: 'Test'
     workingDirectory: 'build'
-
-
-
-
