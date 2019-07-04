@@ -27,6 +27,7 @@
 #include "MemoryUtils.hpp"
 #include "Timer.hpp"
 #include "Types.hpp"
+#include "DecodingParams.hpp"
 #include <sys/types.h>
 
 #include <sstream>
@@ -142,14 +143,6 @@ PairObservations makePairObs(const Individual &iInd, int iHap, const Individual 
   ret.homMinorBits = andVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2);
   return ret;
 }
-
-// individual ids and XOR of genotypes
-struct DecodingReturnValues {
-  vector < vector <float> > sumOverPairs; // output for sum over all pairs
-  vector < vector <float> > sumOverPairs00; // output for sum over all pairs with genotype 00
-  vector < vector <float> > sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
-  vector < vector <float> > sumOverPairs11; // output for sum over all pairs with genotype 11
-};
 
 // does the linear-time decoding
 class HMM {

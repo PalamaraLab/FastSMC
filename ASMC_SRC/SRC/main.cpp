@@ -26,9 +26,9 @@
 #include "StringUtils.hpp"
 #include "Timer.hpp"
 #include "HMM.hpp"
+#include "ASMC.hpp"
 
 using namespace std;
-typedef tuple<DecodingReturnValues, DecodingQuantities, Data> ASMC;
 
 ASMC run(string haps_file_root, string decoding_quant_file,
          string out_file_root, DecodingMode mode,

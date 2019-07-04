@@ -18,12 +18,22 @@
 #define DECODINGPARAMS_HPP
 
 #include <string>
+#include <vector>
 
 using namespace std;
 
 enum class DecodingMode {
     sequenceFolded, arrayFolded, sequence, array
 };
+
+// individual ids and XOR of genotypes
+struct DecodingReturnValues {
+    vector < vector <float> > sumOverPairs; // output for sum over all pairs
+    vector < vector <float> > sumOverPairs00; // output for sum over all pairs with genotype 00
+    vector < vector <float> > sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
+    vector < vector <float> > sumOverPairs11; // output for sum over all pairs with genotype 11
+};
+
 
 class DecodingParams {
 
