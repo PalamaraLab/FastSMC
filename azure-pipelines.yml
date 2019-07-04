@@ -3,17 +3,42 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+
+strategy:
+  matrix:
+    # Ubuntu
+    Ubuntu:
+      imageName: 'ubuntu-16.04'
+    # macOS
+    macOS:
+      imageName: 'macOS-10.14'
+    # Windows
+    Windows:
+      imageName: 'windows-2019'
+
 trigger:
-- master
+  - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: $(imageName)
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '..'
+    displayName: 'CMake'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '--build .'
+    displayName: 'Build'
+
+  - script: ctest -V
+    displayName: 'Test'
+    workingDirectory: 'build'
+
+
+
+
