@@ -88,6 +88,11 @@ find_package(Boost REQUIRED COMPONENTS program_options iostreams)
 target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
 target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
 
+# zlib is required (at least on Linux) for boost iostreams
+find_package(ZLIB REQUIRED)
+target_link_libraries(ASMC PRIVATE ZLIB::ZLIB)
+target_include_directories(ASMC PUBLIC ${ZLIB_INCLUDE_DIRS})
+
 # openmp is a required dependency
 find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)

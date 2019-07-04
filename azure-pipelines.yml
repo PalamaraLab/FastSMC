@@ -26,7 +26,7 @@ pool:
   vmImage: $(imageName)
 
 variables:
-  boostRequired: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math'
+  boostRequired: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
 
 steps:
 
