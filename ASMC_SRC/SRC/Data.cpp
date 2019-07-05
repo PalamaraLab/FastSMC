@@ -121,7 +121,7 @@ int Data::readMap(string hapsFileRoot) {
     vector <string> splitStr;
     istringstream iss(line); string buf; while (iss >> buf) splitStr.push_back(buf);
     string ID = splitStr[1];
-    float gen = std::stof(splitStr[2]) / 100.f;
+    float gen = StringUtils::stof(splitStr[2]) / 100.f;
     int phys = std::stoi(splitStr[3]);
     SNP_IDs[pos] = ID;
     geneticPositions[pos] = gen;
