@@ -68,8 +68,8 @@ set(ASMC_main
 
 
 set(ASMC_test_dir ASMC_SRC/TESTS)
-set(ASMC_tests
-  ${ASMC_test_dir}/Placeholder.cpp
+set(ASMC_unit_tests
+  ${ASMC_test_dir}/unit_tests.cpp
   )
 
 
@@ -80,10 +80,10 @@ target_link_libraries(ASMC_exe PRIVATE ASMC)
 
 enable_testing()
 
-add_executable(ASMC_tests ${ASMC_tests})
-target_include_directories(ASMC_tests PRIVATE ${ASMC_test_dir})
-target_link_libraries(ASMC_tests PRIVATE ASMC)
-add_test(test1 ASMC_tests)
+add_executable(ASMC_unit_tests ${ASMC_unit_tests})
+target_include_directories(ASMC_unit_tests PRIVATE ${ASMC_test_dir})
+target_link_libraries(ASMC_unit_tests PRIVATE ASMC)
+add_test(test1 ASMC_unit_tests)
 
 # boost as a required dependency for ASMC
 find_package(Boost REQUIRED COMPONENTS program_options iostreams)
