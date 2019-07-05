@@ -59,7 +59,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='asmc',
-    version='0.1',
+    version='1.0',
     author='Pier Palamara',
     author_email='palamara@stats.ox.ac.uk',
     description='ASMC is a method to efficiently estimate pairwise coalescence time along the genome',
