@@ -33,6 +33,16 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+float stof(const std::string &str)
+{
+  return static_cast<float>(std::stold(str));
+}
+
+double stod(const std::string &str)
+{
+  return static_cast<double>(std::stold(str));
+}
+
 string findDelimiters(const string &s, const string &c) {
   string delims;
   for (uint p = 0; p < s.length(); p++)
