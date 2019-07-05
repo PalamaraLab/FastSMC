@@ -23,9 +23,14 @@ PYBIND11_MODULE(asmc, m) {
     py::enum_<DecodingModeOverall>(m, "DecodingModeOverall", py::arithmetic())
         .value("sequence", DecodingModeOverall::sequence)
         .value("array", DecodingModeOverall::array);
-    py::class_<DecodingReturnValues>(m, "DecodingReturnValues");
-    py::class_<DecodingQuantities>(m, "DecodingQuantities");
-    py::class_<Data>(m, "Data");
+    py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
+        .def_readwrite("sumOverPairs", &DecodingReturnValues::sumOverPairs)
+        .def_readwrite("sumOverPairs00", &DecodingReturnValues::sumOverPairs00)
+        .def_readwrite("sumOverPairs01", &DecodingReturnValues::sumOverPairs01)
+        .def_readwrite("sumOverPairs11", &DecodingReturnValues::sumOverPairs11)
+        .def_readwrite("sites", &DecodingReturnValues::sites)
+        .def_readwrite("states", &DecodingReturnValues::states)
+        .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "haps_file_root"_a, "decoding_quant_file"_a,
           "out_file_root"_a, "mode"_a,

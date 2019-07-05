@@ -11,7 +11,7 @@
 
 using namespace std;
 
-ASMC run(string haps_file_root, string decoding_quant_file,
+DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
          string out_file_root, DecodingModeOverall mode,
          int jobs = 0, int job_index = 0,
          float skip_csfs_distance = 0,
@@ -74,7 +74,10 @@ ASMC run(string haps_file_root, string decoding_quant_file,
     HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
     DecodingReturnValues decodingReturnValues = hmm.decodeAll(params.jobs, params.jobInd);
-    return make_tuple(decodingReturnValues, decodingQuantities, data);
+    decodingReturnValues.sites = data.sites;
+    decodingReturnValues.states = decodingQuantities.states;
+    decodingReturnValues.siteWasFlippedDuringFolding = data.siteWasFlippedDuringFolding;
+    return decodingReturnValues;
 }
 
 

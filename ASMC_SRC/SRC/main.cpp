@@ -62,24 +62,20 @@ int main(int argc, char *argv[]) {
     cout << "\n" << PROGRAM << " v." << VERSION << ", " << VERSION_DATE << "\n";
     cout << LICENSE <<  ", Copyright (C) " << YEAR << " Pier Palamara" << "\n";
     cout << "Manual: " << WEBSITE << "\n" << "\n";
-    ASMC asmc = run(
+    DecodingReturnValues decodingReturnValues = run(
         params.hapsFileRoot, params.decodingQuantFile,
         params.outFileRoot, params.decodingModeOverall,
         params.jobs, params.jobInd,
         params.skipCSFSdistance,
         params.compress, params.useAncestral);
 
-    DecodingReturnValues decodingReturnValues = get<0>(asmc);
-    DecodingQuantities decodingQuantities = get<1>(asmc);
-    Data data = get<2>(asmc);
-
     vector < vector <float> > sumOverPairs = decodingReturnValues.sumOverPairs;
 
     // output sums over pairs (if requested)
     if (params.doPosteriorSums) {
         FileUtils::AutoGzOfstream fout; fout.openOrExit(params.outFileRoot + ".sumOverPairs.gz");
-        for (int pos = 0; pos < data.sites; pos++) {
-            for (uint k = 0; k < decodingQuantities.states; k++) {
+        for (int pos = 0; pos < decodingReturnValues.sites; pos++) {
+            for (uint k = 0; k < decodingReturnValues.states; k++) {
                 if (k) fout << "\t";
                 fout << sumOverPairs[pos][k];
             }
@@ -94,10 +90,10 @@ int main(int argc, char *argv[]) {
         // Sum for 00
         FileUtils::AutoGzOfstream fout00;
         fout00.openOrExit(params.outFileRoot + ".00.sumOverPairs.gz");
-        for (int pos = 0; pos < data.sites; pos++) {
-            for (uint k = 0; k < decodingQuantities.states; k++) {
+        for (int pos = 0; pos < decodingReturnValues.sites; pos++) {
+            for (uint k = 0; k < decodingReturnValues.states; k++) {
                 if (k) fout00 << "\t";
-                if (!data.siteWasFlippedDuringFolding[pos]) {
+                if (!decodingReturnValues.siteWasFlippedDuringFolding[pos]) {
                     fout00 << sumOverPairs00[pos][k];
                 }
                 else {
@@ -110,8 +106,8 @@ int main(int argc, char *argv[]) {
         // Sum for 01
         FileUtils::AutoGzOfstream fout01;
         fout01.openOrExit(params.outFileRoot + ".01.sumOverPairs.gz");
-        for (int pos = 0; pos < data.sites; pos++) {
-            for (uint k = 0; k < decodingQuantities.states; k++) {
+        for (int pos = 0; pos < decodingReturnValues.sites; pos++) {
+            for (uint k = 0; k < decodingReturnValues.states; k++) {
                 if (k) fout01 << "\t";
                 fout01 << sumOverPairs01[pos][k];
             }
@@ -121,10 +117,10 @@ int main(int argc, char *argv[]) {
         // Sum for 11
         FileUtils::AutoGzOfstream fout11;
         fout11.openOrExit(params.outFileRoot + ".11.sumOverPairs.gz");
-        for (int pos = 0; pos < data.sites; pos++) {
-            for (uint k = 0; k < decodingQuantities.states; k++) {
+        for (int pos = 0; pos < decodingReturnValues.sites; pos++) {
+            for (uint k = 0; k < decodingReturnValues.states; k++) {
                 if (k) fout11 << "\t";
-                if (!data.siteWasFlippedDuringFolding[pos]) {
+                if (!decodingReturnValues.siteWasFlippedDuringFolding[pos]) {
                     fout11 << sumOverPairs11[pos][k];
                 }
                 else {

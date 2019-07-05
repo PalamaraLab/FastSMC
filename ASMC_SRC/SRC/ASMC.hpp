@@ -21,9 +21,7 @@
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 
-typedef std::tuple<DecodingReturnValues, DecodingQuantities, Data> ASMC;
-
-ASMC run(std::string haps_file_root, std::string decoding_quant_file,
+DecodingReturnValues run(std::string haps_file_root, std::string decoding_quant_file,
          std::string out_file_root, DecodingModeOverall mode,
          int jobs, int job_index,
          float skip_csfs_distance,
