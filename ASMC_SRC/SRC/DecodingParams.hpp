@@ -38,7 +38,7 @@ struct DecodingReturnValues {
     vector < vector <float> > sumOverPairs11 = {}; // output for sum over all pairs with genotype 11
     int sites = 0;
     unsigned int states = 0;
-    vector<bool> siteWasFlippedDuringFolding;
+    vector <bool> siteWasFlippedDuringFolding = {};
 };
 
 

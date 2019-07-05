@@ -14,6 +14,13 @@
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <pybind11/pybind11.h>
+#include <vector>
+#include <pybind11/stl_bind.h>
+
+PYBIND11_MAKE_OPAQUE(std::vector<bool>);
+PYBIND11_MAKE_OPAQUE(std::vector<float>);
+PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >);
+
 #include "ASMC.hpp"
 
 namespace py = pybind11;
@@ -23,6 +30,9 @@ PYBIND11_MODULE(asmc, m) {
     py::enum_<DecodingModeOverall>(m, "DecodingModeOverall", py::arithmetic())
         .value("sequence", DecodingModeOverall::sequence)
         .value("array", DecodingModeOverall::array);
+    py::bind_vector<std::vector<bool>>(m, "VectorBool");
+    py::bind_vector<std::vector<float>>(m, "VectorFloat");
+    py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
         .def_readwrite("sumOverPairs", &DecodingReturnValues::sumOverPairs)
         .def_readwrite("sumOverPairs00", &DecodingReturnValues::sumOverPairs00)
