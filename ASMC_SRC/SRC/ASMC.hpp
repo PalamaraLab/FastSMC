@@ -25,6 +25,7 @@ DecodingReturnValues run(std::string haps_file_root, std::string decoding_quant_
          std::string out_file_root, DecodingModeOverall mode,
          int jobs, int job_index,
          float skip_csfs_distance,
-         bool compress, bool use_ancestral);
+         bool compress, bool use_ancestral,
+         bool posterior_sums, bool major_minor_posterior_sums);
 
 #endif

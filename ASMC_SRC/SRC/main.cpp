@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
         params.outFileRoot, params.decodingModeOverall,
         params.jobs, params.jobInd,
         params.skipCSFSdistance,
-        params.compress, params.useAncestral);
+        params.compress, params.useAncestral,
+        params.doPosteriorSums, params.doMajorMinorPosteriorSums);
 
     vector < vector <float> > sumOverPairs = decodingReturnValues.sumOverPairs;
 

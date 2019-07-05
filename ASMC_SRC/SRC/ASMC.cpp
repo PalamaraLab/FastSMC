@@ -12,23 +12,26 @@
 using namespace std;
 
 DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
-         string out_file_root, DecodingModeOverall mode,
+         string out_file_root = "", DecodingModeOverall mode = DecodingModeOverall::array,
          int jobs = 0, int job_index = 0,
          float skip_csfs_distance = 0,
-         bool compress = false, bool use_ancestral = false) {
+         bool compress = false, bool use_ancestral = false,
+         bool posterior_sums = false, bool major_minor_posterior_sums = false) {
 
     srand(1234);
 
     DecodingParams params;
     params.hapsFileRoot = haps_file_root;
     params.decodingQuantFile = decoding_quant_file;
-    params.outFileRoot = out_file_root;
+    params.outFileRoot = out_file_root.empty() ? haps_file_root : out_file_root;
     params.decodingModeOverall = mode;
     params.compress = compress;
     params.useAncestral = use_ancestral;
     params.skipCSFSdistance = skip_csfs_distance;
+    params.doPosteriorSums = posterior_sums;
+    params.doMajorMinorPosteriorSums = major_minor_posterior_sums;
     if(!params.processOptions()) {
-        cerr << "Error in options processing";
+        cerr << "Error in options processing" << endl;
         exit(1);
     }
     params.decodingModeString = params.decodingModeOverall == DecodingModeOverall::array ? "array" : "sequence";

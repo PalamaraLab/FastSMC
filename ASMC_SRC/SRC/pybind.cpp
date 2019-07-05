@@ -33,8 +33,9 @@ PYBIND11_MODULE(asmc, m) {
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "haps_file_root"_a, "decoding_quant_file"_a,
-          "out_file_root"_a, "mode"_a,
+          "out_file_root"_a = "", "mode"_a = DecodingModeOverall::array,
           "jobs"_a = 0, "job_index"_a = 0,
           "skip_csfs_distance"_a = 0,
-          "compress"_a = false, "use_ancestral"_a = false);
+          "compress"_a = false, "use_ancestral"_a = false,
+          "posterior_sums"_a = true, "major_minor_posterior_sums"_a = false);
 }
