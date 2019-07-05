@@ -93,6 +93,12 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
       cerr << endl;
       return false;
     }
+  } catch (po::error &e) {
+    cerr << "ERROR: " << e.what() << endl << endl;
+    cerr << options << endl;
+    return false;
+  }
+
 
     if (compress) {
       if (useAncestral) {
@@ -178,12 +184,6 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
            << endl;
       return false;
     }
-  } catch (po::error &e) {
-    cerr << "ERROR: " << e.what() << endl << endl;
-    cerr << options << endl;
-    return false;
-  }
-
-  return true;
+   return true;
 }
 
