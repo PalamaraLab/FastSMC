@@ -4,7 +4,7 @@ import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
@@ -63,8 +63,11 @@ setup(
     author='Pier Palamara',
     author_email='palamara@stats.ox.ac.uk',
     description='ASMC is a method to efficiently estimate pairwise coalescence time along the genome',
+    packages=find_packages('src'),
+    package_dir={'':'src'},
     long_description='',
-    ext_modules=[CMakeExtension('asmc')],
+    install_requires=['numpy'],
+    ext_modules=[CMakeExtension('asmc/asmc')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
 )
