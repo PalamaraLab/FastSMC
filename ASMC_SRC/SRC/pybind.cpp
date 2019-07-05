@@ -20,11 +20,9 @@ namespace py = pybind11;
 using namespace py::literals;
 
 PYBIND11_MODULE(asmc, m) {
-    py::enum_<DecodingMode>(m, "DecodingMode", py::arithmetic())
-        .value("sequenceFolded", DecodingMode::sequenceFolded)
-        .value("arrayFolded", DecodingMode::arrayFolded)
-        .value("sequence", DecodingMode::sequence)
-        .value("array", DecodingMode::array);
+    py::enum_<DecodingModeOverall>(m, "DecodingModeOverall", py::arithmetic())
+        .value("sequence", DecodingModeOverall::sequence)
+        .value("array", DecodingModeOverall::array);
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues");
     py::class_<DecodingQuantities>(m, "DecodingQuantities");
     py::class_<Data>(m, "Data");

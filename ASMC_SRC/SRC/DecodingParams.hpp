@@ -26,6 +26,10 @@ enum class DecodingMode {
     sequenceFolded, arrayFolded, sequence, array
 };
 
+enum class DecodingModeOverall {
+    sequence, array
+};
+
 // individual ids and XOR of genotypes
 struct DecodingReturnValues {
     vector < vector <float> > sumOverPairs; // output for sum over all pairs
@@ -42,9 +46,10 @@ public:
     string hapsFileRoot;
     string decodingQuantFile;
     string outFileRoot;
-    int jobs;
-    int jobInd;
+    int jobs = 0;
+    int jobInd = 0;
     string decodingModeString;
+    DecodingModeOverall decodingModeOverall;
     DecodingMode decodingMode;
     bool decodingSequence = false;
     bool foldData = false;
@@ -63,6 +68,7 @@ public:
     bool doMajorMinorPosteriorSums = false;
 
     bool processCommandLineArgs(int argc, char *argv[]);
+    bool processOptions();
 
 };
 

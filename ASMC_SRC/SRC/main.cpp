@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     cout << "Manual: " << WEBSITE << "\n" << "\n";
     ASMC asmc = run(
         params.hapsFileRoot, params.decodingQuantFile,
-        params.outFileRoot, params.decodingMode,
+        params.outFileRoot, params.decodingModeOverall,
         params.jobs, params.jobInd,
         params.skipCSFSdistance,
         params.compress, params.useAncestral);

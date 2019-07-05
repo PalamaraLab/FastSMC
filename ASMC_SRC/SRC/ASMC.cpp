@@ -12,7 +12,7 @@
 using namespace std;
 
 ASMC run(string haps_file_root, string decoding_quant_file,
-         string out_file_root, DecodingMode mode,
+         string out_file_root, DecodingModeOverall mode,
          int jobs = 0, int job_index = 0,
          float skip_csfs_distance = 0,
          bool compress = false, bool use_ancestral = false) {
@@ -23,10 +23,15 @@ ASMC run(string haps_file_root, string decoding_quant_file,
     params.hapsFileRoot = haps_file_root;
     params.decodingQuantFile = decoding_quant_file;
     params.outFileRoot = out_file_root;
-    params.decodingMode = mode;
+    params.decodingModeOverall = mode;
     params.compress = compress;
     params.useAncestral = use_ancestral;
     params.skipCSFSdistance = skip_csfs_distance;
+    if(!params.processOptions()) {
+        cerr << "Error in options processing";
+        exit(1);
+    }
+    params.decodingModeString = params.decodingModeOverall == DecodingModeOverall::array ? "array" : "sequence";
 
     cout << "Decoding batch " << params.jobInd << " of " << params.jobs << "\n\n";
 
