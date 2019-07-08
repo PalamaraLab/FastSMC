@@ -1,2 +1,8 @@
 # VS code config files
 .vscode/
+
+# Compiled python files
+*.pyc
+
+# Everything in FILES/EXAMPLE
+FILES/EXAMPLE/*
