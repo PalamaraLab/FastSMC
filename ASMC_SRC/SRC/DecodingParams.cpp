@@ -16,10 +16,11 @@
 
 #include <iostream>
 #include <string>
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include "DecodingParams.hpp"
+#include "Types.hpp"
 
 using namespace std;
 

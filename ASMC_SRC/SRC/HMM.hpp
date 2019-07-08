@@ -28,9 +28,11 @@
 #include "Timer.hpp"
 #include "Types.hpp"
 #include "DecodingParams.hpp"
-#include <sys/types.h>
+#include "StringUtils.hpp"
 
 #include <sstream>
+
+#include <chrono>
 
 using namespace std;
 
@@ -81,8 +83,8 @@ using namespace std;
 #endif
 
 // to keep track of time
-uint64 t1sum = 0, t2sum = 0, t1sumBack = 0;
-uint64 ticksForward = 0, ticksBackward = 0, ticksCombine = 0, ticksSumOverPairs = 0, ticksOutputPerPair = 0;
+std::chrono::high_resolution_clock::duration t1sum(0), t2sum(0), t1sumBack(0);
+std::chrono::high_resolution_clock::duration ticksForward(0), ticksBackward(0), ticksCombine(0), ticksSumOverPairs(0), ticksOutputPerPair(0);
 
 // gets genotypes for decoding  (xor --> 1 if het)
 vector <bool> xorVec(const vector <bool> &x, const vector <bool> &y) {
@@ -173,7 +175,7 @@ class HMM {
   vector<vector<float> > emission2minus0AtSite;
 
   bool noBatches;
-  int currPair = 0;
+  uint64 currPair = 0;
 
   const int precision = 2;
   const float minGenetic = 1e-10f;
@@ -210,7 +212,7 @@ public:
     if (decodingParams.skipCSFSdistance < std::numeric_limits<float>::infinity()) {
       useCSFSatThisPosition[0] = true;
       float lastGenCSFSwasUsed = 0.f;
-      for (uint pos = 1; pos < sequenceLength; pos++) {
+      for (int pos = 1; pos < sequenceLength; pos++) {
         if (data.geneticPositions[pos] - lastGenCSFSwasUsed >= decodingParams.skipCSFSdistance) {
           // this position is a CSFS position
           useCSFSatThisPosition[pos] = true;
@@ -218,7 +220,7 @@ public:
         }
       }
     }
-    for (uint pos = 0; pos < sequenceLength; pos++) {
+    for (int pos = 0; pos < sequenceLength; pos++) {
       if (useCSFSatThisPosition[pos]) {
         int undistAtThisSiteFor0dist = data.undistinguishedCounts[pos][0];
         int undistAtThisSiteFor1dist = data.undistinguishedCounts[pos][1];
@@ -302,7 +304,7 @@ public:
   // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x states).
   DecodingReturnValues decodeAll(int jobs, int jobInd, int batchSize = 64) {
 
-    // uint64 t0 = Timer::rdtsc();
+    // auto t0 = std::chrono::high_resolution_clock().now();
     Timer timer;
 
     scalingBuffer = ALIGNED_MALLOC_FLOATS(batchSize);
@@ -386,7 +388,7 @@ public:
       runLastBatch(observationsBatch);
     }
 
-    // uint64 t1 = Timer::rdtsc();
+    // auto t1 = std::chrono::high_resolution_clock().now();
     // double ticksDecodeAll = t1 - t0;
     printf("\nDecoded %" PRIu64 " pairs in %.3f seconds.\n", pairsJob, timer.update_time());
     // print some stats (will remove)
@@ -437,10 +439,10 @@ private:
   // complete with leftover pairs
   void runLastBatch(vector <PairObservations> &obsBatch) {
     if (obsBatch.empty()) return;
-    int actualBatchSize = obsBatch.size();
+    int actualBatchSize = static_cast<int>(obsBatch.size());
     while (obsBatch.size() % VECX != 0) // fill to size divisible by VECX
       obsBatch.push_back(obsBatch.back());
-    int paddedBatchSize = obsBatch.size();
+    int paddedBatchSize = static_cast<int>(obsBatch.size());
     // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x paddedBatchSize]
     decodeBatch(obsBatch);
     augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
@@ -453,7 +455,7 @@ private:
   // decode a batch
   void decodeBatch(const vector <PairObservations> &obsBatch) {
 
-    int curBatchSize = obsBatch.size();
+    int curBatchSize = static_cast<int>(obsBatch.size());
 
     float *obsIsZeroBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
     float *obsIsTwoBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
@@ -465,17 +467,17 @@ private:
       }
     }
 
-    uint64 t0 = Timer::rdtsc();
+	auto t0 = std::chrono::high_resolution_clock().now();
 
     // run forward
     forwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize);
 
-    uint64 t1 = Timer::rdtsc(); ticksForward += t1 - t0;
+    auto t1 = std::chrono::high_resolution_clock().now(); ticksForward += t1 - t0;
 
     // run backward
     backwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize);
 
-    uint64 t2 = Timer::rdtsc(); ticksBackward += t2 - t1;
+    auto t2 = std::chrono::high_resolution_clock().now(); ticksBackward += t2 - t1;
 
     // combine (alpha * beta), normalize and store
     float *scale = obsIsZeroBatch; // reuse buffer but rename to be less confusing
@@ -532,7 +534,7 @@ private:
     }
 #endif
 
-    uint64 t3 = Timer::rdtsc(); ticksCombine += t3 - t2;
+    auto t3 = std::chrono::high_resolution_clock().now(); ticksCombine += t3 - t2;
     ALIGNED_FREE(obsIsZeroBatch);
     ALIGNED_FREE(obsIsTwoBatch);
 
@@ -872,7 +874,7 @@ private:
   // --posteriorSums
   void augmentSumOverPairs(vector <PairObservations> &obsBatch, int actualBatchSize, int paddedBatchSize) {
 
-    uint64 t0 = Timer::rdtsc();
+    auto t0 = std::chrono::high_resolution_clock().now();
 
     if (!decodingParams.doPosteriorSums && !decodingParams.doMajorMinorPosteriorSums) return;
 
@@ -904,7 +906,7 @@ private:
       }
     }
 
-    uint64 t1 = Timer::rdtsc(); ticksSumOverPairs += t1 - t0;
+    auto t1 = std::chrono::high_resolution_clock().now(); ticksSumOverPairs += t1 - t0;
 
   }
 
@@ -912,7 +914,7 @@ private:
   void writePerPairOutput(int actualBatchSize, int paddedBatchSize,
                           const vector <PairObservations> &obsBatch) {
 
-    uint64 t0 = Timer::rdtsc();
+    auto t0 = std::chrono::high_resolution_clock().now();
 
     // allocate
     float *sums = ALIGNED_MALLOC_FLOATS(states * actualBatchSize);
@@ -968,7 +970,7 @@ private:
 
     ALIGNED_FREE(sums);
 
-    uint64 t1 = Timer::rdtsc(); ticksOutputPerPair += t1 - t0;
+    auto t1 = std::chrono::high_resolution_clock().now(); ticksOutputPerPair += t1 - t0;
   }
 
 // *********************************************************************
@@ -1042,17 +1044,17 @@ private:
 
   vector < vector <float> > decode(const PairObservations &observations) {
 
-    uint64 t0 = Timer::rdtsc();
+    auto t0 = std::chrono::high_resolution_clock().now();
     vector < vector <float> > forwardOut = forward(observations);
-    uint64 t1 = Timer::rdtsc(); ticksForward += t1 - t0;
+    auto t1 = std::chrono::high_resolution_clock().now(); ticksForward += t1 - t0;
 
     vector < vector <float> > backwardOut = backward(observations);
-    uint64 t2 = Timer::rdtsc(); ticksBackward += t2 - t1;
+    auto t2 = std::chrono::high_resolution_clock().now(); ticksBackward += t2 - t1;
 
     vector < vector <float> > posterior = elementWiseMultMatrixMatrix(forwardOut, backwardOut);
     posterior = normalizeMatrixColumns(posterior);
 
-    uint64 t3 = Timer::rdtsc(); ticksCombine += t3 - t2;
+    auto t3 = std::chrono::high_resolution_clock().now(); ticksCombine += t3 - t2;
 
     if (decodingParams.doPosteriorSums) {
       for (uint k = 0; k < decodingQuant.states; k++) {
@@ -1067,7 +1069,7 @@ private:
   float roundMorgans(float gen) {
     float gene1e10 = gen * 1e10f;
     int L10 = std::max(0, (int) floor(log10(gene1e10)) - precision);
-    float factor = pow(10, L10);
+    float factor = static_cast<float>(pow(10, L10));
     float rounded = round(gene1e10 / factor) * factor;
     return std::max(minGenetic, rounded / 1e10f);
   }
@@ -1082,7 +1084,7 @@ private:
     phys = std::max(1, phys);
     int L10 = std::max(0, (int) floor(log10(phys)) - precision);
     int factor = (int) pow(10, L10);
-    int rounded = round(phys / (float) factor) * factor;
+    int rounded = static_cast<int>(round(phys / (float) factor)) * factor;
     return rounded;
   }
 
@@ -1136,7 +1138,7 @@ private:
     int lastPhysicalPos = data.physicalPositions[0];
 
     for (long int pos = 1; pos < sequenceLength; pos++) {
-      unsigned long long t0 = Timer::rdtsc();
+      auto t0 = std::chrono::high_resolution_clock().now();
       // get distances and rates
       float recDistFromPrevious = roundMorgans(std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
       float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
@@ -1154,7 +1156,7 @@ private:
       } else {
         getNextAlpha(recDistFromPrevious, alphaC, previousAlpha, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos], obsIsZero, obsIsHomMinor);
       }
-      unsigned long long t1 = Timer::rdtsc();
+      auto t1 = std::chrono::high_resolution_clock().now();
       if (pos % scalingSkip == 0) {
         // compute scaling (sum of current alpha vector)
         scalingBuffer = 1.f / getSumOfVector(nextAlpha);
@@ -1163,7 +1165,7 @@ private:
       }
       fillMatrixColumn(alpha, nextAlpha, pos);
       previousAlpha = nextAlpha;
-      unsigned long long t2 = Timer::rdtsc();
+      auto t2 = std::chrono::high_resolution_clock().now();
       t1sum += t1 - t0;
       t2sum += t2 - t1;
       // update distances
