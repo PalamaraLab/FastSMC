@@ -30,6 +30,14 @@ def to_array(x):
         return None
 
 
+def flip_rows(a1, a2, flips):
+    # Swap rows according to boolean flips vector
+    if a1 is None or a2 is None:
+        return None, None
+    a1[flips], a2[flips] = a2[flips], a1[flips]
+    return a1, a2
+
+
 def run(haps_file_root, decoding_quant_file, out_file_root="",
         mode=DecodingModeOverall.array, jobs=0,
         job_index=0, skip_csfs_distance=0,
@@ -42,8 +50,11 @@ def run(haps_file_root, decoding_quant_file, out_file_root="",
                compress=compress, use_ancestral=use_ancestral,
                posterior_sums=posterior_sums,
                major_minor_posterior_sums=major_minor_posterior_sums)
+    sumOverPairs00, sumOverPairs11 = flip_rows(
+        to_array(ret.sumOverPairs00), to_array(ret.sumOverPairs11),
+        ret.siteWasFlippedDuringFolding)
     return ASMCReturnValues(
         sumOverPairs=to_array(ret.sumOverPairs),
-        sumOverPairs00=to_array(ret.sumOverPairs00),
+        sumOverPairs00=sumOverPairs00,
         sumOverPairs01=to_array(ret.sumOverPairs01),
-        sumOverPairs11=to_array(ret.sumOverPairs11))
+        sumOverPairs11=sumOverPairs11)
