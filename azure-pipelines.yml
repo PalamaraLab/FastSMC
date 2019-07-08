@@ -44,9 +44,9 @@ steps:
       architecture: 'x64'
 
   - script: |
-      python -m pip install --upgrade pip
-      python -m pip install --upgrade cmake
-    displayName: Update cmake
+      python -m pip install --upgrade pip setuptools wheel
+      python -m pip install --upgrade cmake pytest
+    displayName: Update cmake and required python modules
 
   - script: |
       sudo apt update
@@ -78,8 +78,12 @@ steps:
     displayName: 'Build'
 
   - script: ctest -V
-    displayName: 'Test'
+    displayName: 'Unit tests'
     workingDirectory: 'build'
+
+  - script: pytest ASMC_SRC/TESTS/regression_test.py -s
+    displayName: 'Regression test'
+    workingDirectory: '.'
 
   - script: |
       lcov --directory . --capture --output-file coverage.info
