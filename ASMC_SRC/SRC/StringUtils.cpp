@@ -21,9 +21,10 @@
 #include <iostream>
 #include <sstream>
 
-#include <sys/types.h>
+//#include <sys/types.h>
 
 #include "StringUtils.hpp"
+#include "Types.hpp"
 
 namespace StringUtils {
 using std::vector;
@@ -32,29 +33,16 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-int stoi(const string &s) {
-  int i;
-  if (sscanf(s.c_str(), "%d", &i) == 0) {
-    cerr << "ERROR: Could not parse integer from string: " << s << endl;
-    exit(1);
-  }
-  return i;
+float stof(const std::string &str)
+{
+  return static_cast<float>(std::stold(str));
 }
-double stod(const string &s) {
-  double d;
-  sscanf(s.c_str(), "%lf", &d);
-  return d;
+
+double stod(const std::string &str)
+{
+  return static_cast<double>(std::stold(str));
 }
-float stof(const string &s) {
-  float f;
-  sscanf(s.c_str(), "%f", &f);
-  return f;
-}
-string itos(int i) {
-  std::ostringstream oss;
-  oss << i;
-  return oss.str();
-}
+
 string findDelimiters(const string &s, const string &c) {
   string delims;
   for (uint p = 0; p < s.length(); p++)
@@ -107,7 +95,7 @@ vector <string> expandRangeTemplate(const string &str) {
     string prefix, suffix;
     if (str[0] != RANGE_DELIMS[0]) prefix = tokens[0];
     if (str[str.length() - 1] != RANGE_DELIMS[2]) suffix = tokens.back();
-    int start = StringUtils::stoi(tokens[startInd]), end = StringUtils::stoi(tokens[endInd]);
+    int start = std::stoi(tokens[startInd]), end = std::stoi(tokens[endInd]);
     if (start > end + 1 || end > start + 1000000) {
       cerr << "ERROR: Invalid range in template string: " << str << endl;
       cerr << "  Start: " << start << endl;
@@ -115,7 +103,7 @@ vector <string> expandRangeTemplate(const string &str) {
       exit(1);
     }
     for (int i = start; i <= end; i++)
-      ret.push_back(prefix + itos(i) + suffix);
+      ret.push_back(prefix + std::to_string(i) + suffix);
   }
   else
     rangeErrorExit(str, delims);

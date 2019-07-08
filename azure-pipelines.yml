@@ -3,17 +3,89 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+
+strategy:
+  matrix:
+    # Ubuntu
+    Ubuntu:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      cmakeArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
+      runCoverage: 'true'
+    # macOS
+    macOS:
+      imageName: 'macOS-10.13'
+      vcpkgTriplet: 'x64-osx'
+      installDeps: 'brew'
+      cmakeArgs: ''
+    # Windows
+    Windows:
+      imageName: 'windows-2019'
+      installDeps: 'vcpkg'
+      vcpkgTriplet: 'x64-windows'
+      cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+
 trigger:
-- master
+  - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: $(imageName)
+
+variables:
+  aptDeps: 'libboost-all-dev lcov'
+  brewDeps: 'boost libomp'
+  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      architecture: 'x64'
+
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install --upgrade cmake
+    displayName: Update cmake
+
+  - script: |
+      sudo apt update
+      sudo apt install $(aptDeps)
+    condition: eq(variables['installDeps'], 'apt')
+    displayName: 'install dependencies (apt)'
+
+  - script: |
+      brew update
+      brew install $(brewDeps)
+    condition: eq(variables['installDeps'], 'brew')
+    displayName: 'install dependencies (brew)'
+
+  - script: |
+      vcpkg --triplet $(vcpkgTriplet) install $(vcpkgDeps)
+    condition: eq(variables['installDeps'], 'vcpkg')
+    displayName: 'install dependencies (vcpkg)'
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '.. $(cmakeArgs)'
+    displayName: 'CMake'
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '--build .'
+    displayName: 'Build'
+
+  - script: ctest -V
+    displayName: 'Test'
+    workingDirectory: 'build'
+
+  - script: |
+      lcov --directory . --capture --output-file coverage.info
+      lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
+      lcov --list coverage.info
+      bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
+    displayName: 'Upload coverage'
+    workingDirectory: 'build'
+    condition: eq(variables['runCoverage'], 'true')

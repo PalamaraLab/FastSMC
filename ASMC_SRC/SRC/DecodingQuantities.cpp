@@ -49,7 +49,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
     if (firstToken == string("states")) {
       currentType = DataType::States;
       getline(br, line);
-      states = StringUtils::stoi(line);
+      states = std::stoi(line);
       parsedStates = true;
       // cout << "Parsed states " << states << endl;
       continue;
@@ -62,7 +62,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
       currentType = DataType::CSFSSamples;
       parsedCSFSSamples = true;
       getline(br, line);
-      CSFSSamples = StringUtils::stoi(line);
+      CSFSSamples = std::stoi(line);
       // cout << "Parsed CSFSSamples " << CSFSSamples << endl;
       CSFSmap = vector < vector < vector <float> > > (CSFSSamples - 1);
       foldedCSFSmap = vector < vector < vector <float> > > (CSFSSamples - 1);
@@ -170,7 +170,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 3; k++) {
         getline(br, line);
@@ -194,7 +194,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 2; k++) {
         getline(br, line);
@@ -217,7 +217,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 3; k++) {
         getline(br, line);
@@ -240,7 +240,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         cerr << "ERROR. Parsed " << int(currentType) << " before parsing states and number of CSFS samples." << endl;
         exit(1);
       }
-      int undistinguishedIndex = StringUtils::stoi(splitString[1]);
+      int undistinguishedIndex = std::stoi(splitString[1]);
       vector < vector <float> > thisCSFS = vector < vector <float> > ();
       for (int k = 0; k < 2; k++) {
         getline(br, line);
@@ -316,7 +316,7 @@ void DecodingQuantities::createFromGzippedText(const char *fileName) {
         for (unsigned int i = 1; i < splitString.size(); i++) {
           thisRow[i-1] = StringUtils::stof(splitString[i]);
         }
-        int index = StringUtils::stoi(splitString[0]);
+        int index = std::stoi(splitString[0]);
         homozygousEmissionMap[index] = thisRow;
       }
     }

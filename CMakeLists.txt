@@ -14,8 +14,10 @@
 # along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 
-cmake_minimum_required(VERSION 3.6)
-project(ASMC)
+cmake_minimum_required(VERSION 3.12)
+message(STATUS "CMake version: ${CMAKE_VERSION}")
+
+project(ASMC LANGUAGES CXX)
 
 # ensure C++11
 set(CMAKE_CXX_STANDARD 11)
@@ -68,8 +70,8 @@ set(ASMC_main
 
 
 set(ASMC_test_dir ASMC_SRC/TESTS)
-set(ASMC_tests
-  ${ASMC_test_dir}/Placeholder.cpp
+set(ASMC_unit_tests
+  ${ASMC_test_dir}/unit_tests.cpp
   )
 
 add_subdirectory(pybind11)
@@ -82,20 +84,25 @@ target_link_libraries(ASMC_exe PRIVATE ASMC)
 
 enable_testing()
 
-add_executable(ASMC_tests ${ASMC_tests})
-target_include_directories(ASMC_tests PRIVATE ${ASMC_test_dir})
-target_link_libraries(ASMC_tests PRIVATE ASMC)
-add_test(test1 ASMC_tests)
+add_executable(ASMC_unit_tests ${ASMC_unit_tests})
+target_include_directories(ASMC_unit_tests PRIVATE ${ASMC_test_dir})
+target_link_libraries(ASMC_unit_tests PRIVATE ASMC)
+add_test(test1 ASMC_unit_tests)
 
 # boost as a required dependency for ASMC
 find_package(Boost REQUIRED COMPONENTS program_options iostreams)
-target_link_libraries(ASMC PRIVATE "${Boost_LIBRARIES}")
-target_include_directories(ASMC PRIVATE "${Boost_INCLUDE_DIR}")
+target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
+target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
+
+# zlib is required (at least on Linux) for boost iostreams
+find_package(ZLIB REQUIRED)
+target_link_libraries(ASMC PRIVATE ZLIB::ZLIB)
+target_include_directories(ASMC PUBLIC ${ZLIB_INCLUDE_DIRS})
 
 # openmp is a required dependency
 find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
 
 # Clang tidy as optional static analyzer
 option(Template_USE_CLANG_TIDY "Use clang tidy for static analysis" OFF)
@@ -129,13 +136,13 @@ if (Template_MEMCHECK)
 endif()
 
 # Setup coverage testing for GCC or Clang
-option(Template_ENABLE_COVERAGE "Enable coverage reporting for GCC or Clang" FALSE)
-if (Template_ENABLE_COVERAGE)
+option(ASMC_ENABLE_COVERAGE "Enable coverage reporting for GCC or Clang" FALSE)
+if (ASMC_ENABLE_COVERAGE)
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
         message(STATUS "Configuring with coverage")
         target_compile_options(ASMC PUBLIC --coverage -O0)
         target_link_libraries(ASMC PUBLIC --coverage)
     else()
-        message(FATAL_ERROR "GCC or Clang required with Template_ENABLE_COVERAGE: found ${CMAKE_CXX_COMPILER_ID}")
+        message(FATAL_ERROR "GCC or Clang required with ASMC_ENABLE_COVERAGE: found ${CMAKE_CXX_COMPILER_ID}")
     endif()
 endif()

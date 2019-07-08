@@ -13,20 +13,26 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <chrono>
+
 
 #ifndef TIMER_HPP
 #define TIMER_HPP
 
 class Timer {
 private:
-	double prevtime, curtime;
+	using timer_t = std::chrono::system_clock;
+	using sys_time = std::chrono::time_point<timer_t>;
+	
+	sys_time prevtime, curtime;
 
 public:
-	static unsigned long long rdtsc(void);
 
+	/// constructs a timer, recording the initial time
 	Timer(void);
+
+	/// updates the current time and returns the time since the last update in seconds
 	double update_time(void);
-	double get_time(void);
 };
 
 #endif

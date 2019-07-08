@@ -22,12 +22,32 @@
 
 namespace StringUtils {
 
+/**
+ * Convert string to float, taking account of the fact that inputs may be given
+ * at a precision too great to be representable as a float.
+ *
+ * This function converts first to long double, and then explicitly performs a
+ * static cast to narrow the output to a float.
+ *
+ * @param str the string to convert to a float
+ * @return the closest float representation of the string
+ */
+float stof(const std::string &str);
+
+/**
+ * Convert string to double, taking account of the fact that inputs may be given
+ * at a precision too great to be representable as a double.
+ *
+ * This function converts first to long double, and then explicitly performs a
+ * static cast to narrow the output to a double.
+ *
+ * @param str the string to convert to a double
+ * @return the closest double representation of the string
+ */
+double stod(const std::string &str);
+
 const std::string RANGE_DELIMS = "{:}";
 
-int stoi(const std::string &s);
-double stod(const std::string &s);
-float stof(const std::string &s);
-std::string itos(int i);
 std::string findDelimiters(const std::string &s, const std::string &c);
 
 std::vector <std::string> tokenizeMultipleDelimiters(const std::string &s, const std::string &c);
