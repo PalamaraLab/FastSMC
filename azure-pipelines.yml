@@ -23,7 +23,7 @@ strategy:
       imageName: 'windows-2019'
       installDeps: 'vcpkg'
       vcpkgTriplet: 'x64-windows'
-      cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      cmakeArgs: '-G Ninja -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
 
 trigger:
   - master
