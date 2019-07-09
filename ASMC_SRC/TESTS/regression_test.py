@@ -3,17 +3,26 @@ import os
 import subprocess
 
 
-def test_regession(asmc_exe):
-
-    asmc_exe = os.path.realpath(asmc_exe)
-    assert os.path.isfile(asmc_exe),\
-        "ASMC_exe not found at {}. Run pytest ASMC_SRC/TESTS/regression_test.py --asmc_exe path/to/ASMC_exe"
+def test_regession():
 
     script_dir = os.path.realpath(os.path.dirname(__file__))
     base_dir = os.path.realpath(os.path.join(script_dir, '..', '..'))
+    bin_dir = os.path.join(base_dir, 'ASMC_SRC', 'BIN')
     old_file = os.path.join(script_dir, 'data', 'regression_test_original.gz')
-
     assert os.path.isfile(old_file)
+
+    # Find the executable in the BIN dir
+    exe_names = ['ASMC_exe', 'ASMC_exe.exe']
+    asmc_exe = None
+
+    for exe_name in exe_names:
+        exe = os.path.join(bin_dir, exe_name)
+        if os.path.isfile(exe):
+            asmc_exe = exe
+            break
+
+    assert asmc_exe is not None,\
+        "ASMC_exe not found in {}. Ensure ASMC_exe target is built before running this test".format(bin_dir)
 
     # Old file contents are before OxfordRSE involvement in ASMC
     with gzip.open(old_file, 'rt') as gz_f:
