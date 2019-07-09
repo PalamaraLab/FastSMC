@@ -37,8 +37,9 @@ endif()
 # Set SIMD compiler options
 include(cmake/SIMD.cmake)
 
-set(ASMC_source_dir ASMC_SRC/SRC)
-set(ASMC_test_dir ASMC_SRC/TESTS)
+set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
+set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
+set(ASMC_exe_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/BIN)
 set(ASMC_source
   ${ASMC_source_dir}/Data.cpp
   ${ASMC_source_dir}/DecodingParams.cpp
@@ -77,6 +78,7 @@ add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 add_executable(ASMC_exe ${ASMC_main})
 target_link_libraries(ASMC_exe PRIVATE ASMC)
+set_target_properties(ASMC_exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ASMC_exe_dir}")
 
 enable_testing()
 

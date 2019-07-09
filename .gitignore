@@ -1,8 +1,11 @@
-# VS code config files
+# VS & VS code config files
 .vscode/
+.vs/
+CMakeSettings.json
 
 # Compiled python files
 *.pyc
 
-# Everything in FILES/EXAMPLE
+# Untracked directories in the main repo
 FILES/EXAMPLE/*
+ASMC_SRC/BIN/*
