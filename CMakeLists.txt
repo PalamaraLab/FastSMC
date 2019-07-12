@@ -39,7 +39,7 @@ include(cmake/SIMD.cmake)
 
 set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
 set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
-set(ASMC_exe_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/BIN)
+
 set(ASMC_source
   ${ASMC_source_dir}/Data.cpp
   ${ASMC_source_dir}/DecodingParams.cpp
@@ -67,8 +67,6 @@ set(ASMC_main
   ${ASMC_source_dir}/main.cpp
   )
 
-
-set(ASMC_test_dir ASMC_SRC/TESTS)
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   )
@@ -78,7 +76,6 @@ add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 add_executable(ASMC_exe ${ASMC_main})
 target_link_libraries(ASMC_exe PRIVATE ASMC)
-set_target_properties(ASMC_exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ASMC_exe_dir}")
 
 enable_testing()
 
@@ -101,6 +98,25 @@ target_include_directories(ASMC PUBLIC ${ZLIB_INCLUDE_DIRS})
 find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)
 target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
+
+
+# Optionally run regression tests to ensure core functionality remains unchanged
+option(ASMC_REGRESSION_TESTING "Whether to generate regression testing target" OFF)
+if (ASMC_REGRESSION_TESTING)
+
+    # Python is required for running regression tests
+    find_package(Python3 REQUIRED)
+
+    add_custom_target(
+            Regression
+            COMMAND ${Python3_EXECUTABLE} regression_test.py $<TARGET_FILE:ASMC_exe>
+            DEPENDS ASMC_exe
+            COMMENT "Running ASMC regression test"
+            WORKING_DIRECTORY ${ASMC_test_dir}
+    )
+
+endif ()
+
 
 # Clang tidy as optional static analyzer
 option(Template_USE_CLANG_TIDY "Use clang tidy for static analysis" OFF)
