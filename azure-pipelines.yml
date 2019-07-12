@@ -6,24 +6,37 @@
 
 strategy:
   matrix:
-    # Ubuntu
-    Ubuntu:
+    # Ubuntu (unit tests)
+    Ubuntu-unit:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      jobType: 'unit'
+    # Ubuntu (coverage)
+    Ubuntu-coverage:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
       cmakeArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
-      runCoverage: 'true'
+      cmakeBuildArgs: '--target Regression'
+      jobType: 'coverage'
+    # Ubuntu (regression test)
+    Ubuntu-regression:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      cmakeArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
+      jobType: 'regression'
     # macOS
-    macOS:
+    macOS-unit:
       imageName: 'macOS-10.13'
-      vcpkgTriplet: 'x64-osx'
       installDeps: 'brew'
       cmakeArgs: ''
+      jobType: 'unit'
     # Windows
-    Windows:
+    Windows-unit:
       imageName: 'windows-2019'
       installDeps: 'vcpkg'
       vcpkgTriplet: 'x64-windows'
-      cmakeArgs: '-G Ninja -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      jobType: 'unit'
 
 trigger:
   - master
@@ -45,8 +58,8 @@ steps:
 
   - script: |
       python -m pip install --upgrade pip setuptools wheel
-      python -m pip install --upgrade cmake pytest
-    displayName: Update cmake and required python modules
+      python -m pip install --upgrade cmake
+    displayName: Update cmake
 
   - script: |
       sudo apt update
@@ -74,16 +87,13 @@ steps:
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
-      cmakeArgs: '--build .'
+      cmakeArgs: '--build . $(cmakeBuildArgs)'
     displayName: 'Build'
 
   - script: ctest -V
     displayName: 'Unit tests'
+    condition: in(variables['jobType'], 'unit', 'coverage')
     workingDirectory: 'build'
-
-  - script: pytest ASMC_SRC/TESTS/regression_test.py -s
-    displayName: 'Regression test'
-    workingDirectory: '.'
 
   - script: |
       lcov --directory . --capture --output-file coverage.info
