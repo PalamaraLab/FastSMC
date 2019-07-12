@@ -10,32 +10,37 @@ strategy:
     Ubuntu-unit:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
+      cmakeConfigArgs: ''
+      cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
     # Ubuntu (coverage)
     Ubuntu-coverage:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
-      cmakeArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
-      cmakeBuildArgs: '--target Regression'
+      cmakeConfigArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
+      cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'coverage'
     # Ubuntu (regression test)
     Ubuntu-regression:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
-      cmakeArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
+      cmakeConfigArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
+      cmakeBuildArgs: '--target Regression'
       jobType: 'regression'
     # macOS
     macOS-unit:
       imageName: 'macOS-10.13'
       installDeps: 'brew'
-      cmakeArgs: ''
+      cmakeConfigArgs: ''
+      cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
     # Windows
     Windows-unit:
       imageName: 'windows-2019'
       installDeps: 'vcpkg'
       vcpkgTriplet: 'x64-windows'
-      cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      cmakeConfigArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+      cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
 
 trigger:
@@ -81,7 +86,7 @@ steps:
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
-      cmakeArgs: '.. $(cmakeArgs)'
+      cmakeArgs: '.. $(cmakeConfigArgs)'
     displayName: 'CMake'
 
   - task: CMake@1
@@ -102,4 +107,4 @@ steps:
       bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
     displayName: 'Upload coverage'
     workingDirectory: 'build'
-    condition: eq(variables['runCoverage'], 'true')
+    condition: eq(variables['jobType'], 'coverage')
