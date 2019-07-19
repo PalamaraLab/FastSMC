@@ -20,6 +20,7 @@
 #include "DecodingQuantities.hpp"
 #include "Data.hpp"
 #include "DecodingParams.hpp"
+#include "HMM.hpp"
 
 DecodingReturnValues run(std::string haps_file_root, std::string decoding_quant_file,
          std::string out_file_root, DecodingModeOverall mode,
