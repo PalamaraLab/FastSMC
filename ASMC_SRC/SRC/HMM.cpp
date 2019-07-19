@@ -160,7 +160,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
     DecodingParams& _decodingParams, bool useBatches, int _scalingSkip)
     : m_batchSize(64)
     , data(_data)
-    , decodingQuant(_decodingQuant)
+    , m_decodingQuant(_decodingQuant)
     , decodingParams(_decodingParams)
     , scalingSkip(_scalingSkip)
     , noBatches(!useBatches)
@@ -179,6 +179,35 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
   if (decodingParams.doPerPairPosteriorMean) {
     expectedCoalTimes
         = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
+  }
+
+  // allocate buffers
+  m_scalingBuffer = ALIGNED_MALLOC_FLOATS(m_batchSize);
+  m_alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
+  m_betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
+  m_allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
+
+  if (decodingParams.doPerPairPosteriorMean) {
+    meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
+  }
+  if (decodingParams.doPerPairMAP) {
+    MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * m_batchSize);
+    currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
+  }
+}
+
+HMM::~HMM() {
+  ALIGNED_FREE(m_betaBuffer);
+  ALIGNED_FREE(m_alphaBuffer);
+  ALIGNED_FREE(m_scalingBuffer);
+  ALIGNED_FREE(m_allZeros);
+
+  if (decodingParams.doPerPairPosteriorMean) {
+    ALIGNED_FREE(meanPost);
+  }
+  if (decodingParams.doPerPairMAP) {
+    ALIGNED_FREE(MAP);
+    ALIGNED_FREE(currentMAPValue);
   }
 }
 
@@ -206,30 +235,30 @@ void HMM::prepareEmissions()
         for (int k = 0; k < states; k++) {
           if (undistAtThisSiteFor1dist >= 0) {
             emission1AtSite[pos][k] = decodingParams.decodingSequence
-                ? decodingQuant.foldedCSFSmap[undistAtThisSiteFor1dist][1][k]
-                : decodingQuant
+                ? m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor1dist][1][k]
+                : m_decodingQuant
                       .foldedAscertainedCSFSmap[undistAtThisSiteFor1dist][1][k];
           } else {
             emission1AtSite[pos][k] = 0.f;
           }
           emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
-              ? (decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k]
+              ? (m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k]
                     - emission1AtSite[pos][k])
-              : (decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]
+              : (m_decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]
                     - emission1AtSite[pos][k]);
           if (undistAtThisSiteFor2dist >= 0) {
             emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
-                ? (decodingQuant.foldedCSFSmap[undistAtThisSiteFor2dist][0][k]
-                      - decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
-                : (decodingQuant
+                ? (m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor2dist][0][k]
+                      - m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
+                : (m_decodingQuant
                           .foldedAscertainedCSFSmap[undistAtThisSiteFor2dist][0][k]
-                      - decodingQuant
+                      - m_decodingQuant
                             .foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]);
           } else {
             emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
-                ? (0 - decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
+                ? (0 - m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k])
                 : (0
-                      - decodingQuant
+                      - m_decodingQuant
                             .foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]);
           }
         }
@@ -238,16 +267,16 @@ void HMM::prepareEmissions()
         for (int k = 0; k < states; k++) {
           if (undistAtThisSiteFor1dist >= 0) {
             emission1AtSite[pos][k] = decodingParams.decodingSequence
-                ? decodingQuant.CSFSmap[undistAtThisSiteFor1dist][1][k]
-                : decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor1dist][1][k];
+                ? m_decodingQuant.CSFSmap[undistAtThisSiteFor1dist][1][k]
+                : m_decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor1dist][1][k];
           } else {
             emission1AtSite[pos][k] = 0.f;
           }
           float emission0AtThisSiteAndState = 0.f;
           if (undistAtThisSiteFor0dist >= 0) {
             emission0AtThisSiteAndState = decodingParams.decodingSequence
-                ? decodingQuant.CSFSmap[undistAtThisSiteFor0dist][0][k]
-                : decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor0dist][0][k];
+                ? m_decodingQuant.CSFSmap[undistAtThisSiteFor0dist][0][k]
+                : m_decodingQuant.ascertainedCSFSmap[undistAtThisSiteFor0dist][0][k];
           }
           emission0minus1AtSite[pos][k]
               = emission0AtThisSiteAndState - emission1AtSite[pos][k];
@@ -260,8 +289,8 @@ void HMM::prepareEmissions()
               undist = 0;
             }
             emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
-                ? (decodingQuant.CSFSmap[undist][dist][k] - emission0AtThisSiteAndState)
-                : (decodingQuant.ascertainedCSFSmap[undist][dist][k]
+                ? (m_decodingQuant.CSFSmap[undist][dist][k] - emission0AtThisSiteAndState)
+                : (m_decodingQuant.ascertainedCSFSmap[undist][dist][k]
                       - emission0AtThisSiteAndState);
           } else {
             emission2minus0AtSite[pos][k] = 0 - emission0AtThisSiteAndState;
@@ -272,13 +301,13 @@ void HMM::prepareEmissions()
       // this position is not a CSFS position
       for (int k = 0; k < states; k++) {
         emission1AtSite[pos][k] = decodingParams.decodingSequence
-            ? decodingQuant.classicEmissionTable[1][k]
-            : decodingQuant.compressedEmissionTable[1][k];
+            ? m_decodingQuant.classicEmissionTable[1][k]
+            : m_decodingQuant.compressedEmissionTable[1][k];
         emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
-            ? (decodingQuant.classicEmissionTable[0][k]
-                  - decodingQuant.classicEmissionTable[1][k])
-            : (decodingQuant.compressedEmissionTable[0][k]
-                  - decodingQuant.compressedEmissionTable[1][k]);
+            ? (m_decodingQuant.classicEmissionTable[0][k]
+                  - m_decodingQuant.classicEmissionTable[1][k])
+            : (m_decodingQuant.compressedEmissionTable[0][k]
+                  - m_decodingQuant.compressedEmissionTable[1][k]);
         // emission2 = emission0
         emission2minus0AtSite[pos][k] = 0.f;
       }
@@ -293,29 +322,23 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
   // auto t0 = std::chrono::high_resolution_clock().now();
   Timer timer;
 
-  scalingBuffer = ALIGNED_MALLOC_FLOATS(m_batchSize);
-  alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
-  betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
-  allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
-  memset(allZeros, 0, sequenceLength * m_batchSize * sizeof(allZeros[0]));
+  memset(m_allZeros, 0, sequenceLength * m_batchSize * sizeof(m_allZeros[0]));
+  
   if (decodingParams.doPerPairPosteriorMean) {
     foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
-    meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
   }
   if (decodingParams.doPerPairMAP) {
     foutMAPPerPair.openOrExit(outFileRoot + ".perPairMAP.gz");
-    MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * m_batchSize);
-    currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
   }
 
-  decodingReturnValues.sumOverPairs
+  m_decodingReturnValues.sumOverPairs
       = vector<vector<float>>(sequenceLength, vector<float>(states));
   if (decodingParams.doMajorMinorPosteriorSums) {
-    decodingReturnValues.sumOverPairs00
+    m_decodingReturnValues.sumOverPairs00
         = vector<vector<float>>(sequenceLength, vector<float>(states));
-    decodingReturnValues.sumOverPairs01
+    m_decodingReturnValues.sumOverPairs01
         = vector<vector<float>>(sequenceLength, vector<float>(states));
-    decodingReturnValues.sumOverPairs11
+    m_decodingReturnValues.sumOverPairs11
         = vector<vector<float>>(sequenceLength, vector<float>(states));
   }
   const vector<Individual>& individuals = data.individuals;
@@ -397,23 +420,14 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
   //    ticksSumOverPairs + ticksOutputPerPair) / ticksDecodeAll);
   cout << flush;
 
-  // dealloc
-  ALIGNED_FREE(betaBuffer);
-  ALIGNED_FREE(alphaBuffer);
-  ALIGNED_FREE(scalingBuffer);
-  ALIGNED_FREE(allZeros);
-
   if (decodingParams.doPerPairPosteriorMean) {
-    ALIGNED_FREE(meanPost);
     foutPosteriorMeanPerPair.close();
   }
   if (decodingParams.doPerPairMAP) {
-    ALIGNED_FREE(MAP);
-    ALIGNED_FREE(currentMAPValue);
     foutMAPPerPair.close();
   }
 
-  return decodingReturnValues;
+  return m_decodingReturnValues;
 }
 
 void HMM::decodePair(const uint i, const uint j)
@@ -426,13 +440,13 @@ void HMM::decodePair(const uint i, const uint j)
     // different individuals; decode 2 haps x 2 haps
     for (int iHap = 1; iHap <= 2; iHap++) {
       for (int jHap = 1; jHap <= 2; jHap++) {
-          PairObservations observations
-              = makePairObs(individuals[i], iHap, individuals[j], jHap);
-          if (noBatches) {
-            decode(observations);
-          } else {
-            addToBatch(m_observationsBatch, observations);
-          }
+        PairObservations observations
+            = makePairObs(individuals[i], iHap, individuals[j], jHap);
+        if (noBatches) {
+          decode(observations);
+        } else {
+          addToBatch(m_observationsBatch, observations);
+        }
       }
     }
   } else {
@@ -446,12 +460,8 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-void HMM::flushBatchBuffer()
-{
-  if (!noBatches) {
-    runLastBatch(m_observationsBatch);
-  }
-}
+void HMM::flushBatchBuffer() { runLastBatch(m_observationsBatch); }
+
 
 // add pair to batch and run if we have enough
 void HMM::addToBatch(
@@ -459,7 +469,7 @@ void HMM::addToBatch(
 {
   obsBatch.push_back(observations);
   if ((int)obsBatch.size() == m_batchSize) {
-    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x
+    // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x
     // m_batchSize]
     decodeBatch(obsBatch);
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
@@ -479,7 +489,7 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   while (obsBatch.size() % VECX != 0) // fill to size divisible by VECX
     obsBatch.push_back(obsBatch.back());
   int paddedBatchSize = static_cast<int>(obsBatch.size());
-  // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x
+  // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x
   // paddedBatchSize]
   decodeBatch(obsBatch);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
@@ -529,8 +539,8 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch)
     for (int k = 0; k < states; k++) {
       for (int v = 0; v < curBatchSize; v++) {
         long int ind = (pos * states + k) * curBatchSize + v;
-        alphaBuffer[ind] *= betaBuffer[ind];
-        scale[pos * curBatchSize + v] += alphaBuffer[ind];
+        m_alphaBuffer[ind] *= m_betaBuffer[ind];
+        scale[pos * curBatchSize + v] += m_alphaBuffer[ind];
       }
     }
   }
@@ -542,7 +552,7 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch)
   for (long int pos = 0; pos < sequenceLength; pos++) {
     for (int k = 0; k < states; k++) {
       for (int v = 0; v < curBatchSize; v++) {
-        alphaBuffer[(pos * states + k) * curBatchSize + v]
+        m_alphaBuffer[(pos * states + k) * curBatchSize + v]
             *= scale[pos * curBatchSize + v];
       }
     }
@@ -552,8 +562,8 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch)
     for (int k = 0; k < states; k++) {
       for (int v = 0; v < curBatchSize; v += VECX) {
         long int ind = (pos * states + k) * curBatchSize + v;
-        FLOAT prod = MULT(LOAD(&alphaBuffer[ind]), LOAD(&betaBuffer[ind]));
-        STORE(&alphaBuffer[ind], prod);
+        FLOAT prod = MULT(LOAD(&m_alphaBuffer[ind]), LOAD(&m_betaBuffer[ind]));
+        STORE(&m_alphaBuffer[ind], prod);
         STORE(&scale[pos * curBatchSize + v],
             ADD(LOAD(&scale[pos * curBatchSize + v]), prod));
       }
@@ -569,8 +579,8 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch)
     for (int k = 0; k < states; k++) {
       for (int v = 0; v < curBatchSize; v += VECX) {
         long int ind = (pos * states + k) * curBatchSize + v;
-        STORE(&alphaBuffer[ind],
-            MULT(LOAD(&alphaBuffer[ind]), LOAD(&scale[pos * curBatchSize + v])));
+        STORE(&m_alphaBuffer[ind],
+            MULT(LOAD(&m_alphaBuffer[ind]), LOAD(&scale[pos * curBatchSize + v])));
       }
     }
   }
@@ -642,15 +652,15 @@ void HMM::forwardBatch(
       float firstEmission = emission1AtSite[0][k]
           + emission0minus1AtSite[0][k] * obsIsZeroBatch[v]
           + emission2minus0AtSite[0][k] * obsIsTwoBatch[v];
-      alphaBuffer[k * curBatchSize + v]
-          = decodingQuant.initialStateProb[k] * firstEmission;
+      m_alphaBuffer[k * curBatchSize + v]
+          = m_decodingQuant.initialStateProb[k] * firstEmission;
     }
   }
 
   float* sums = AU; // reuse buffer but rename to be less confusing
   memset(sums, 0, curBatchSize * sizeof(sums[0]));
-  scaleBatch(alphaBuffer, scalingBuffer, sums, curBatchSize);
-  applyScaling(alphaBuffer, scalingBuffer, curBatchSize);
+  scaleBatch(m_alphaBuffer, m_scalingBuffer, sums, curBatchSize);
+  applyScaling(m_alphaBuffer, m_scalingBuffer, curBatchSize);
 
   // Induction Step:
   float lastGeneticPos = data.geneticPositions[0];
@@ -661,17 +671,17 @@ void HMM::forwardBatch(
     float recDistFromPrevious = roundMorgans(
         std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
     float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
-    float* previousAlpha = &alphaBuffer[(pos - 1) * states * curBatchSize];
-    float* nextAlpha = &alphaBuffer[pos * states * curBatchSize];
+    float* previousAlpha = &m_alphaBuffer[(pos - 1) * states * curBatchSize];
+    float* nextAlpha = &m_alphaBuffer[pos * states * curBatchSize];
     if (decodingParams.decodingSequence) {
       int physDistFromPreviousMinusOne
           = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
       float recDistFromPreviousMinusOne
           = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
       vector<float> homozEmission
-          = decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+          = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getNextAlphaBatched(recDistFromPreviousMinusOne, alphaC, curBatchSize,
-          previousAlpha, pos, allZeros, allZeros, AU, nextAlpha, homozEmission,
+          previousAlpha, pos, m_allZeros, m_allZeros, AU, nextAlpha, homozEmission,
           homozEmission, homozEmission);
       previousAlpha = nextAlpha;
       getNextAlphaBatched(currentRecRate, alphaC, curBatchSize, previousAlpha, pos,
@@ -685,8 +695,8 @@ void HMM::forwardBatch(
     float* sums = AU; // reuse buffer but rename to be less confusing
     memset(sums, 0, curBatchSize * sizeof(sums[0]));
     if (pos % scalingSkip == 0) {
-      scaleBatch(nextAlpha, scalingBuffer, sums, curBatchSize);
-      applyScaling(nextAlpha, scalingBuffer, curBatchSize);
+      scaleBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize);
+      applyScaling(nextAlpha, m_scalingBuffer, curBatchSize);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
@@ -705,9 +715,9 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
     const vector<float>& emission2minus0AtSite)
 {
 
-  const float* B = &decodingQuant.Bvectors.at(recDistFromPrevious)[0];
-  const float* U = &decodingQuant.Uvectors.at(recDistFromPrevious)[0];
-  const float* D = &decodingQuant.Dvectors.at(recDistFromPrevious)[0];
+  const float* B = &m_decodingQuant.Bvectors.at(recDistFromPrevious)[0];
+  const float* U = &m_decodingQuant.Uvectors.at(recDistFromPrevious)[0];
+  const float* D = &m_decodingQuant.Dvectors.at(recDistFromPrevious)[0];
 
   memcpy(&alphaC[(states - 1) * curBatchSize],
       &previousAlpha[(states - 1) * curBatchSize], curBatchSize * sizeof(alphaC[0]));
@@ -734,7 +744,7 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
     for (int v = 0; v < curBatchSize; v++) {
       if (k)
         AU[v] = U[k - 1] * previousAlpha[(k - 1) * curBatchSize + v]
-            + decodingQuant.columnRatios[k - 1] * AU[v];
+            + m_decodingQuant.columnRatios[k - 1] * AU[v];
       float term = AU[v] + D[k] * previousAlpha[k * curBatchSize + v];
       if (k < states - 1) {
         term += B[k] * alphaC[(k + 1) * curBatchSize + v];
@@ -763,10 +773,10 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
     if (k) {
 #ifdef AVX512
       Ukm1 = LOAD1(U[k - 1]);
-      colRatios_km1 = LOAD1(decodingQuant.columnRatios[k - 1]);
+      colRatios_km1 = LOAD1(m_decodingQuant.columnRatios[k - 1]);
 #else
       Ukm1 = LOAD1(&U[k - 1]);
-      colRatios_km1 = LOAD1(&decodingQuant.columnRatios[k - 1]);
+      colRatios_km1 = LOAD1(&m_decodingQuant.columnRatios[k - 1]);
 #endif
     }
     for (int v = 0; v < curBatchSize; v += VECX) {
@@ -803,13 +813,13 @@ void HMM::backwardBatch(
   // fill pos=sequenceLenght-1 in beta
   for (int k = 0; k < states; k++) {
     for (int v = 0; v < curBatchSize; v++) {
-      betaBuffer[((sequenceLength - 1) * states + k) * curBatchSize + v] = 1.0f;
+      m_betaBuffer[((sequenceLength - 1) * states + k) * curBatchSize + v] = 1.0f;
     }
   }
   float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
   memset(sums, 0, curBatchSize * sizeof(sums[0]));
-  scaleBatch(betaBuffer, scalingBuffer, sums, curBatchSize);
-  applyScaling(betaBuffer, scalingBuffer, curBatchSize);
+  scaleBatch(m_betaBuffer, m_scalingBuffer, sums, curBatchSize);
+  applyScaling(m_betaBuffer, m_scalingBuffer, curBatchSize);
 
   // Induction Step:
   float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
@@ -824,17 +834,17 @@ void HMM::backwardBatch(
     float recDistFromPrevious = roundMorgans(
         std::max(minGenetic, lastGeneticPos - data.geneticPositions[pos]));
     float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
-    float* currentBeta = &betaBuffer[pos * states * curBatchSize];
-    float* lastComputedBeta = &betaBuffer[(pos + 1) * states * curBatchSize];
+    float* currentBeta = &m_betaBuffer[pos * states * curBatchSize];
+    float* lastComputedBeta = &m_betaBuffer[(pos + 1) * states * curBatchSize];
     if (decodingParams.decodingSequence) {
       int physDistFromPreviousMinusOne
           = roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1);
       float recDistFromPreviousMinusOne
           = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
       vector<float> homozEmission
-          = decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+          = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize,
-          lastComputedBeta, pos, allZeros, allZeros, vec, BU, BL, currentBeta,
+          lastComputedBeta, pos, m_allZeros, m_allZeros, vec, BU, BL, currentBeta,
           homozEmission, homozEmission, homozEmission);
       lastComputedBeta = currentBeta;
       getPreviousBetaBatched(currentRecRate, curBatchSize, lastComputedBeta, pos,
@@ -850,8 +860,8 @@ void HMM::backwardBatch(
     if (pos % scalingSkip == 0) {
       // normalize betas using alpha scaling
       memset(sums, 0, curBatchSize * sizeof(sums[0]));
-      scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize);
-      applyScaling(currentBeta, scalingBuffer, curBatchSize);
+      scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize);
+      applyScaling(currentBeta, m_scalingBuffer, curBatchSize);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
@@ -870,10 +880,10 @@ void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize,
     const vector<float>& emission1AtSite, const vector<float>& emission0minus1AtSite,
     const vector<float>& emission2minus0AtSite)
 {
-  const vector<float>& B = decodingQuant.Bvectors.at(recDistFromPrevious);
-  const vector<float>& U = decodingQuant.Uvectors.at(recDistFromPrevious);
-  const vector<float>& RR = decodingQuant.rowRatioVectors.at(recDistFromPrevious);
-  const vector<float>& D = decodingQuant.Dvectors.at(recDistFromPrevious);
+  const vector<float>& B = m_decodingQuant.Bvectors.at(recDistFromPrevious);
+  const vector<float>& U = m_decodingQuant.Uvectors.at(recDistFromPrevious);
+  const vector<float>& RR = m_decodingQuant.rowRatioVectors.at(recDistFromPrevious);
+  const vector<float>& D = m_decodingQuant.Dvectors.at(recDistFromPrevious);
 #ifdef NO_SSE
 
   for (int k = 0; k < states; k++) {
@@ -989,7 +999,7 @@ void HMM::augmentSumOverPairs(
       for (int v = 0; v < actualBatchSize;
            v++) { // only loop over actual (not padding) pairs
         float posterior_pos_state_pair
-            = alphaBuffer[(pos * states + k) * paddedBatchSize + v];
+            = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
         if (decodingParams.doPosteriorSums) {
           sum += posterior_pos_state_pair;
         }
@@ -1003,12 +1013,12 @@ void HMM::augmentSumOverPairs(
         }
       }
       if (decodingParams.doPosteriorSums) {
-        decodingReturnValues.sumOverPairs[pos][k] += sum;
+        m_decodingReturnValues.sumOverPairs[pos][k] += sum;
       }
       if (decodingParams.doMajorMinorPosteriorSums) {
-        decodingReturnValues.sumOverPairs00[pos][k] += sum00;
-        decodingReturnValues.sumOverPairs01[pos][k] += sum01;
-        decodingReturnValues.sumOverPairs11[pos][k] += sum11;
+        m_decodingReturnValues.sumOverPairs00[pos][k] += sum00;
+        m_decodingReturnValues.sumOverPairs01[pos][k] += sum01;
+        m_decodingReturnValues.sumOverPairs11[pos][k] += sum11;
       }
     }
   }
@@ -1042,7 +1052,7 @@ void HMM::writePerPairOutput(
     for (ushort k = 0; k < states; k++) {
       for (int v = 0; v < actualBatchSize; v++) {
         float posterior_pos_state_pair
-            = alphaBuffer[(pos * states + k) * paddedBatchSize + v];
+            = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
         sums[k * actualBatchSize + v] += posterior_pos_state_pair;
         if (decodingParams.doPerPairPosteriorMean) {
           meanPost[pos * actualBatchSize + v]
@@ -1182,9 +1192,9 @@ vector<vector<float>> HMM::decode(const PairObservations& observations)
   ticksCombine += t3 - t2;
 
   if (decodingParams.doPosteriorSums) {
-    for (uint k = 0; k < decodingQuant.states; k++) {
+    for (uint k = 0; k < m_decodingQuant.states; k++) {
       for (long int pos = 0; pos < sequenceLength; pos++) {
-        decodingReturnValues.sumOverPairs[pos][k] += posterior[k][pos];
+        m_decodingReturnValues.sumOverPairs[pos][k] += posterior[k][pos];
       }
     }
   }
@@ -1222,18 +1232,18 @@ vector<float> HMM::getEmission(
   if (!useCSFSatThisPosition[pos]) {
     // this position is not a CSFS position, use compressed or classic
     emission = decodingParams.decodingSequence
-        ? decodingQuant.classicEmissionTable[emissionIndex]
-        : decodingQuant.compressedEmissionTable[emissionIndex];
+        ? m_decodingQuant.classicEmissionTable[emissionIndex]
+        : m_decodingQuant.compressedEmissionTable[emissionIndex];
   } else {
     // this position is a CSFS position
     if (decodingParams.foldData) {
       emission = decodingParams.decodingSequence
-          ? decodingQuant.foldedCSFSmap[undistinguished][emissionIndex]
-          : decodingQuant.foldedAscertainedCSFSmap[undistinguished][emissionIndex];
+          ? m_decodingQuant.foldedCSFSmap[undistinguished][emissionIndex]
+          : m_decodingQuant.foldedAscertainedCSFSmap[undistinguished][emissionIndex];
     } else {
       emission = decodingParams.decodingSequence
-          ? decodingQuant.CSFSmap[undistinguished][distinguished]
-          : decodingQuant.ascertainedCSFSmap[undistinguished][distinguished];
+          ? m_decodingQuant.CSFSmap[undistinguished][distinguished]
+          : m_decodingQuant.ascertainedCSFSmap[undistinguished][distinguished];
     }
   }
   return emission;
@@ -1255,12 +1265,12 @@ vector<vector<float>> HMM::forward(const PairObservations& observations)
       = getEmission(0, distinguished, undistinguished, emissionIndex);
 
   vector<float> firstAlpha
-      = elementWiseMultVectorVector(decodingQuant.initialStateProb, emission);
+      = elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
 
   // cumpute scaling (sum of current alpha vector)
-  float scalingBuffer = 1.f / getSumOfVector(firstAlpha);
+  float m_scalingBuffer = 1.f / getSumOfVector(firstAlpha);
   // normalize current alpha vector to 1
-  firstAlpha = elementWiseMultVectorScalar(firstAlpha, scalingBuffer);
+  firstAlpha = elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
 
   fillMatrixColumn(alpha, firstAlpha, 0);
   // Induction Step:
@@ -1287,7 +1297,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations)
       float recDistFromPreviousMinusOne
           = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
       vector<float> homozEmission
-          = decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+          = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getNextAlpha(recDistFromPreviousMinusOne, alphaC, previousAlpha, nextAlpha,
           homozEmission, homozEmission, homozEmission, 0.0f, 0.0f);
       previousAlpha = nextAlpha;
@@ -1302,9 +1312,9 @@ vector<vector<float>> HMM::forward(const PairObservations& observations)
     auto t1 = std::chrono::high_resolution_clock().now();
     if (pos % scalingSkip == 0) {
       // compute scaling (sum of current alpha vector)
-      scalingBuffer = 1.f / getSumOfVector(nextAlpha);
+      m_scalingBuffer = 1.f / getSumOfVector(nextAlpha);
       // normalize current alpha vector to 1
-      nextAlpha = elementWiseMultVectorScalar(nextAlpha, scalingBuffer);
+      nextAlpha = elementWiseMultVectorScalar(nextAlpha, m_scalingBuffer);
     }
     fillMatrixColumn(alpha, nextAlpha, pos);
     previousAlpha = nextAlpha;
@@ -1323,19 +1333,19 @@ void HMM::getNextAlpha(float recDistFromPrevious, vector<float>& alphaC,
     vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
     vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor)
 {
-  alphaC[decodingQuant.states - 1] = previousAlpha[decodingQuant.states - 1];
-  for (int k = decodingQuant.states - 2; k >= 0; k--) {
+  alphaC[m_decodingQuant.states - 1] = previousAlpha[m_decodingQuant.states - 1];
+  for (int k = m_decodingQuant.states - 2; k >= 0; k--) {
     alphaC[k] = alphaC[k + 1] + previousAlpha[k];
   }
-  const float* B = &decodingQuant.Bvectors.at(recDistFromPrevious)[0];
-  const float* U = &decodingQuant.Uvectors.at(recDistFromPrevious)[0];
-  const float* D = &decodingQuant.Dvectors.at(recDistFromPrevious)[0];
+  const float* B = &m_decodingQuant.Bvectors.at(recDistFromPrevious)[0];
+  const float* U = &m_decodingQuant.Uvectors.at(recDistFromPrevious)[0];
+  const float* D = &m_decodingQuant.Dvectors.at(recDistFromPrevious)[0];
   float AUc = 0;
-  for (uint k = 0; k < decodingQuant.states; k++) {
+  for (uint k = 0; k < m_decodingQuant.states; k++) {
     if (k)
-      AUc = U[k - 1] * previousAlpha[k - 1] + decodingQuant.columnRatios[k - 1] * AUc;
+      AUc = U[k - 1] * previousAlpha[k - 1] + m_decodingQuant.columnRatios[k - 1] * AUc;
     float term = AUc + D[k] * previousAlpha[k];
-    if (k < decodingQuant.states - 1)
+    if (k < m_decodingQuant.states - 1)
       term += B[k] * alphaC[k + 1];
     float currentEmission_k = emission1AtSite[k] + emission0minus1AtSite[k] * obsIsZero
         + emission2minus0AtSite[k] * obsIsHomMinor;
@@ -1354,8 +1364,8 @@ vector<vector<float>> HMM::backward(const PairObservations& observations)
     lastBeta[i] = 1.f;
   }
   // normalize current alpha vector to 1
-  float scalingBuffer = 1.f / getSumOfVector(lastBeta);
-  lastBeta = elementWiseMultVectorScalar(lastBeta, scalingBuffer);
+  float m_scalingBuffer = 1.f / getSumOfVector(lastBeta);
+  lastBeta = elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
   fillMatrixColumn(beta, lastBeta, sequenceLength - 1);
   // Induction Step:
   vector<float> currentBeta(states);
@@ -1379,7 +1389,7 @@ vector<vector<float>> HMM::backward(const PairObservations& observations)
       float recDistFromPreviousMinusOne
           = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
       vector<float> homozEmission
-          = decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+          = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBeta(recDistFromPreviousMinusOne, lastComputedBeta, BL, BU,
           currentBeta, homozEmission, homozEmission, homozEmission, 0.0f, 0.0f);
       lastComputedBeta = currentBeta;
@@ -1392,8 +1402,8 @@ vector<vector<float>> HMM::backward(const PairObservations& observations)
           emission2minus0AtSite[pos + 1], obsIsZero, obsIsHomMinor);
     }
     if (pos % scalingSkip == 0) {
-      scalingBuffer = 1.f / getSumOfVector(currentBeta);
-      currentBeta = elementWiseMultVectorScalar(currentBeta, scalingBuffer);
+      m_scalingBuffer = 1.f / getSumOfVector(currentBeta);
+      currentBeta = elementWiseMultVectorScalar(currentBeta, m_scalingBuffer);
     }
     fillMatrixColumn(beta, currentBeta, pos);
     lastComputedBeta = currentBeta;
@@ -1417,19 +1427,19 @@ void HMM::getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputed
   }
   // compute below table
   float sum = 0;
-  const vector<float>& B = decodingQuant.Bvectors.at(recDistFromPrevious);
+  const vector<float>& B = m_decodingQuant.Bvectors.at(recDistFromPrevious);
   for (int k = 1; k < states; k++) {
     sum += B[k - 1] * vec[k - 1];
     BL[k] = sum;
   }
   // compute above table
-  const vector<float>& U = decodingQuant.Uvectors.at(recDistFromPrevious);
-  const vector<float>& RR = decodingQuant.rowRatioVectors.at(recDistFromPrevious);
+  const vector<float>& U = m_decodingQuant.Uvectors.at(recDistFromPrevious);
+  const vector<float>& RR = m_decodingQuant.rowRatioVectors.at(recDistFromPrevious);
   for (int k = states - 2; k >= 0; k--) {
     BU[k] = vec[k + 1] * U[k] + RR[k] * BU[k + 1];
   }
   // put them together
-  const vector<float>& D = decodingQuant.Dvectors.at(recDistFromPrevious);
+  const vector<float>& D = m_decodingQuant.Dvectors.at(recDistFromPrevious);
   for (int k = 0; k < states; k++) {
     currentBeta[k] = BL[k] + vec[k] * D[k] + BU[k];
   }

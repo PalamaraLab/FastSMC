@@ -37,13 +37,19 @@ struct PairObservations {
 
 // individual ids and XOR of genotypes
 struct DecodingReturnValues {
-  vector<vector<float>> sumOverPairs; // output for sum over all pairs
-  vector<vector<float>>
-      sumOverPairs00; // output for sum over all pairs with genotype 00
-  vector<vector<float>>
-      sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
-  vector<vector<float>>
-      sumOverPairs11; // output for sum over all pairs with genotype 11
+
+  /// output for sum over all pairs
+  vector<vector<float>> sumOverPairs;
+
+  /// output for sum over all pairs with genotype 00
+  vector<vector<float>> sumOverPairs00;
+
+  /// output for sum over all pairs with genotype 01 or 10
+  vector<vector<float>> sumOverPairs01;
+
+  /// output for sum over all pairs with genotype 11
+  vector<vector<float>> sumOverPairs11;
+
   int sites = 0;
   unsigned int states = 0;
   vector <bool> siteWasFlippedDuringFolding = {};
@@ -54,14 +60,18 @@ class HMM {
 
   int m_batchSize;
 
-  float* alphaBuffer;
-  float* betaBuffer;
-  float* scalingBuffer;
-  float* allZeros;
+  float* m_alphaBuffer;
+  float* m_betaBuffer;
+  float* m_scalingBuffer;
+  float* m_allZeros;
+
+  float* meanPost;
+  ushort* MAP;
+  float* currentMAPValue;
 
   // for decoding
   Data& data;
-  const DecodingQuantities& decodingQuant;
+  const DecodingQuantities& m_decodingQuant;
   const DecodingParams& decodingParams;
 
   string outFileRoot;
@@ -85,26 +95,23 @@ class HMM {
   const int precision = 2;
   const float minGenetic = 1e-10f;
 
-
   vector<PairObservations> m_observationsBatch;
 
   // output
-  DecodingReturnValues decodingReturnValues;
+  DecodingReturnValues m_decodingReturnValues;
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
-  float* meanPost;
-  ushort* MAP;
-  float* currentMAPValue;
 
   public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
       DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
 
+  ~HMM();
 
-  // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
-  // states).
-  DecodingReturnValues decodeAll(int jobs, int jobInd);
+  /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
+  /// states).
+  void decodeAll(int jobs, int jobInd);
 
   /// decode a single pair
   ///
@@ -117,17 +124,18 @@ class HMM {
   ///
   void decodePair(const uint i, const uint j);
 
-  /// returns the current buffer of pair observations 
+  /// returns the current buffer of pair observations
   const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
+
+  /// returns the decoding quantities calculated thus far
+  const DecodingReturnValues& getDecodingReturnValues() { return m_decodingReturnValues; }
 
   /// tells HMM object to process whatever pairs are stored in the observationsBatch
   /// buffer
   void flushBatchBuffer();
 
   private:
-
   void prepareEmissions();
-
 
   // add pair to batch and run if we have enough
   void addToBatch(
