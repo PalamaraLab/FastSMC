@@ -16,13 +16,12 @@
 #ifndef ASMC_HMM
 #define ASMC_HMM
 
-#include "Individual.hpp"
-#include "DecodingQuantities.hpp"
-#include "DecodingParams.hpp"
-#include "Types.hpp"
-#include "StringUtils.hpp"
-#include "FileUtils.hpp"
 #include "Data.hpp"
+#include "DecodingParams.hpp"
+#include "DecodingQuantities.hpp"
+#include "FileUtils.hpp"
+#include "Individual.hpp"
+#include "Types.hpp"
 #include <string>
 #include <vector>
 
@@ -52,6 +51,8 @@ struct DecodingReturnValues {
 
 // does the linear-time decoding
 class HMM {
+
+  int m_batchSize;
 
   float* alphaBuffer;
   float* betaBuffer;
@@ -84,6 +85,9 @@ class HMM {
   const int precision = 2;
   const float minGenetic = 1e-10f;
 
+
+  vector<PairObservations> m_observationsBatch;
+
   // output
   DecodingReturnValues decodingReturnValues;
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
@@ -97,16 +101,37 @@ class HMM {
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
       DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
 
-  void prepareEmissions();
 
   // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
   // states).
-  DecodingReturnValues decodeAll(int jobs, int jobInd, int batchSize = 64);
+  DecodingReturnValues decodeAll(int jobs, int jobInd);
+
+  /// decode a single pair
+  ///
+  /// i and j must be a valid index in `individuals`
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full
+  ///
+  /// @param i index of first individual
+  /// @param j index of second individual
+  ///
+  void decodePair(const uint i, const uint j);
+
+  /// returns the current buffer of pair observations 
+  const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
+
+  /// tells HMM object to process whatever pairs are stored in the observationsBatch
+  /// buffer
+  void flushBatchBuffer();
 
   private:
+
+  void prepareEmissions();
+
+
   // add pair to batch and run if we have enough
-  void addToBatch(vector<PairObservations>& obsBatch, int batchSize,
-      const PairObservations& observations);
+  void addToBatch(
+      vector<PairObservations>& obsBatch, const PairObservations& observations);
 
   // complete with leftover pairs
   void runLastBatch(vector<PairObservations>& obsBatch);
@@ -116,7 +141,6 @@ class HMM {
 
   // compute scaling factor for an alpha vector
   void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize);
-
 
   void applyScaling(float* vec, float* scalings, int curBatchSize);
 

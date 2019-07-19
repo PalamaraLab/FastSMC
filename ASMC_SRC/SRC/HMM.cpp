@@ -15,6 +15,7 @@
 
 #include "HMM.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <map>
 
@@ -138,7 +139,6 @@ void printPctTime(const char* str, double fracTime)
   printf("Time in %-15s: %4.1f%%\n", str, 100 * fracTime);
 }
 
-
 // build a pair for two individuals
 PairObservations makePairObs(
     const Individual& iInd, int iHap, const Individual& jInd, int jHap)
@@ -155,11 +155,11 @@ PairObservations makePairObs(
   return ret;
 }
 
-
 // constructor
 HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
     DecodingParams& _decodingParams, bool useBatches, int _scalingSkip)
-    : data(_data)
+    : m_batchSize(64)
+    , data(_data)
     , decodingQuant(_decodingQuant)
     , decodingParams(_decodingParams)
     , scalingSkip(_scalingSkip)
@@ -287,25 +287,25 @@ void HMM::prepareEmissions()
 }
 
 // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x states).
-DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
+DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
 {
 
   // auto t0 = std::chrono::high_resolution_clock().now();
   Timer timer;
 
-  scalingBuffer = ALIGNED_MALLOC_FLOATS(batchSize);
-  alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * batchSize);
-  betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * batchSize);
-  allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * batchSize);
-  memset(allZeros, 0, sequenceLength * batchSize * sizeof(allZeros[0]));
+  scalingBuffer = ALIGNED_MALLOC_FLOATS(m_batchSize);
+  alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
+  betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
+  allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
+  memset(allZeros, 0, sequenceLength * m_batchSize * sizeof(allZeros[0]));
   if (decodingParams.doPerPairPosteriorMean) {
     foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
-    meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * batchSize);
+    meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
   }
   if (decodingParams.doPerPairMAP) {
     foutMAPPerPair.openOrExit(outFileRoot + ".perPairMAP.gz");
-    MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * batchSize);
-    currentMAPValue = ALIGNED_MALLOC_FLOATS(batchSize);
+    MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * m_batchSize);
+    currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
   }
 
   decodingReturnValues.sumOverPairs
@@ -322,12 +322,16 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
   uint64 lastPercentage = -1;
   uint64 N = individuals.size();
   uint64 pairs = 0, pairsJob = 0;
+
+  // calculate total number of pairs to decode
   uint64 totPairs;
   if (!decodingParams.withinOnly) {
     totPairs = 2 * N * N - N;
   } else {
     totPairs = N;
   }
+
+  // figure out the range of pairs for this job number
   uint64 pairsStart = totPairs * (jobInd - 1) / jobs;
   uint64 pairsEnd = totPairs * jobInd / jobs;
   uint64 totPairsJob = pairsEnd - pairsStart;
@@ -346,7 +350,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
               if (noBatches) {
                 decode(observations);
               } else {
-                addToBatch(observationsBatch, batchSize, observations);
+                addToBatch(observationsBatch, observations);
               }
               pairsJob++;
             }
@@ -362,7 +366,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
       if (noBatches) {
         decode(observations);
       } else {
-        addToBatch(observationsBatch, batchSize, observations);
+        addToBatch(observationsBatch, observations);
       }
       pairsJob++;
     }
@@ -412,18 +416,55 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
   return decodingReturnValues;
 }
 
+void HMM::decodePair(const uint i, const uint j)
+{
+  const vector<Individual>& individuals = data.individuals;
+  assert(i < individuals.size());
+  assert(j < individuals.size());
+
+  if (i != j) {
+    // different individuals; decode 2 haps x 2 haps
+    for (int iHap = 1; iHap <= 2; iHap++) {
+      for (int jHap = 1; jHap <= 2; jHap++) {
+          PairObservations observations
+              = makePairObs(individuals[i], iHap, individuals[j], jHap);
+          if (noBatches) {
+            decode(observations);
+          } else {
+            addToBatch(m_observationsBatch, observations);
+          }
+      }
+    }
+  } else {
+    // this is the same individual; only decode across chromosomes
+    PairObservations observations = makePairObs(individuals[i], 1, individuals[i], 2);
+    if (noBatches) {
+      decode(observations);
+    } else {
+      addToBatch(m_observationsBatch, observations);
+    }
+  }
+}
+
+void HMM::flushBatchBuffer()
+{
+  if (!noBatches) {
+    runLastBatch(m_observationsBatch);
+  }
+}
+
 // add pair to batch and run if we have enough
-void HMM::addToBatch(vector<PairObservations>& obsBatch, int batchSize,
-    const PairObservations& observations)
+void HMM::addToBatch(
+    vector<PairObservations>& obsBatch, const PairObservations& observations)
 {
   obsBatch.push_back(observations);
-  if ((int)obsBatch.size() == batchSize) {
+  if ((int)obsBatch.size() == m_batchSize) {
     // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x
-    // batchSize]
+    // m_batchSize]
     decodeBatch(obsBatch);
-    augmentSumOverPairs(obsBatch, batchSize, batchSize);
+    augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
     if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
-      writePerPairOutput(batchSize, batchSize, obsBatch);
+      writePerPairOutput(m_batchSize, m_batchSize, obsBatch);
     }
     obsBatch.clear();
   }
@@ -1235,8 +1276,8 @@ vector<vector<float>> HMM::forward(const PairObservations& observations)
     float recDistFromPrevious = roundMorgans(
         std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
     float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
-    // if both samples are carriers, there are two distinguished, otherwise, it's the or
-    // (use previous xor). This affects the number of undistinguished for the site
+    // if both samples are carriers, there are two distinguished, otherwise, it's the
+    // or (use previous xor). This affects the number of undistinguished for the site
     float obsIsZero = !observations.obsBits[pos] ? 1.0f : 0.0f;
     float obsIsHomMinor = observations.homMinorBits[pos] ? 1.0f : 0.0f;
 
@@ -1328,8 +1369,8 @@ vector<vector<float>> HMM::backward(const PairObservations& observations)
     float recDistFromPrevious = roundMorgans(
         std::max(minGenetic, lastGeneticPos - data.geneticPositions[pos]));
     float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
-    // if both samples are carriers, there are two distinguished, otherwise, it's the or
-    // (use previous xor). This affects the number of undistinguished for the site
+    // if both samples are carriers, there are two distinguished, otherwise, it's the
+    // or (use previous xor). This affects the number of undistinguished for the site
     float obsIsZero = !observations.obsBits[pos + 1] ? 1.0f : 0.0f;
     float obsIsHomMinor = observations.homMinorBits[pos + 1] ? 1.0f : 0.0f;
     if (decodingParams.decodingSequence) {

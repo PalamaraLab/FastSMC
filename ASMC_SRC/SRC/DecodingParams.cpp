@@ -24,6 +24,29 @@
 
 using namespace std;
 
+DecodingParams::DecodingParams()
+      : hapsFileRoot( ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array")
+      , decodingQuantFile( ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz")
+      , outFileRoot(hapsFileRoot)
+      , jobs(0)
+      , jobInd(0)
+      , decodingModeString("array")
+      , decodingMode(DecodingMode::arrayFolded)
+      , decodingSequence(false)
+      , foldData(true)
+      , usingCSFS(true)
+      , compress(false)
+      , useAncestral(false)
+      , skipCSFSdistance(0.f)
+      , noBatches(false)
+      , doPosteriorSums(false)
+      , doPerPairPosteriorMean(false)
+      , expectedCoalTimesFile("")
+      , withinOnly(false)
+      , doMajorMinorPosteriorSums(false)
+  {
+  }
+
 bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 
   namespace po = boost::program_options;

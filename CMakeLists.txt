@@ -39,6 +39,8 @@ include(cmake/SIMD.cmake)
 
 set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
 set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
+set(ASMC_file_dir ${ASMC_SOURCE_DIR}/FILES)
+add_definitions(-DASMC_FILE_DIR=\"${ASMC_file_dir}\")
 
 set(ASMC_source
   ${ASMC_source_dir}/HMM.cpp
@@ -72,6 +74,7 @@ set(ASMC_main
 
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_HMM.cpp
   )
 
 add_subdirectory(pybind11)
