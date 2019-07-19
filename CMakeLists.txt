@@ -41,6 +41,7 @@ set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
 set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
 
 set(ASMC_source
+  ${ASMC_source_dir}/HMM.cpp
   ${ASMC_source_dir}/Data.cpp
   ${ASMC_source_dir}/DecodingParams.cpp
   ${ASMC_source_dir}/DecodingQuantities.cpp
