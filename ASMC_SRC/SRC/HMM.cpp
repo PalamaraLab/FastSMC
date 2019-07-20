@@ -1034,10 +1034,6 @@ void HMM::writePerPairOutput(
 
   auto t0 = std::chrono::high_resolution_clock().now();
 
-  // allocate
-  float* sums = ALIGNED_MALLOC_FLOATS(states * actualBatchSize);
-  memset(sums, 0, states * actualBatchSize * sizeof(sums[0]));
-
   if (decodingParams.doPerPairMAP) {
     memset(MAP, 0, sequenceLength * actualBatchSize * sizeof(MAP[0]));
   }
@@ -1053,7 +1049,6 @@ void HMM::writePerPairOutput(
       for (int v = 0; v < actualBatchSize; v++) {
         float posterior_pos_state_pair
             = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
-        sums[k * actualBatchSize + v] += posterior_pos_state_pair;
         if (decodingParams.doPerPairPosteriorMean) {
           meanPost[pos * actualBatchSize + v]
               += posterior_pos_state_pair * expectedCoalTimes[k];
@@ -1088,8 +1083,6 @@ void HMM::writePerPairOutput(
       foutMAPPerPair << endl;
     }
   }
-
-  ALIGNED_FREE(sums);
 
   auto t1 = std::chrono::high_resolution_clock().now();
   ticksOutputPerPair += t1 - t0;
