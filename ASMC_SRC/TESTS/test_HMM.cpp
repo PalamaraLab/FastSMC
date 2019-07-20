@@ -44,20 +44,20 @@ TEST_CASE("test hmm functions", "[HMM]")
     REQUIRE(hmm.getBatchBuffer()[4].jName == data.individuals[1].name);
   }
 
-  SECTION("test flushBatchBuffer")
+  SECTION("test finishDecoding")
   {
     REQUIRE(hmm.getBatchBuffer().size() == 0);
     hmm.decodePair(0, 9);
     REQUIRE(hmm.getBatchBuffer().size() == 4);
-    hmm.flushBatchBuffer();
+    hmm.finishDecoding();
     REQUIRE(hmm.getBatchBuffer().size() == 0);
   }
 
   SECTION("test fill up buffer")
   {
     // default batch size is 64
-    for (int i = 0; i < 64 / 4; ++i) {
-      hmm.decodePair(i, 9);
+    for (int i = 1; i <= 64 / 4; ++i) {
+      hmm.decodePair(0, i);
     }
 
     // buffer should be empty now

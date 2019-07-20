@@ -128,13 +128,24 @@ class HMM {
   const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
 
   /// returns the decoding quantities calculated thus far
-  const DecodingReturnValues& getDecodingReturnValues() { return m_decodingReturnValues; }
+  const DecodingReturnValues& getDecodingReturnValues()
+  {
+    return m_decodingReturnValues;
+  }
 
-  /// tells HMM object to process whatever pairs are stored in the observationsBatch
-  /// buffer
-  void flushBatchBuffer();
+  /// finish decoding pairs
+  ///
+  /// tells HMM object to finish processing whatever pairs are stored in the
+  /// observationsBatch buffer and close output files
+  void finishDecoding();
 
   private:
+  /// resets the internal state of HMM to a clean state
+  void resetDecoding();
+
+  /// zero a vector of vectors of type T
+  template <typename T> void zeroVectorOfVectors(vector<vector<T>>& v);
+
   void prepareEmissions();
 
   // add pair to batch and run if we have enough

@@ -186,6 +186,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
   m_alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
   m_betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
   m_allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
+  memset(m_allZeros, 0, sequenceLength * m_batchSize * sizeof(m_allZeros[0]));
 
   if (decodingParams.doPerPairPosteriorMean) {
     meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
@@ -194,9 +195,23 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
     MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * m_batchSize);
     currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
   }
+
+  m_decodingReturnValues.sumOverPairs
+      = vector<vector<float>>(sequenceLength, vector<float>(states));
+  if (decodingParams.doMajorMinorPosteriorSums) {
+    m_decodingReturnValues.sumOverPairs00
+        = vector<vector<float>>(sequenceLength, vector<float>(states));
+    m_decodingReturnValues.sumOverPairs01
+        = vector<vector<float>>(sequenceLength, vector<float>(states));
+    m_decodingReturnValues.sumOverPairs11
+        = vector<vector<float>>(sequenceLength, vector<float>(states));
+  }
+
+  resetDecoding();
 }
 
-HMM::~HMM() {
+HMM::~HMM()
+{
   ALIGNED_FREE(m_betaBuffer);
   ALIGNED_FREE(m_alphaBuffer);
   ALIGNED_FREE(m_scalingBuffer);
@@ -244,7 +259,8 @@ void HMM::prepareEmissions()
           emission0minus1AtSite[pos][k] = decodingParams.decodingSequence
               ? (m_decodingQuant.foldedCSFSmap[undistAtThisSiteFor0dist][0][k]
                     - emission1AtSite[pos][k])
-              : (m_decodingQuant.foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]
+              : (m_decodingQuant
+                        .foldedAscertainedCSFSmap[undistAtThisSiteFor0dist][0][k]
                     - emission1AtSite[pos][k]);
           if (undistAtThisSiteFor2dist >= 0) {
             emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
@@ -289,7 +305,8 @@ void HMM::prepareEmissions()
               undist = 0;
             }
             emission2minus0AtSite[pos][k] = decodingParams.decodingSequence
-                ? (m_decodingQuant.CSFSmap[undist][dist][k] - emission0AtThisSiteAndState)
+                ? (m_decodingQuant.CSFSmap[undist][dist][k]
+                      - emission0AtThisSiteAndState)
                 : (m_decodingQuant.ascertainedCSFSmap[undist][dist][k]
                       - emission0AtThisSiteAndState);
           } else {
@@ -315,32 +332,47 @@ void HMM::prepareEmissions()
   }
 }
 
+template <typename T> void HMM::zeroVectorOfVectors(vector<vector<T>>& v)
+{
+  for (size_t i = 0; i < m_decodingReturnValues.sumOverPairs.size(); ++i) {
+    vector<float>& row = m_decodingReturnValues.sumOverPairs[i];
+    std::fill(row.begin(), row.end(), 0);
+  }
+}
+
+void HMM::resetDecoding()
+{
+  if (decodingParams.doPerPairPosteriorMean) {
+    if (foutPosteriorMeanPerPair) {
+      foutPosteriorMeanPerPair.close();
+    }
+    foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
+  }
+  if (decodingParams.doPerPairMAP) {
+    if (foutMAPPerPair) {
+      foutMAPPerPair.close();
+    }
+    foutMAPPerPair.openOrExit(outFileRoot + ".perPairMAP.gz");
+  }
+
+  zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs);
+
+  if (decodingParams.doMajorMinorPosteriorSums) {
+    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs00);
+    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs01);
+    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs11);
+  }
+}
+
 // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x states).
-DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
+void HMM::decodeAll(int jobs, int jobInd)
 {
 
   // auto t0 = std::chrono::high_resolution_clock().now();
   Timer timer;
 
-  memset(m_allZeros, 0, sequenceLength * m_batchSize * sizeof(m_allZeros[0]));
-  
-  if (decodingParams.doPerPairPosteriorMean) {
-    foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
-  }
-  if (decodingParams.doPerPairMAP) {
-    foutMAPPerPair.openOrExit(outFileRoot + ".perPairMAP.gz");
-  }
+  resetDecoding();
 
-  m_decodingReturnValues.sumOverPairs
-      = vector<vector<float>>(sequenceLength, vector<float>(states));
-  if (decodingParams.doMajorMinorPosteriorSums) {
-    m_decodingReturnValues.sumOverPairs00
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-    m_decodingReturnValues.sumOverPairs01
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-    m_decodingReturnValues.sumOverPairs11
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-  }
   const vector<Individual>& individuals = data.individuals;
   uint64 lastPercentage = -1;
   uint64 N = individuals.size();
@@ -360,7 +392,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
   uint64 totPairsJob = pairsEnd - pairsStart;
 
   // alloc
-  vector<PairObservations> observationsBatch;
+  m_observationsBatch.clear();
   for (uint i = 0; i < individuals.size(); i++) {
     if (!decodingParams.withinOnly) {
       for (uint j = 0; j < i; j++) {
@@ -373,7 +405,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
               if (noBatches) {
                 decode(observations);
               } else {
-                addToBatch(observationsBatch, observations);
+                addToBatch(m_observationsBatch, observations);
               }
               pairsJob++;
             }
@@ -389,7 +421,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
       if (noBatches) {
         decode(observations);
       } else {
-        addToBatch(observationsBatch, observations);
+        addToBatch(m_observationsBatch, observations);
       }
       pairsJob++;
     }
@@ -401,9 +433,6 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
            << "  (" << pairsJob << "/" << totPairsJob << ")" << flush;
     }
     lastPercentage = percentage;
-  }
-  if (!noBatches) {
-    runLastBatch(observationsBatch);
   }
 
   // auto t1 = std::chrono::high_resolution_clock().now();
@@ -420,14 +449,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd)
   //    ticksSumOverPairs + ticksOutputPerPair) / ticksDecodeAll);
   cout << flush;
 
-  if (decodingParams.doPerPairPosteriorMean) {
-    foutPosteriorMeanPerPair.close();
-  }
-  if (decodingParams.doPerPairMAP) {
-    foutMAPPerPair.close();
-  }
-
-  return m_decodingReturnValues;
+  finishDecoding();
 }
 
 void HMM::decodePair(const uint i, const uint j)
@@ -460,8 +482,16 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-void HMM::flushBatchBuffer() { runLastBatch(m_observationsBatch); }
-
+void HMM::finishDecoding()
+{
+  runLastBatch(m_observationsBatch);
+  if (decodingParams.doPerPairPosteriorMean) {
+    foutPosteriorMeanPerPair.close();
+  }
+  if (decodingParams.doPerPairMAP) {
+    foutMAPPerPair.close();
+  }
+}
 
 // add pair to batch and run if we have enough
 void HMM::addToBatch(
