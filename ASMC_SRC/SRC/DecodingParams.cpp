@@ -25,8 +25,8 @@
 using namespace std;
 
 DecodingParams::DecodingParams()
-      : hapsFileRoot( ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array")
-      , decodingQuantFile( ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz")
+      : hapsFileRoot("")
+      , decodingQuantFile("")
       , outFileRoot(hapsFileRoot)
       , jobs(0)
       , jobInd(0)

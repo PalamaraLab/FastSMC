@@ -32,7 +32,7 @@ def test_regession(asmc_exe):
         '--posteriorSums',
     ])
 
-    new_file = os.path.join(base_dir, 'FILES', 'EXAMPLE', 'exampleFile.n300.array.sumOverPairs.gz')
+    new_file = os.path.join(base_dir, 'FILES', 'EXAMPLE', 'exampleFile.n300.array.1-1.sumOverPairs.gz')
     assert os.path.isfile(new_file), \
         "No output file found at {}. Did the executable run as expected?".format(new_file)
 
