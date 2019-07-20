@@ -336,7 +336,7 @@ template <typename T> void HMM::zeroVectorOfVectors(vector<vector<T>>& v)
 {
   for (size_t i = 0; i < m_decodingReturnValues.sumOverPairs.size(); ++i) {
     vector<float>& row = m_decodingReturnValues.sumOverPairs[i];
-    std::fill(row.begin(), row.end(), 0);
+    std::fill(row.begin(), row.end(), static_cast<T>(0));
   }
 }
 
