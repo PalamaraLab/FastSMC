@@ -72,6 +72,50 @@ int main(int argc, char *argv[]) {
 
     vector < vector <float> > sumOverPairs = decodingReturnValues.sumOverPairs;
 
+    cout << "Decoding batch " << params.jobInd << " of " << params.jobs << "\n\n";
+
+    cout << "Will decode " << params.decodingModeString << " data." << endl;
+    cout << "Output will have prefix: " << params.outFileRoot << endl;
+    if (params.compress)
+        cout << "Will use classic emission model (no CSFS)." << endl;
+    else
+        cout << "Minimum marker distance to use CSFS is set to " << params.skipCSFSdistance << "." << endl;
+    if (params.useAncestral)
+        cout << "Assuming ancestral alleles are correctly encoded." << endl;
+    if (params.doPosteriorSums)
+        cout << "Will output sum of posterior tables for all pairs." << endl;
+    if (params.doMajorMinorPosteriorSums)
+        cout << "Will output sum of posterior tables for all pairs, partitioned by major/minor alleles." << endl;
+
+    // if (params.noBatches)
+    //     cout << "Will not process samples in batches (slower)." << endl;
+    // if (!params.withinOnly)
+    //     cout << "Will only decode maternal vs. paternal haplotypes." << endl;
+    // if (params.doPerPairMAP)
+    //     cout << "Will output MAP for all haploid pairs (DANGER: huge files)." << endl;
+    // if (params.doPerPairPosteriorMean)
+    //     cout << "Will output posterior mean for all haploid pairs (DANGER: huge files)." << endl;
+
+    // used for benchmarking
+    Timer timer;
+
+    // read decoding quantities from file
+    std::string str(params.decodingQuantFile.c_str());
+    DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
+    printf("Read precomputed decoding info in %.3f seconds.\n", timer.update_time());
+    // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
+
+    cout << "Data will be loaded from " << params.hapsFileRoot << "*\n";
+    int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
+    Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);
+    printf("Read haps in %.3f seconds.\n", timer.update_time());
+
+    HMM hmm(data, decodingQuantities, params, !params.noBatches);
+
+    hmm.decodeAll(params.jobs, params.jobInd);
+    const DecodingReturnValues& decodingReturnValues = hmm.getDecodingReturnValues();
+    const vector < vector <float> >& sumOverPairs = decodingReturnValues.sumOverPairs;
+
     // output sums over pairs (if requested)
     if (params.doPosteriorSums) {
         FileUtils::AutoGzOfstream fout; fout.openOrExit(params.outFileRoot + ".sumOverPairs.gz");
