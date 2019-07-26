@@ -75,11 +75,11 @@ set(ASMC_unit_tests
   )
 
 add_subdirectory(pybind11)
-pybind11_add_module(asmc ${ASMC_source_dir}/pybind.cpp)
+pybind11_add_module(pyASMC ${ASMC_source_dir}/pybind.cpp)
 add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 add_executable(ASMC_exe ${ASMC_main})
-target_link_libraries(asmc PRIVATE ASMC)
+target_link_libraries(pyASMC PRIVATE ASMC)
 target_link_libraries(ASMC_exe PRIVATE ASMC)
 
 enable_testing()
