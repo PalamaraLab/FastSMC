@@ -124,6 +124,20 @@ class HMM {
   ///
   void decodePair(const uint i, const uint j);
 
+  /// decode a list of pairs
+  ///
+  /// the input pairs are described using two vectors of indicies of `individuals`.
+  /// if noBatches is not set then the pairs are processed in batches for efficiency.
+  /// This means that after the call to `decodePairs` there might be unprocessed pairs
+  /// waiting for the buffer to be full. Use `finishDecoding` to process these.
+  ///
+  /// @param individualsA vector of indicies of first individual
+  /// @param individualsB vector of indicies of second individual
+  ///
+  void decodePairs(const vector<uint>& individualsA, const vector<uint>& individualsB);
+
+
+
   /// returns the current buffer of pair observations
   const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
 

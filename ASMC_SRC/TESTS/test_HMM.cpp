@@ -47,6 +47,19 @@ TEST_CASE("test hmm functions", "[HMM]")
     REQUIRE(hmm.getBatchBuffer()[4].jName == data.individuals[1].name);
   }
 
+  SECTION("test decode pairs")
+  {
+    REQUIRE(hmm.getBatchBuffer().size() == 0);
+    hmm.decodePairs({ 0, 1 }, { 9, 1 });
+    REQUIRE(hmm.getBatchBuffer().size() == 5);
+    for (int i = 0; i < 4; ++i) {
+      REQUIRE(hmm.getBatchBuffer()[0].iName == data.individuals[0].name);
+      REQUIRE(hmm.getBatchBuffer()[0].jName == data.individuals[9].name);
+    }
+    REQUIRE(hmm.getBatchBuffer()[4].iName == data.individuals[1].name);
+    REQUIRE(hmm.getBatchBuffer()[4].jName == data.individuals[1].name);
+  }
+
   SECTION("test finishDecoding")
   {
     REQUIRE(hmm.getBatchBuffer().size() == 0);

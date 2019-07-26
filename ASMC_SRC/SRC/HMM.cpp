@@ -16,6 +16,7 @@
 #include "HMM.hpp"
 
 #include <cassert>
+#include <exception>
 #include <iostream>
 #include <map>
 
@@ -450,6 +451,18 @@ void HMM::decodeAll(int jobs, int jobInd)
   cout << flush;
 
   finishDecoding();
+}
+
+void HMM::decodePairs(
+    const vector<uint>& individualsA, const vector<uint>& individualsB)
+{
+  if (individualsA.size() != individualsB.size()) {
+    throw runtime_error(
+        "vector of A indicies must be the same size as vector of B indicies");
+  }
+  for (size_t i = 0; i < individualsA.size(); ++i) {
+    decodePair(individualsA[i], individualsB[i]);
+  }
 }
 
 void HMM::decodePair(const uint i, const uint j)
