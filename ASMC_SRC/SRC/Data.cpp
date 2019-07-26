@@ -258,6 +258,8 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
       cerr << "ERROR: haps line has wrong length. Length is " << line.length()
            << ", should be 4*" << famAndIndNameList.size() << " = "
            << 4 * famAndIndNameList.size() << "." << endl;
+      cerr << "\thaps line is: " << line << endl;
+
       exit(1);
     }
     int totalSamples = static_cast<int>(2 * famAndIndNameList.size());
