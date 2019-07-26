@@ -17,9 +17,9 @@
 #include <vector>
 #include <pybind11/stl_bind.h>
 
-PYBIND11_MAKE_OPAQUE(std::vector<bool>);
-PYBIND11_MAKE_OPAQUE(std::vector<float>);
-PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >);
+PYBIND11_MAKE_OPAQUE(std::vector<bool>)
+PYBIND11_MAKE_OPAQUE(std::vector<float>)
+PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 
 #include "ASMC.hpp"
 
