@@ -20,6 +20,7 @@
 #include "DecodingQuantities.hpp"
 #include "DecodingParams.hpp"
 #include "Types.hpp"
+#include "StringUtils.hpp"
 #include "FileUtils.hpp"
 #include "Data.hpp"
 #include <string>
@@ -44,6 +45,9 @@ struct DecodingReturnValues {
       sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
   vector<vector<float>>
       sumOverPairs11; // output for sum over all pairs with genotype 11
+  int sites = 0;
+  unsigned int states = 0;
+  vector <bool> siteWasFlippedDuringFolding = {};
 };
 
 // does the linear-time decoding

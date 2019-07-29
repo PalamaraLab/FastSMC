@@ -94,6 +94,33 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
       cerr << endl;
       return false;
     }
+  } catch (po::error &e) {
+    cerr << "ERROR: " << e.what() << endl << endl;
+    cerr << options << endl;
+    return false;
+  }
+
+  if(decodingModeString == string("sequence"))
+      decodingModeOverall = DecodingModeOverall::sequence;
+  else if(decodingModeString == string("array"))
+      decodingModeOverall = DecodingModeOverall::array;
+  else {
+     cerr << "Decoding mode should be one of {sequence, array}";
+     return false;
+  }
+  if(processOptions()) {
+    if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
+         cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
+              << endl;
+         return false;
+    }
+  }
+  else
+      return false;
+  return true;
+}
+
+bool DecodingParams::processOptions() {
 
     if (compress) {
       if (useAncestral) {
@@ -122,7 +149,7 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
     }
 
     boost::algorithm::to_lower(decodingModeString);
-    if (decodingModeString == string("sequence")) {
+    if (decodingModeOverall == DecodingModeOverall::sequence) {
       decodingSequence = true;
       if (useAncestral) {
         decodingMode = DecodingMode::sequence;
@@ -132,7 +159,7 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
         decodingMode = DecodingMode::sequenceFolded;
         foldData = true;
       }
-    } else if (decodingModeString == string("array")) {
+    } else if (decodingModeOverall == DecodingModeOverall::array) {
       decodingSequence = false;
       if (useAncestral) {
         decodingMode = DecodingMode::array;
@@ -174,17 +201,6 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
       }
     }
 
-    if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
-      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
-           << endl;
-      return false;
-    }
-  } catch (po::error &e) {
-    cerr << "ERROR: " << e.what() << endl << endl;
-    cerr << options << endl;
-    return false;
-  }
-
-  return true;
+   return true;
 }
 

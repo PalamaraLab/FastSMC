@@ -18,11 +18,16 @@
 #define DECODINGPARAMS_HPP
 
 #include <string>
+#include <vector>
 
 using namespace std;
 
 enum class DecodingMode {
     sequenceFolded, arrayFolded, sequence, array
+};
+
+enum class DecodingModeOverall {
+    sequence, array
 };
 
 class DecodingParams {
@@ -32,9 +37,10 @@ public:
     string hapsFileRoot;
     string decodingQuantFile;
     string outFileRoot;
-    int jobs;
-    int jobInd;
+    int jobs = 0;
+    int jobInd = 0;
     string decodingModeString;
+    DecodingModeOverall decodingModeOverall;
     DecodingMode decodingMode;
     bool decodingSequence = false;
     bool foldData = false;
@@ -53,6 +59,7 @@ public:
     bool doMajorMinorPosteriorSums = false;
 
     bool processCommandLineArgs(int argc, char *argv[]);
+    bool processOptions();
 
 };
 
