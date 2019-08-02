@@ -209,6 +209,12 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
   }
 
   resetDecoding();
+
+  // output for python interface (TODO: not sure if this is the right place)
+  m_decodingReturnValues.sites = _data.sites;
+  m_decodingReturnValues.states = _decodingQuant.states;
+  m_decodingReturnValues.siteWasFlippedDuringFolding = _data.siteWasFlippedDuringFolding;
+
 }
 
 HMM::~HMM()

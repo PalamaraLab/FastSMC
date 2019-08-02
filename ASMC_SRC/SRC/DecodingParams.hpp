@@ -39,6 +39,7 @@ public:
   int jobs;
   int jobInd;
   string decodingModeString;
+  DecodingModeOverall decodingModeOverall;
   DecodingMode decodingMode;
   bool decodingSequence = false;
   bool foldData;
@@ -56,6 +57,7 @@ public:
   bool withinOnly;      // only compute decoding within individuals
   bool doMajorMinorPosteriorSums = false;
 
+  bool processOptions();
   bool processCommandLineArgs(int argc, char* argv[]);
 
   /// constructor with default parameters set
