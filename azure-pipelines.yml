@@ -35,13 +35,13 @@ strategy:
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
     # Windows
-    Windows-unit:
-      imageName: 'windows-2019'
-      installDeps: 'vcpkg'
-      vcpkgTriplet: 'x64-windows'
-      cmakeConfigArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
-      cmakeBuildArgs: '--target ASMC_unit_tests'
-      jobType: 'unit'
+    #Windows-unit:
+    #  imageName: 'windows-2019'
+    #  installDeps: 'vcpkg'
+    #  vcpkgTriplet: 'x64-windows'
+    #  cmakeConfigArgs: '-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake'
+    #  cmakeBuildArgs: '--target ASMC_unit_tests'
+    #  jobType: 'unit'
 
 trigger:
   - master
