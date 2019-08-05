@@ -136,7 +136,18 @@ class HMM {
   ///
   void decodePairs(const vector<uint>& individualsA, const vector<uint>& individualsB);
 
-
+  /// decode a single pair over a segment of the genome
+  ///
+  /// i and j must be a valid index in `individuals`, `fromPosition` and `toPosition`
+  /// must be less than the size of ?
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full. This is only efficient if subseqent pairs overlap
+  /// in the range `fromPosition` -> `toPosition`
+  ///
+  /// @param i index of first individual
+  /// @param j index of second individual
+  ///
+  void decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition);
 
   /// returns the current buffer of pair observations
   const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
