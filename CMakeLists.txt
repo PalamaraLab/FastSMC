@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 cmake_minimum_required(VERSION 3.12)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 
