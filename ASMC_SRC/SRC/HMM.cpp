@@ -382,7 +382,7 @@ DecodingReturnValues HMM::decodeAll(int jobs, int jobInd, int batchSize)
   // auto t1 = std::chrono::high_resolution_clock().now();
   // double ticksDecodeAll = t1 - t0;
   printf(
-      "\nDecoded %" PRIu64 " pairs in %.3f seconds.\n", pairsJob, timer.update_time());
+      "\nDecoded %" PRIu64 " pairs in %.9f seconds.\n", pairsJob, timer.update_time());
   // print some stats (will remove)
   //    printPctTime("forward", ticksForward / ticksDecodeAll);
   //    printPctTime("backward", ticksBackward / ticksDecodeAll);
