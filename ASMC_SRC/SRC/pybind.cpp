@@ -26,7 +26,7 @@ PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 namespace py = pybind11;
 using namespace py::literals;
 
-PYBIND11_MODULE(asmc, m) {
+PYBIND11_MODULE(pyASMC, m) {
     py::enum_<DecodingModeOverall>(m, "DecodingModeOverall", py::arithmetic())
         .value("sequence", DecodingModeOverall::sequence)
         .value("array", DecodingModeOverall::array);
