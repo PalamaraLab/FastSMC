@@ -24,6 +24,8 @@ PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 #include "ASMC.hpp"
 #include "Individual.hpp"
 #include "HMM.hpp"
+#include "DecodingQuantities.hpp"
+#include "DecodingParams.hpp"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -53,6 +55,8 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("jName", &PairObservations::jName)
         .def_readwrite("obsBits", &PairObservations::obsBits)
         .def_readwrite("homMinorBits", &PairObservations::homMinorBits);
+    py::class_<DecodingQuantities>(m, "DecodingQuantities");
+    py::class_<DecodingParams>(m, "DecodingParams");
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "haps_file_root"_a, "decoding_quant_file"_a,
           "out_file_root"_a = "", "mode"_a = DecodingModeOverall::array,
