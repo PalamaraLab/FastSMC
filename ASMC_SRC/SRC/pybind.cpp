@@ -22,6 +22,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<float>)
 PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 
 #include "ASMC.hpp"
+#include "Individual.hpp"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -41,6 +42,11 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("sites", &DecodingReturnValues::sites)
         .def_readwrite("states", &DecodingReturnValues::states)
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
+    py::class_<Individual>(m, "Individual")
+        .def(py::init<string, string, int>(),
+                py::arg("_famId") = "", py::arg("_IId") = "",
+                py::arg("numOfSites") = 0)
+        .def("setGenotype", &Individual::setGenotype);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "haps_file_root"_a, "decoding_quant_file"_a,
           "out_file_root"_a = "", "mode"_a = DecodingModeOverall::array,
