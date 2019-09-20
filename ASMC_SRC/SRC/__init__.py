@@ -15,7 +15,7 @@
 
 import numpy as np
 import collections
-from .asmc import DecodingModeOverall, asmc
+from .pyASMC import DecodingModeOverall, asmc
 
 ASMCReturnValues = collections.namedtuple(
     "ASMCReturnValues",
