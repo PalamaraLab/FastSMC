@@ -76,11 +76,8 @@ DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
 
     HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
-    DecodingReturnValues decodingReturnValues = hmm.decodeAll(params.jobs, params.jobInd);
-    decodingReturnValues.sites = data.sites;
-    decodingReturnValues.states = decodingQuantities.states;
-    decodingReturnValues.siteWasFlippedDuringFolding = data.siteWasFlippedDuringFolding;
-    return decodingReturnValues;
+    hmm.decodeAll(params.jobs, params.jobInd);
+    return hmm.getDecodingReturnValues();
 }
 
 

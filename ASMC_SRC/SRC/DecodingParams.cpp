@@ -24,6 +24,29 @@
 
 using namespace std;
 
+DecodingParams::DecodingParams()
+      : hapsFileRoot("")
+      , decodingQuantFile("")
+      , outFileRoot(hapsFileRoot)
+      , jobs(1)
+      , jobInd(1)
+      , decodingModeString("array")
+      , decodingMode(DecodingMode::arrayFolded)
+      , decodingSequence(false)
+      , foldData(true)
+      , usingCSFS(true)
+      , compress(false)
+      , useAncestral(false)
+      , skipCSFSdistance(0.f)
+      , noBatches(false)
+      , doPosteriorSums(false)
+      , doPerPairPosteriorMean(false)
+      , expectedCoalTimesFile("")
+      , withinOnly(false)
+      , doMajorMinorPosteriorSums(false)
+  {
+  }
+
 bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 
   namespace po = boost::program_options;

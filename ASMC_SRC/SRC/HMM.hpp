@@ -16,13 +16,12 @@
 #ifndef ASMC_HMM
 #define ASMC_HMM
 
-#include "Individual.hpp"
-#include "DecodingQuantities.hpp"
-#include "DecodingParams.hpp"
-#include "Types.hpp"
-#include "StringUtils.hpp"
-#include "FileUtils.hpp"
 #include "Data.hpp"
+#include "DecodingParams.hpp"
+#include "DecodingQuantities.hpp"
+#include "FileUtils.hpp"
+#include "Individual.hpp"
+#include "Types.hpp"
 #include <string>
 #include <vector>
 
@@ -38,13 +37,19 @@ struct PairObservations {
 
 // individual ids and XOR of genotypes
 struct DecodingReturnValues {
-  vector<vector<float>> sumOverPairs; // output for sum over all pairs
-  vector<vector<float>>
-      sumOverPairs00; // output for sum over all pairs with genotype 00
-  vector<vector<float>>
-      sumOverPairs01; // output for sum over all pairs with genotype 01 or 10
-  vector<vector<float>>
-      sumOverPairs11; // output for sum over all pairs with genotype 11
+
+  /// output for sum over all pairs
+  vector<vector<float>> sumOverPairs;
+
+  /// output for sum over all pairs with genotype 00
+  vector<vector<float>> sumOverPairs00;
+
+  /// output for sum over all pairs with genotype 01 or 10
+  vector<vector<float>> sumOverPairs01;
+
+  /// output for sum over all pairs with genotype 11
+  vector<vector<float>> sumOverPairs11;
+
   int sites = 0;
   unsigned int states = 0;
   vector <bool> siteWasFlippedDuringFolding = {};
@@ -53,14 +58,20 @@ struct DecodingReturnValues {
 // does the linear-time decoding
 class HMM {
 
-  float* alphaBuffer;
-  float* betaBuffer;
-  float* scalingBuffer;
-  float* allZeros;
+  int m_batchSize;
+
+  float* m_alphaBuffer;
+  float* m_betaBuffer;
+  float* m_scalingBuffer;
+  float* m_allZeros;
+
+  float* meanPost;
+  ushort* MAP;
+  float* currentMAPValue;
 
   // for decoding
   Data& data;
-  const DecodingQuantities& decodingQuant;
+  const DecodingQuantities& m_decodingQuant;
   const DecodingParams& decodingParams;
 
   string outFileRoot;
@@ -84,29 +95,76 @@ class HMM {
   const int precision = 2;
   const float minGenetic = 1e-10f;
 
+  vector<PairObservations> m_observationsBatch;
+
   // output
-  DecodingReturnValues decodingReturnValues;
+  DecodingReturnValues m_decodingReturnValues;
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
-  float* meanPost;
-  ushort* MAP;
-  float* currentMAPValue;
 
   public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
       DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
 
-  void prepareEmissions();
+  ~HMM();
 
-  // Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
-  // states).
-  DecodingReturnValues decodeAll(int jobs, int jobInd, int batchSize = 64);
+  /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
+  /// states).
+  void decodeAll(int jobs, int jobInd);
+
+  /// decode a single pair
+  ///
+  /// i and j must be a valid index in `individuals`
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full
+  ///
+  /// @param i index of first individual
+  /// @param j index of second individual
+  ///
+  void decodePair(const uint i, const uint j);
+
+  /// decode a list of pairs
+  ///
+  /// the input pairs are described using two vectors of indicies of `individuals`.
+  /// if noBatches is not set then the pairs are processed in batches for efficiency.
+  /// This means that after the call to `decodePairs` there might be unprocessed pairs
+  /// waiting for the buffer to be full. Use `finishDecoding` to process these.
+  ///
+  /// @param individualsA vector of indicies of first individual
+  /// @param individualsB vector of indicies of second individual
+  ///
+  void decodePairs(const vector<uint>& individualsA, const vector<uint>& individualsB);
+
+
+
+  /// returns the current buffer of pair observations
+  const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
+
+  /// returns the decoding quantities calculated thus far
+  const DecodingReturnValues& getDecodingReturnValues()
+  {
+    return m_decodingReturnValues;
+  }
+
+  /// finish decoding pairs
+  ///
+  /// tells HMM object to finish processing whatever pairs are stored in the
+  /// observationsBatch buffer and close output files
+  void finishDecoding();
 
   private:
+  /// resets the internal state of HMM to a clean state
+  void resetDecoding();
+
+  /// zero a vector of vectors of type T
+  template <typename T> void zeroVectorOfVectors(vector<vector<T>>& v);
+
+  void prepareEmissions();
+
   // add pair to batch and run if we have enough
-  void addToBatch(vector<PairObservations>& obsBatch, int batchSize,
-      const PairObservations& observations);
+  void addToBatch(
+      vector<PairObservations>& obsBatch, const PairObservations& observations);
 
   // complete with leftover pairs
   void runLastBatch(vector<PairObservations>& obsBatch);
@@ -116,7 +174,6 @@ class HMM {
 
   // compute scaling factor for an alpha vector
   void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize);
-
 
   void applyScaling(float* vec, float* scalings, int curBatchSize);
 
