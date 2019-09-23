@@ -24,6 +24,7 @@ PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 #include "ASMC.hpp"
 #include "Individual.hpp"
 #include "HMM.hpp"
+#include "Data.hpp"
 #include "DecodingQuantities.hpp"
 #include "DecodingParams.hpp"
 
@@ -55,8 +56,15 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("jName", &PairObservations::jName)
         .def_readwrite("obsBits", &PairObservations::obsBits)
         .def_readwrite("homMinorBits", &PairObservations::homMinorBits);
-    py::class_<DecodingQuantities>(m, "DecodingQuantities");
-    py::class_<DecodingParams>(m, "DecodingParams");
+    py::class_<DecodingQuantities>(m, "DecodingQuantities")
+        .def(py::init<const char*>());
+    py::class_<DecodingParams>(m, "DecodingParams")
+        .def(py::init<>());
+    py::class_<Data>(m, "Data")
+        .def(py::init<string, int, int, bool, bool>());
+    py::class_<HMM>(m, "HMM")
+        .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
+        .def("decode", &HMM::decode);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "haps_file_root"_a, "decoding_quant_file"_a,
           "out_file_root"_a = "", "mode"_a = DecodingModeOverall::array,

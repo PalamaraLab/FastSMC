@@ -113,6 +113,8 @@ class HMM {
   /// states).
   void decodeAll(int jobs, int jobInd);
 
+  vector<vector<float>> decode(const PairObservations& observations);
+
   /// decode a single pair
   ///
   /// i and j must be a valid index in `individuals`
@@ -227,7 +229,6 @@ class HMM {
   void fillMatrixColumn(
       vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
 
-  vector<vector<float>> decode(const PairObservations& observations);
 
   float roundMorgans(float gen);
 
