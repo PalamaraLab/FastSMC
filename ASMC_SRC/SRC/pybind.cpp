@@ -61,7 +61,7 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<DecodingParams>(m, "DecodingParams")
         .def(py::init<>());
     py::class_<Data>(m, "Data")
-        .def(py::init<string, int, int, bool, bool>());
+        .def(py::init<std::string, int, int, bool, bool>());
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
         .def("decode", &HMM::decode);
