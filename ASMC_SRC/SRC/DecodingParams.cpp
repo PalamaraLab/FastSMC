@@ -47,6 +47,50 @@ DecodingParams::DecodingParams()
   {
   }
 
+DecodingParams::DecodingParams(string _hapsFileRoot,
+        string _decodingQuantFile,
+        string _outFileRoot = "",
+        int _jobs = 1,
+        int _jobInd = 1,
+        string _decodingModeString = "array",
+        DecodingMode _decodingMode = DecodingMode::arrayFolded,
+        bool _decodingSequence = false,
+        bool _foldData = true,
+        bool _usingCSFS = true,
+        bool _compress = false,
+        bool _useAncestral = false,
+        float _skipCSFSdistance = 0.f,
+        bool _noBatches = false,
+        bool _doPosteriorSums = false,
+        bool _doPerPairPosteriorMean = false,
+        string _expectedCoalTimesFile = "",
+        bool _withinOnly = false,
+        bool _doMajorMinorPosteriorSums = false
+        )
+      : hapsFileRoot(_hapsFileRoot)
+      , decodingQuantFile(_decodingQuantFile)
+      , outFileRoot(_outFileRoot)
+      , jobs(_jobs)
+      , jobInd(_jobInd)
+      , decodingModeString(_decodingModeString)
+      , decodingMode(_decodingMode)
+      , decodingSequence(_decodingSequence)
+      , foldData(_foldData)
+      , usingCSFS(_usingCSFS)
+      , compress(_compress)
+      , useAncestral(_useAncestral)
+      , skipCSFSdistance(_skipCSFSdistance)
+      , noBatches(_noBatches)
+      , doPosteriorSums(_doPosteriorSums)
+      , doPerPairPosteriorMean(_doPerPairPosteriorMean)
+      , expectedCoalTimesFile(_expectedCoalTimesFile)
+      , withinOnly(_withinOnly)
+      , doMajorMinorPosteriorSums(_doMajorMinorPosteriorSums)
+  {
+      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
+  }
+
+
 bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 
   namespace po = boost::program_options;
