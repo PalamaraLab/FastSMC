@@ -35,6 +35,11 @@ PYBIND11_MODULE(pyASMC, m) {
     py::enum_<DecodingModeOverall>(m, "DecodingModeOverall", py::arithmetic())
         .value("sequence", DecodingModeOverall::sequence)
         .value("array", DecodingModeOverall::array);
+    py::enum_<DecodingMode>(m, "DecodingMode", py::arithmetic())
+        .value("sequenceFolded", DecodingMode::sequenceFolded)
+        .value("arrayFolded", DecodingMode::arrayFolded)
+        .value("sequence", DecodingMode::sequence)
+        .value("array", DecodingMode::array);
     py::bind_vector<std::vector<bool>>(m, "VectorBool");
     py::bind_vector<std::vector<float>>(m, "VectorFloat");
     py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
@@ -59,7 +64,28 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<DecodingQuantities>(m, "DecodingQuantities")
         .def(py::init<const char*>());
     py::class_<DecodingParams>(m, "DecodingParams")
-        .def(py::init<>());
+        .def(py::init<string, string, string,
+                int, int, string, DecodingMode,
+                bool, bool, bool, bool, bool,
+                float, bool, bool, bool,
+                string, bool, bool>(),
+                py::arg("hapsFileRoot"), py::arg("decodingQuantFile"),
+                py::arg("outFileRoot") = "",
+                py::arg("jobs") = 1, py::arg("jobInd") = 1,
+                py::arg("decodingModeString") = "array",
+                py::arg("decodingMode") = DecodingMode::arrayFolded,
+                py::arg("decodingSequence") = false,
+                py::arg("foldData") = true,
+                py::arg("usingCSFS") = true,
+                py::arg("compress") = false,
+                py::arg("useAncestral") = false,
+                py::arg("skipCSFSdistance") = 0.f,
+                py::arg("noBatches") = false,
+                py::arg("doPosteriorSums") = false,
+                py::arg("doPerPairPosteriorMean") = false,
+                py::arg("expectedCoalTimesFile") = "",
+                py::arg("withinOnly") = false,
+                py::arg("doMajorMinorPosteriorSums") = false);
     py::class_<Data>(m, "Data")
         .def(py::init<std::string, int, int, bool, bool>());
     py::class_<HMM>(m, "HMM")
