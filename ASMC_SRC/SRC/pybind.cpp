@@ -87,15 +87,18 @@ PYBIND11_MODULE(pyASMC, m) {
                 py::arg("withinOnly") = false,
                 py::arg("doMajorMinorPosteriorSums") = false);
     py::class_<Data>(m, "Data")
-        .def(py::init<std::string, int, int, bool, bool>());
+        .def(py::init<std::string, int, int, bool, bool>(),
+             "hapsFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
+             "foldToMinorAlleles"_a, "decodingUsesCSFS"_a)
+        .def_static("countHapLines", &Data::countHapLines);
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
         .def("decode", &HMM::decode);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
-          "haps_file_root"_a, "decoding_quant_file"_a,
-          "out_file_root"_a = "", "mode"_a = DecodingModeOverall::array,
-          "jobs"_a = 0, "job_index"_a = 0,
-          "skip_csfs_distance"_a = 0,
-          "compress"_a = false, "use_ancestral"_a = false,
-          "posterior_sums"_a = true, "major_minor_posterior_sums"_a = false);
+          "hapsFileRoot"_a, "decodingQuantFile"_a,
+          "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
+          "jobs"_a = 0, "jobInd"_a = 0,
+          "skipCSFSDistance"_a = 0,
+          "compress"_a = false, "useAncestral"_a = false,
+          "doPosteriorSums"_a = true, "doMajorMinorPosteriorSums"_a = false);
 }
