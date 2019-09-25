@@ -53,8 +53,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
     py::class_<Individual>(m, "Individual")
         .def(py::init<string, string, int>(),
-                py::arg("_famId") = "", py::arg("_IId") = "",
-                py::arg("numOfSites") = 0)
+                "famId"_a = "", "IId"_a = "", "numOfSites"_a = 0)
         .def("setGenotype", &Individual::setGenotype);
     py::class_<PairObservations>(m, "PairObservations")
         .def_readwrite("iName", &PairObservations::iName)
@@ -73,7 +72,7 @@ PYBIND11_MODULE(pyASMC, m) {
                 string, bool, bool>(),
                 "hapsFileRoot"_a, "decodingQuantFile"_a,
                 "outFileRoot"_a = "",
-                "jobs"_a = 1, py::arg("jobInd") = 1,
+                "jobs"_a = 1, "jobInd"_a = 1,
                 "decodingModeString"_a = "array",
                 "decodingMode"_a = DecodingMode::arrayFolded,
                 "decodingSequence"_a = false,
