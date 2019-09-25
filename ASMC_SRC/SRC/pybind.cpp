@@ -119,6 +119,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("decodeAll", &HMM::decodeAll)
         .def("getDecodingReturnValues", &HMM::getDecodingReturnValues)
         ;
+    m.def("makePairObs", &makePairObs);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "hapsFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,

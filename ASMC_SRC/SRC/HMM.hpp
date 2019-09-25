@@ -55,6 +55,8 @@ struct DecodingReturnValues {
   vector <bool> siteWasFlippedDuringFolding = {};
 };
 
+PairObservations makePairObs(
+    const Individual& iInd, int iHap, const Individual& jInd, int jHap);
 // does the linear-time decoding
 class HMM {
 
