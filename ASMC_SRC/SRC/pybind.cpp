@@ -69,23 +69,44 @@ PYBIND11_MODULE(pyASMC, m) {
                 bool, bool, bool, bool, bool,
                 float, bool, bool, bool,
                 string, bool, bool>(),
-                py::arg("hapsFileRoot"), py::arg("decodingQuantFile"),
-                py::arg("outFileRoot") = "",
-                py::arg("jobs") = 1, py::arg("jobInd") = 1,
-                py::arg("decodingModeString") = "array",
-                py::arg("decodingMode") = DecodingMode::arrayFolded,
-                py::arg("decodingSequence") = false,
-                py::arg("foldData") = true,
-                py::arg("usingCSFS") = true,
-                py::arg("compress") = false,
-                py::arg("useAncestral") = false,
-                py::arg("skipCSFSdistance") = 0.f,
-                py::arg("noBatches") = false,
-                py::arg("doPosteriorSums") = false,
-                py::arg("doPerPairPosteriorMean") = false,
-                py::arg("expectedCoalTimesFile") = "",
-                py::arg("withinOnly") = false,
-                py::arg("doMajorMinorPosteriorSums") = false);
+                "hapsFileRoot"_a, "decodingQuantFile"_a,
+                "outFileRoot"_a = "",
+                "jobs"_a = 1, py::arg("jobInd") = 1,
+                "decodingModeString"_a = "array",
+                "decodingMode"_a = DecodingMode::arrayFolded,
+                "decodingSequence"_a = false,
+                "foldData"_a = true,
+                "usingCSFS"_a = true,
+                "compress"_a = false,
+                "useAncestral"_a = false,
+                "skipCSFSdistance"_a = 0.f,
+                "noBatches"_a = false,
+                "doPosteriorSums"_a = false,
+                "doPerPairPosteriorMean"_a = false,
+                "expectedCoalTimesFile"_a = "",
+                "withinOnly"_a = false,
+                "doMajorMinorPosteriorSums"_a = false)
+        .def_readwrite("hapsFileRoot", &DecodingParams::hapsFileRoot)
+        .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
+        .def_readwrite("outFileRoot", &DecodingParams::outFileRoot)
+        .def_readwrite("jobs", &DecodingParams::jobs)
+        .def_readwrite("jobInd", &DecodingParams::jobInd)
+        .def_readwrite("decodingModeString", &DecodingParams::decodingModeString)
+        .def_readwrite("decodingMode", &DecodingParams::decodingMode)
+        .def_readwrite("decodingSequence", &DecodingParams::decodingSequence)
+        .def_readwrite("foldData", &DecodingParams::foldData)
+        .def_readwrite("usingCSFS", &DecodingParams::usingCSFS)
+        .def_readwrite("compress", &DecodingParams::compress)
+        .def_readwrite("useAncestral", &DecodingParams::useAncestral)
+        .def_readwrite("skipCSFSdistance", &DecodingParams::skipCSFSdistance)
+        .def_readwrite("noBatches", &DecodingParams::noBatches)
+        .def_readwrite("doPosteriorSums", &DecodingParams::doPosteriorSums)
+        .def_readwrite("doPerPairPosteriorMean", &DecodingParams::doPerPairPosteriorMean)
+        .def_readwrite("expectedCoalTimesFile", &DecodingParams::expectedCoalTimesFile)
+        .def_readwrite("withinOnly", &DecodingParams::withinOnly)
+        .def_readwrite("doMajorMinorPosteriorSums", &DecodingParams::doMajorMinorPosteriorSums)
+        ;
+
     py::class_<Data>(m, "Data")
         .def(py::init<std::string, int, int, bool, bool>(),
              "hapsFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
@@ -98,7 +119,7 @@ PYBIND11_MODULE(pyASMC, m) {
           "hapsFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
           "jobs"_a = 0, "jobInd"_a = 0,
-          "skipCSFSDistance"_a = 0,
+          "skipCSFSdistance"_a = 0,
           "compress"_a = false, "useAncestral"_a = false,
           "doPosteriorSums"_a = true, "doMajorMinorPosteriorSums"_a = false);
 }
