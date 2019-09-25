@@ -54,7 +54,8 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<Individual>(m, "Individual")
         .def(py::init<string, string, int>(),
                 "famId"_a = "", "IId"_a = "", "numOfSites"_a = 0)
-        .def("setGenotype", &Individual::setGenotype);
+        .def("setGenotype", &Individual::setGenotype,
+                "hap"_a, "pos"_a, "val"_a);
     py::class_<PairObservations>(m, "PairObservations")
         .def_readwrite("iName", &PairObservations::iName)
         .def_readwrite("jName", &PairObservations::jName)
