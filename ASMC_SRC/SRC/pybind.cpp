@@ -62,7 +62,9 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("obsBits", &PairObservations::obsBits)
         .def_readwrite("homMinorBits", &PairObservations::homMinorBits);
     py::class_<DecodingQuantities>(m, "DecodingQuantities")
-        .def(py::init<const char*>());
+        .def(py::init<const char*>())
+        .def_readwrite("CSFSSamples", &DecodingQuantities::CSFSSamples)
+        ;
     py::class_<DecodingParams>(m, "DecodingParams")
         .def(py::init<string, string, string,
                 int, int, string, DecodingMode,
