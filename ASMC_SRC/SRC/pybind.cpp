@@ -116,7 +116,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_static("countHapLines", &Data::countHapLines);
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
-        .def("decode", &HMM::decode);
+        .def("decode", &HMM::decode)
         .def("decodeAll", &HMM::decodeAll);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "hapsFileRoot"_a, "decodingQuantFile"_a,
