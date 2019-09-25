@@ -44,6 +44,7 @@ DecodingParams::DecodingParams()
       , expectedCoalTimesFile("")
       , withinOnly(false)
       , doMajorMinorPosteriorSums(false)
+      , doPerPairMAP(false)
   {
   }
 
@@ -86,6 +87,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , expectedCoalTimesFile(_expectedCoalTimesFile)
       , withinOnly(_withinOnly)
       , doMajorMinorPosteriorSums(_doMajorMinorPosteriorSums)
+      , doPerPairMAP(false)
   {
       outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
   }
