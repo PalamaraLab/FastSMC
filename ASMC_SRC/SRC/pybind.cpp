@@ -42,6 +42,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .value("array", DecodingMode::array);
     py::bind_vector<std::vector<bool>>(m, "VectorBool");
     py::bind_vector<std::vector<float>>(m, "VectorFloat");
+    py::bind_vector<std::vector<Individual>>(m, "VectorIndividual");
     py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
         .def_readwrite("sumOverPairs", &DecodingReturnValues::sumOverPairs)
@@ -117,6 +118,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)
         .def_readwrite("famAndIndNameList", &Data::famAndIndNameList)
+        .def_readwrite("individuals", &Data::individuals)
         .def_readwrite("sampleSize", &Data::sampleSize)
         .def_readwrite("haploidSampleSize", &Data::haploidSampleSize)
         .def_readwrite("sites", &Data::sites)
