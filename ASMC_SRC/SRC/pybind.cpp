@@ -16,6 +16,7 @@
 #include <pybind11/pybind11.h>
 #include <vector>
 #include <pybind11/stl_bind.h>
+#include <pybind11/stl.h>
 
 PYBIND11_MAKE_OPAQUE(std::vector<bool>)
 PYBIND11_MAKE_OPAQUE(std::vector<float>)
@@ -43,6 +44,8 @@ PYBIND11_MODULE(pyASMC, m) {
     py::bind_vector<std::vector<bool>>(m, "VectorBool");
     py::bind_vector<std::vector<float>>(m, "VectorFloat");
     py::bind_vector<std::vector<Individual>>(m, "VectorIndividual");
+    py::bind_vector<std::vector<uint>>(m, "VectorUInt");
+    py::bind_vector<std::vector<PairObservations>>(m, "VectorPairObservations");
     py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
         .def_readwrite("sumOverPairs", &DecodingReturnValues::sumOverPairs)
@@ -56,7 +59,13 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<string, string, int>(),
                 "famId"_a = "", "IId"_a = "", "numOfSites"_a = 0)
         .def("setGenotype", &Individual::setGenotype,
-                "hap"_a, "pos"_a, "val"_a);
+                "hap"_a, "pos"_a, "val"_a)
+        .def_readwrite("famId", &Individual::famId)
+        .def_readwrite("IId", &Individual::IId)
+        .def_readwrite("name", &Individual::name)
+        .def_readwrite("genotype1", &Individual::genotype1)
+        .def_readwrite("genotype2", &Individual::genotype2)
+        ;
     py::class_<PairObservations>(m, "PairObservations")
         .def_readwrite("iName", &PairObservations::iName)
         .def_readwrite("jName", &PairObservations::jName)
@@ -136,6 +145,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("decodeAll", &HMM::decodeAll)
         .def("getDecodingReturnValues", &HMM::getDecodingReturnValues)
         .def("decodePair", &HMM::decodePair)
+        .def("decodePairs", &HMM::decodePairs)
         .def("getBatchBuffer", &HMM::getBatchBuffer)
         .def("finishDecoding", &HMM::finishDecoding)
         ;
