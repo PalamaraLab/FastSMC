@@ -113,12 +113,29 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<std::string, int, int, bool, bool>(),
              "hapsFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
              "foldToMinorAlleles"_a, "decodingUsesCSFS"_a)
-        .def_static("countHapLines", &Data::countHapLines);
+        .def_static("countHapLines", &Data::countHapLines)
+        .def_readwrite("FamIDList", &Data::FamIDList)
+        .def_readwrite("IIDList", &Data::IIDList)
+        .def_readwrite("famAndIndNameList", &Data::famAndIndNameList)
+        .def_readwrite("sampleSize", &Data::sampleSize)
+        .def_readwrite("haploidSampleSize", &Data::haploidSampleSize)
+        .def_readwrite("sites", &Data::sites)
+        .def_readwrite("totalSamplesBound", &Data::totalSamplesBound)
+        .def_readwrite("decodingUsesCSFS", &Data::decodingUsesCSFS)
+        .def_readwrite("geneticPositions", &Data::geneticPositions)
+        .def_readwrite("physicalPositions", &Data::physicalPositions)
+        .def_readwrite("siteWasFlippedDuringFolding", &Data::siteWasFlippedDuringFolding)
+        .def_readwrite("recRateAtMarker", &Data::recRateAtMarker)
+        .def_readwrite("undistinguishedCounts", &Data::undistinguishedCounts)
+        ;
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
         .def("decode", &HMM::decode)
         .def("decodeAll", &HMM::decodeAll)
         .def("getDecodingReturnValues", &HMM::getDecodingReturnValues)
+        .def("decodePair", &HMM::decodePair)
+        .def("getBatchBuffer", &HMM::getBatchBuffer)
+        .def("finishDecoding", &HMM::finishDecoding)
         ;
     m.def("makePairObs", &makePairObs);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
