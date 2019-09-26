@@ -17,17 +17,18 @@
 #include <vector>
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
-
-PYBIND11_MAKE_OPAQUE(std::vector<bool>)
-PYBIND11_MAKE_OPAQUE(std::vector<float>)
-PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
-
 #include "ASMC.hpp"
 #include "Individual.hpp"
 #include "HMM.hpp"
 #include "Data.hpp"
 #include "DecodingQuantities.hpp"
 #include "DecodingParams.hpp"
+
+PYBIND11_MAKE_OPAQUE(std::vector<bool>)
+PYBIND11_MAKE_OPAQUE(std::vector<float>)
+PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
+PYBIND11_MAKE_OPAQUE(std::vector<Individual>)
+PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
 
 namespace py = pybind11;
 using namespace py::literals;
