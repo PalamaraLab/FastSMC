@@ -29,6 +29,8 @@ PYBIND11_MAKE_OPAQUE(std::vector<float>)
 PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 PYBIND11_MAKE_OPAQUE(std::vector<Individual>)
 PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
+PYBIND11_MAKE_OPAQUE(std::unordered_map<float, std::vector<float>>)
+PYBIND11_MAKE_OPAQUE(std::unordered_map<int, std::vector<float>>)
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -48,6 +50,8 @@ PYBIND11_MODULE(pyASMC, m) {
     py::bind_vector<std::vector<uint>>(m, "VectorUInt");
     py::bind_vector<std::vector<PairObservations>>(m, "VectorPairObservations");
     py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
+    py::bind_map<std::unordered_map<float, std::vector<float>>>(m, "UMapFloatToVectorFloat");
+    py::bind_map<std::unordered_map<int, std::vector<float>>>(m, "UMapIntToVectorFloat");
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
         .def_readwrite("sumOverPairs", &DecodingReturnValues::sumOverPairs)
         .def_readwrite("sumOverPairs00", &DecodingReturnValues::sumOverPairs00)
@@ -75,6 +79,23 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<DecodingQuantities>(m, "DecodingQuantities")
         .def(py::init<const char*>())
         .def_readwrite("CSFSSamples", &DecodingQuantities::CSFSSamples)
+        .def_readwrite("states", &DecodingQuantities::states)
+        .def_readwrite("initialStateProb", &DecodingQuantities::initialStateProb)
+        .def_readwrite("expectedTimes", &DecodingQuantities::expectedTimes)
+        .def_readwrite("discretization", &DecodingQuantities::discretization)
+        .def_readwrite("timeVector", &DecodingQuantities::timeVector)
+        .def_readwrite("columnRatios", &DecodingQuantities::columnRatios)
+        .def_readwrite("classicEmissionTable", &DecodingQuantities::classicEmissionTable)
+        .def_readwrite("compressedEmissionTable", &DecodingQuantities::compressedEmissionTable)
+        .def_readwrite("Dvectors", &DecodingQuantities::Dvectors)
+        .def_readwrite("Bvectors", &DecodingQuantities::Bvectors)
+        .def_readwrite("Uvectors", &DecodingQuantities::Uvectors)
+        .def_readwrite("rowRatioVectors", &DecodingQuantities::rowRatioVectors)
+        .def_readwrite("homozygousEmissionMap", &DecodingQuantities::homozygousEmissionMap)
+        .def_readwrite("CSFSmap", &DecodingQuantities::CSFSmap)
+        .def_readwrite("foldedCSFSmap", &DecodingQuantities::foldedCSFSmap)
+        .def_readwrite("ascertainedCSFSmap", &DecodingQuantities::ascertainedCSFSmap)
+        .def_readwrite("foldedAscertainedCSFSmap", &DecodingQuantities::foldedAscertainedCSFSmap)
         ;
     py::class_<DecodingParams>(m, "DecodingParams")
         .def(py::init<string, string, string,
