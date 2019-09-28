@@ -14,6 +14,7 @@
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 
+#include <exception>
 #include <iostream>
 #include <string>
 //#include <sys/types.h>
@@ -46,6 +47,26 @@ DecodingParams::DecodingParams()
       , doMajorMinorPosteriorSums(false)
       , doPerPairMAP(false)
   {
+      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
+
+      // TODO: eliminate some of these if-else branches
+      if(decodingModeString == string("sequence"))
+          decodingModeOverall = DecodingModeOverall::sequence;
+      else if(decodingModeString == string("array"))
+          decodingModeOverall = DecodingModeOverall::array;
+      else {
+         cerr << "Decoding mode should be one of {sequence, array}";
+         throw std::exception();
+      }
+      if(processOptions()) {
+        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
+        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
+        //           << endl;
+        //      throw std::exception();
+        // }
+      }
+      else
+          throw std::exception();
   }
 
 DecodingParams::DecodingParams(string _hapsFileRoot,
@@ -90,6 +111,24 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , doPerPairMAP(false)
   {
       outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
+
+      if(decodingModeString == string("sequence"))
+          decodingModeOverall = DecodingModeOverall::sequence;
+      else if(decodingModeString == string("array"))
+          decodingModeOverall = DecodingModeOverall::array;
+      else {
+         cerr << "Decoding mode should be one of {sequence, array}";
+         throw std::exception();
+      }
+      if(processOptions()) {
+        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
+        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
+        //           << endl;
+        //      throw std::exception();
+        // }
+      }
+      else
+          throw std::exception();
   }
 
 
