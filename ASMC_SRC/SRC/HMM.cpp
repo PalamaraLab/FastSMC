@@ -764,15 +764,12 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
     const vector<float>& emission2minus0AtSite)
 {
 
-  cout << "getNextAlphaBatched enter" << endl;
   const float* B = &m_decodingQuant.Bvectors.at(recDistFromPrevious)[0];
   const float* U = &m_decodingQuant.Uvectors.at(recDistFromPrevious)[0];
   const float* D = &m_decodingQuant.Dvectors.at(recDistFromPrevious)[0];
 
-  cout << "getNextAlphaBatched CP 0" << endl;
   memcpy(&alphaC[(states - 1) * curBatchSize],
       &previousAlpha[(states - 1) * curBatchSize], curBatchSize * sizeof(alphaC[0]));
-  cout << "getNextAlphaBatched CP 1" << endl;
 
   for (int k = states - 2; k >= 0; k--) {
 #ifdef NO_SSE
@@ -789,7 +786,6 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
 #endif
   }
 
-  cout << "getNextAlphaBatched CP 2" << endl;
   memset(AU, 0, curBatchSize * sizeof(AU[0]));
   for (int k = 0; k < states; k++) {
 
@@ -832,7 +828,6 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC,
       colRatios_km1 = LOAD1(&m_decodingQuant.columnRatios[k - 1]);
 #endif
     }
-  cout << "getNextAlphaBatched CP 3" << endl;
     for (int v = 0; v < curBatchSize; v += VECX) {
       FLOAT AU_v;
       if (k) {

@@ -31,6 +31,12 @@ PYBIND11_MAKE_OPAQUE(std::vector<Individual>)
 PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<float, std::vector<float>>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<int, std::vector<float>>)
+PYBIND11_MAKE_OPAQUE(DecodingQuantities)
+PYBIND11_MAKE_OPAQUE(DecodingReturnValues)
+PYBIND11_MAKE_OPAQUE(PairObservations)
+PYBIND11_MAKE_OPAQUE(Individual)
+PYBIND11_MAKE_OPAQUE(Data)
+PYBIND11_MAKE_OPAQUE(HMM)
 
 namespace py = pybind11;
 using namespace py::literals;
