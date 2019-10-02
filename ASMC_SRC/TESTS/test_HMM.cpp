@@ -32,6 +32,16 @@ TEST_CASE("test hmm functions", "[HMM]")
 
   REQUIRE(data.individuals.size() > 20);
 
+  SECTION("test decode pair summarize")
+  {
+    PairObservations pairObs = makePairObs(data.individuals[0], 1, data.individuals[0], 2);
+    vector<vector<float>> decodeResult = hmm.decode(pairObs);
+    pair<vector<float>, vector<float>> decodeSummary = hmm.decodeSummarize(pairObs);
+    // check that the MAP and posterior mean are the same length
+    REQUIRE(decodeSummary.first.size() == decodeSummary.second.size());
+    REQUIRE(decodeSummary.first.size() == decodeResult[0].size());
+  }
+
   SECTION("test decode pair")
   {
     REQUIRE(hmm.getBatchBuffer().size() == 0);
@@ -79,4 +89,5 @@ TEST_CASE("test hmm functions", "[HMM]")
     // buffer should be empty now
     REQUIRE(hmm.getBatchBuffer().size() == 0);
   }
+
 }

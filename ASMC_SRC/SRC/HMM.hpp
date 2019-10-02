@@ -117,6 +117,8 @@ class HMM {
 
   vector<vector<float>> decode(const PairObservations& observations);
 
+  pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
+
   /// decode a single pair
   ///
   /// i and j must be a valid index in `individuals`

@@ -1243,6 +1243,28 @@ vector<vector<float>> HMM::decode(const PairObservations& observations)
   return posterior;
 }
 
+// Instead of returning a whole posterior, return the MAP and posterior mean
+pair<vector<float>, vector<float>> HMM::decodeSummarize(const PairObservations& observations)
+{
+  vector<vector<float>> posterior = decode(observations);
+  size_t num_discretizations = m_decodingQuant.expectedTimes.size();
+  assert(num_discretizations == posterior.size());
+
+  vector<float> posterior_map(posterior[0].size(), 0);
+  vector<float> posterior_max_so_far(posterior[0].size(), 0);
+  vector<float> posterior_mean(posterior[0].size(), 0);
+  for (int i = 0; i < posterior.size(); ++i) {
+    for (int j = 0; j < posterior[0].size(); ++j) {
+      posterior_mean[j] += posterior[i][j] * m_decodingQuant.expectedTimes[i];
+      if (posterior[i][j] > posterior_max_so_far[j]) {
+        posterior_max_so_far[j] = posterior[i][j];
+        posterior_map[j] = m_decodingQuant.expectedTimes[i];
+      }
+    }
+  }
+  return std::make_pair(posterior_map, posterior_mean);
+}
+
 float HMM::roundMorgans(float gen)
 {
   float gene1e10 = gen * 1e10f;

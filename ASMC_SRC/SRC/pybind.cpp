@@ -171,6 +171,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
         .def("decode", &HMM::decode)
         .def("decodeAll", &HMM::decodeAll)
+        .def("decodeSummarize", &HMM::decodeSummarize)
         .def("getDecodingReturnValues", &HMM::getDecodingReturnValues)
         .def("decodePair", &HMM::decodePair)
         .def("decodePairs", &HMM::decodePairs)
