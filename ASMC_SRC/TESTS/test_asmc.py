@@ -15,16 +15,13 @@ class TestASMC(unittest.TestCase):
         decodingQuantFile = "FILES/DECODING_QUANTITIES" \
             "/30-100-2000.decodingQuantities.gz"
         self.sequenceLength = Data.countHapLines(hapsFileRoot)
-        self.params = DecodingParams(hapsFileRoot, decodingQuantFile)
+        params = DecodingParams(hapsFileRoot, decodingQuantFile)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
         self.data = Data(hapsFileRoot, self.sequenceLength,
-                         self.decodingQuantities.CSFSSamples, self.params.foldData,
-                         self.params.usingCSFS)
-        self.hmm = HMM(self.data, self.decodingQuantities, self.params,
-                       not self.params.noBatches, 1)
-
-    def tearDown(self):
-        del self.hmm
+                         self.decodingQuantities.CSFSSamples,
+                         params.foldData, params.usingCSFS)
+        self.hmm = HMM(self.data, self.decodingQuantities, params,
+                       not params.noBatches, 1)
 
     def test_initialization(self):
         self.assertGreater(len(self.data.individuals), 20)
@@ -109,7 +106,6 @@ class TestASMCDecodingParams(unittest.TestCase):
         self.assertEqual(len(d), len(decodingQuantities.expectedTimes))
         for i in range(len(d)):
             self.assertEqual(len(d[i]), data.sites)
-        del hmm
 
 
 if __name__ == "__main__":

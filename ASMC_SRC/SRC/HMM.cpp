@@ -158,7 +158,7 @@ PairObservations makePairObs(
 
 // constructor
 HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-    DecodingParams& _decodingParams, bool useBatches, int _scalingSkip)
+    DecodingParams _decodingParams, bool useBatches, int _scalingSkip)
     : m_batchSize(64)
     , data(_data)
     , m_decodingQuant(_decodingQuant)

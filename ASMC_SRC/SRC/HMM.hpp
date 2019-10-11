@@ -74,7 +74,7 @@ class HMM {
   // for decoding
   Data& data;
   const DecodingQuantities& m_decodingQuant;
-  const DecodingParams& decodingParams;
+  const DecodingParams decodingParams;
 
   string outFileRoot;
   string expectedCoalTimesFile;
@@ -107,7 +107,7 @@ class HMM {
   public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-      DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
+      DecodingParams _decodingParams, bool useBatches, int _scalingSkip = 1);
 
   ~HMM();
 
