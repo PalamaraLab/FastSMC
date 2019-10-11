@@ -23,6 +23,9 @@ class TestASMC(unittest.TestCase):
         self.hmm = HMM(self.data, self.decodingQuantities, self.params,
                        not self.params.noBatches, 1)
 
+    def tearDown(self):
+        del self.hmm
+
     def test_initialization(self):
         self.assertGreater(len(self.data.individuals), 20)
 
@@ -106,6 +109,7 @@ class TestASMCDecodingParams(unittest.TestCase):
         self.assertEqual(len(d), len(decodingQuantities.expectedTimes))
         for i in range(len(d)):
             self.assertEqual(len(d[i]), data.sites)
+        del hmm
 
 
 if __name__ == "__main__":
