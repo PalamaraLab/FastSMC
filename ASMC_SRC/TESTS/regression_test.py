@@ -4,6 +4,15 @@ import subprocess
 import sys
 
 
+def list_files(startpath):
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print('{}{}/'.format(indent, os.path.basename(root)))
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print('{}{}'.format(subindent, f))
+
 def test_regession(asmc_exe):
     """
     Run the ASMC regression test, which will test the output of an example ASMC run with the cached result in
@@ -38,6 +47,7 @@ def test_regession(asmc_exe):
     ])
 
     new_file = os.path.join(base_dir, 'FILES', 'EXAMPLE', 'exampleFile.n300.array.1-1.sumOverPairs.gz')
+    list_files(base_dir)
     assert os.path.isfile(new_file), \
         "No output file found at {}. Did the executable run as expected?".format(new_file)
 
