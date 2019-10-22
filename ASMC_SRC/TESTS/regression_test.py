@@ -15,6 +15,11 @@ def test_regession(asmc_exe):
     script_dir = os.path.realpath(os.path.dirname(__file__))
     base_dir = os.path.realpath(os.path.join(script_dir, '..', '..'))
     old_file = os.path.join(script_dir, 'data', 'regression_test_original.gz')
+    print('-' * 35)
+    print('script dir', script_dir)
+    print('base dir', base_dir)
+    print('asmc exe', asmc_exe)
+    print('-' * 35)
     assert os.path.isfile(old_file)
 
     # Old file contents are before OxfordRSE involvement in ASMC
