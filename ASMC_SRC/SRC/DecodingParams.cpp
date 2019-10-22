@@ -123,14 +123,6 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
     return false;
   }
 
-  if(decodingModeString == string("sequence"))
-      decodingModeOverall = DecodingModeOverall::sequence;
-  else if(decodingModeString == string("array"))
-      decodingModeOverall = DecodingModeOverall::array;
-  else {
-     cerr << "Decoding mode should be one of {sequence, array}";
-     return false;
-  }
   if(processOptions()) {
     if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
          cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
@@ -223,6 +215,14 @@ bool DecodingParams::processOptions() {
         outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
       }
     }
+   if(decodingModeString == string("sequence"))
+       decodingModeOverall = DecodingModeOverall::sequence;
+   else if(decodingModeString == string("array"))
+       decodingModeOverall = DecodingModeOverall::array;
+   else {
+      cerr << "Decoding mode should be one of {sequence, array}";
+      return false;
+   }
 
    return true;
 }
