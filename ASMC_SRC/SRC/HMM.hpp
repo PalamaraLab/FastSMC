@@ -55,6 +55,8 @@ struct DecodingReturnValues {
   vector <bool> siteWasFlippedDuringFolding = {};
 };
 
+PairObservations makePairObs(
+    const Individual& iInd, int iHap, const Individual& jInd, int jHap);
 // does the linear-time decoding
 class HMM {
 
@@ -72,7 +74,7 @@ class HMM {
   // for decoding
   Data& data;
   const DecodingQuantities& m_decodingQuant;
-  const DecodingParams& decodingParams;
+  const DecodingParams decodingParams;
 
   string outFileRoot;
   string expectedCoalTimesFile;
@@ -105,13 +107,17 @@ class HMM {
   public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-      DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
+      DecodingParams _decodingParams, bool useBatches, int _scalingSkip = 1);
 
   ~HMM();
 
   /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
   /// states).
   void decodeAll(int jobs, int jobInd);
+
+  vector<vector<float>> decode(const PairObservations& observations);
+
+  pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
 
   /// decode a single pair
   ///
@@ -227,7 +233,6 @@ class HMM {
   void fillMatrixColumn(
       vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
 
-  vector<vector<float>> decode(const PairObservations& observations);
 
   float roundMorgans(float gen);
 

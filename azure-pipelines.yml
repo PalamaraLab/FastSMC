@@ -13,6 +13,13 @@ strategy:
       cmakeConfigArgs: ''
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
+      language: 'C++'
+    # Ubuntu (python module)
+    Ubuntu-python:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      jobType: 'unit'
+      language: 'Python'
     # Ubuntu (coverage)
     Ubuntu-coverage:
       imageName: 'ubuntu-16.04'
@@ -20,6 +27,7 @@ strategy:
       cmakeConfigArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'coverage'
+      language: 'C++'
     # Ubuntu (regression test)
     Ubuntu-regression:
       imageName: 'ubuntu-16.04'
@@ -27,6 +35,7 @@ strategy:
       cmakeConfigArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
       cmakeBuildArgs: '--target Regression'
       jobType: 'regression'
+      language: 'C++'
     # macOS
     macOS-unit:
       imageName: 'macOS-10.13'
@@ -34,6 +43,7 @@ strategy:
       cmakeConfigArgs: ''
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
+      language: 'C++'
     # Windows
     #Windows-unit:
     #  imageName: 'windows-2019'
@@ -90,17 +100,32 @@ steps:
     inputs:
       workingDirectory: 'build'
       cmakeArgs: '.. $(cmakeConfigArgs)'
+    condition: eq(variables['language'], 'C++')
     displayName: 'CMake'
 
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
       cmakeArgs: '--build . $(cmakeBuildArgs)'
+    condition: eq(variables['language'], 'C++')
     displayName: 'Build'
+
+  - script: python -m pip install .
+    displayName: 'Python build'
+    condition: eq(variables['language'], 'Python')
+
+  - script: python ASMC_SRC/TESTS/test_asmc.py -v
+    displayName: 'Python tests'
+    condition: eq(variables['language'], 'Python')
 
   - script: ctest -V
     displayName: 'Unit tests'
-    condition: in(variables['jobType'], 'unit', 'coverage')
+    condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
+    workingDirectory: 'build'
+
+  - script: ctest -V
+    displayName: 'Unit tests'
+    condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
   - script: |
@@ -110,4 +135,4 @@ steps:
       bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
     displayName: 'Upload coverage'
     workingDirectory: 'build'
-    condition: eq(variables['jobType'], 'coverage')
+    condition: and(eq(variables['jobType'], 'coverage'), eq(variables['language'], 'C++'))
