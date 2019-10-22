@@ -114,7 +114,7 @@ steps:
     displayName: 'Python build'
     condition: eq(variables['language'], 'Python')
 
-  - script: python ASMC_SRC/TESTS/test_asmc.py -v
+  - script: python -m unittest discover ASMC_SRC/TESTS
     displayName: 'Python tests'
     condition: eq(variables['language'], 'Python')
 
