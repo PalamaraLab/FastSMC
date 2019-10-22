@@ -32,9 +32,7 @@ DecodingParams::DecodingParams()
       , jobs(1)
       , jobInd(1)
       , decodingModeString("array")
-      , decodingMode(DecodingMode::arrayFolded)
       , decodingSequence(false)
-      , foldData(true)
       , usingCSFS(true)
       , compress(false)
       , useAncestral(false)
@@ -75,9 +73,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
         int _jobs = 1,
         int _jobInd = 1,
         string _decodingModeString = "array",
-        DecodingMode _decodingMode = DecodingMode::arrayFolded,
         bool _decodingSequence = false,
-        bool _foldData = true,
         bool _usingCSFS = true,
         bool _compress = false,
         bool _useAncestral = false,
@@ -95,9 +91,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , jobs(_jobs)
       , jobInd(_jobInd)
       , decodingModeString(_decodingModeString)
-      , decodingMode(_decodingMode)
       , decodingSequence(_decodingSequence)
-      , foldData(_foldData)
       , usingCSFS(_usingCSFS)
       , compress(_compress)
       , useAncestral(_useAncestral)
