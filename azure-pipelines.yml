@@ -123,11 +123,6 @@ steps:
     condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
-  - script: ctest -V
-    displayName: 'Unit tests'
-    condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
-    workingDirectory: 'build'
-
   - script: |
       lcov --directory . --capture --output-file coverage.info
       lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
