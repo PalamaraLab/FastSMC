@@ -16,6 +16,7 @@
 #include "catch.hpp"
 
 #include "HMM.hpp"
+#include "FileUtils.hpp"
 
 TEST_CASE("test hmm functions", "[HMM]")
 {
@@ -90,4 +91,25 @@ TEST_CASE("test hmm functions", "[HMM]")
     REQUIRE(hmm.getBatchBuffer().size() == 0);
   }
 
+  SECTION("regression test")
+  {
+    std::string regressionFile = ASMC_FILE_DIR "/../ASMC_SRC/TESTS/data/regression_test_original.gz";
+    FileUtils::AutoGzIfstream fin;
+    fin.openOrExit(regressionFile);
+    hmm.decodeAll(params.jobs, params.jobInd);
+    const DecodingReturnValues& decodingReturnValues = hmm.getDecodingReturnValues();
+    const vector<vector<float>>& sumOverPairs = decodingReturnValues.sumOverPairs;
+    int pos = 0;
+    std::string as = "";
+    for( std::string line; getline(fin, line); )
+    {
+      for (uint k = 0; k < decodingQuantities.states; k++) {
+        if (k) as += "\t";
+        as += std::to_string(sumOverPairs[pos][k]);
+      }
+      REQUIRE(as == line);
+      pos++;
+    }
+    REQUIRE(pos == sumOverPairs.size());
+  }
 }
