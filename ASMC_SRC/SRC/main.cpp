@@ -124,6 +124,7 @@ int main(int argc, char* argv[])
   if (params.doPosteriorSums) {
     FileUtils::AutoGzOfstream fout;
     fout.openOrExit(params.outFileRoot + ".sumOverPairs.gz");
+    cout << "Output file: " << params.outFileRoot << ".sumOverPairs.gz" << endl;
     for (int pos = 0; pos < data.sites; pos++) {
       for (uint k = 0; k < decodingQuantities.states; k++) {
         if (k)

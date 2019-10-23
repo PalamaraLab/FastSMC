@@ -45,26 +45,6 @@ DecodingParams::DecodingParams()
       , doMajorMinorPosteriorSums(false)
       , doPerPairMAP(false)
   {
-      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
-
-      // TODO: eliminate some of these if-else branches
-      if(decodingModeString == string("sequence"))
-          decodingModeOverall = DecodingModeOverall::sequence;
-      else if(decodingModeString == string("array"))
-          decodingModeOverall = DecodingModeOverall::array;
-      else {
-         cerr << "Decoding mode should be one of {sequence, array}";
-         throw std::exception();
-      }
-      if(processOptions()) {
-        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
-        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
-        //           << endl;
-        //      throw std::exception();
-        // }
-      }
-      else
-          throw std::exception();
   }
 
 DecodingParams::DecodingParams(string _hapsFileRoot,
@@ -104,25 +84,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , doMajorMinorPosteriorSums(_doMajorMinorPosteriorSums)
       , doPerPairMAP(false)
   {
-      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
-
-      if(decodingModeString == string("sequence"))
-          decodingModeOverall = DecodingModeOverall::sequence;
-      else if(decodingModeString == string("array"))
-          decodingModeOverall = DecodingModeOverall::array;
-      else {
-         cerr << "Decoding mode should be one of {sequence, array}";
-         throw std::exception();
-      }
-      if(processOptions()) {
-        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
-        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
-        //           << endl;
-        //      throw std::exception();
-        // }
-      }
-      else
-          throw std::exception();
+     if(!processOptions()) throw std::exception();
   }
 
 
@@ -243,6 +205,15 @@ bool DecodingParams::processOptions() {
     }
 
     boost::algorithm::to_lower(decodingModeString);
+    if(decodingModeString == string("sequence"))
+        decodingModeOverall = DecodingModeOverall::sequence;
+    else if(decodingModeString == string("array"))
+        decodingModeOverall = DecodingModeOverall::array;
+    else {
+       cerr << "Decoding mode should be one of {sequence, array}";
+       return false;
+    }
+
     if (decodingModeOverall == DecodingModeOverall::sequence) {
       decodingSequence = true;
       if (useAncestral) {
@@ -287,22 +258,12 @@ bool DecodingParams::processOptions() {
       cerr << "ERROR: --jobInd must be between 1 and --jobs inclusive" << endl;
       return false;
     }
-
     if (outFileRoot.empty()) {
       outFileRoot = hapsFileRoot;
       if (jobs > 0) {
         outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
       }
     }
-   if(decodingModeString == string("sequence"))
-       decodingModeOverall = DecodingModeOverall::sequence;
-   else if(decodingModeString == string("array"))
-       decodingModeOverall = DecodingModeOverall::array;
-   else {
-      cerr << "Decoding mode should be one of {sequence, array}";
-      return false;
-   }
-
    return true;
 }
 
