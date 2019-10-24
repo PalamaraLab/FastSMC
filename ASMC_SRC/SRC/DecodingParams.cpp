@@ -49,21 +49,21 @@ DecodingParams::DecodingParams()
 
 DecodingParams::DecodingParams(string _hapsFileRoot,
         string _decodingQuantFile,
-        string _outFileRoot = "",
-        int _jobs = 1,
-        int _jobInd = 1,
-        string _decodingModeString = "array",
-        bool _decodingSequence = false,
-        bool _usingCSFS = true,
-        bool _compress = false,
-        bool _useAncestral = false,
-        float _skipCSFSdistance = 0.f,
-        bool _noBatches = false,
-        bool _doPosteriorSums = false,
-        bool _doPerPairPosteriorMean = false,
-        string _expectedCoalTimesFile = "",
-        bool _withinOnly = false,
-        bool _doMajorMinorPosteriorSums = false
+        string _outFileRoot,
+        int _jobs,
+        int _jobInd,
+        string _decodingModeString,
+        bool _decodingSequence,
+        bool _usingCSFS,
+        bool _compress,
+        bool _useAncestral,
+        float _skipCSFSdistance,
+        bool _noBatches,
+        bool _doPosteriorSums,
+        bool _doPerPairPosteriorMean,
+        string _expectedCoalTimesFile,
+        bool _withinOnly,
+        bool _doMajorMinorPosteriorSums
         )
       : hapsFileRoot(_hapsFileRoot)
       , decodingQuantFile(_decodingQuantFile)
