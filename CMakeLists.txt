@@ -74,6 +74,7 @@ set(ASMC_main
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_HMM.cpp
+  ${ASMC_test_dir}/test_decoding_params.cpp
   )
 
 option(ASMC_PYTHON_BINDINGS "Whether to build the ASMC python bindings" OFF)
