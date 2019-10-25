@@ -16,14 +16,14 @@
 #include "catch.hpp"
 
 #include "HMM.hpp"
+#include "FileUtils.hpp"
+#include <sstream>
 
 TEST_CASE("test hmm functions", "[HMM]")
 {
-
-  DecodingParams params;
-  params.hapsFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
-  params.decodingQuantFile
-      = ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz";
+  DecodingParams params(
+      ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
+      ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
   Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
@@ -89,5 +89,4 @@ TEST_CASE("test hmm functions", "[HMM]")
     // buffer should be empty now
     REQUIRE(hmm.getBatchBuffer().size() == 0);
   }
-
 }

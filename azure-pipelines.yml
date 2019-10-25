@@ -25,15 +25,23 @@ strategy:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
       cmakeConfigArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
-      cmakeBuildArgs: '--target ASMC_unit_tests'
+      cmakeBuildArgs: ''
       jobType: 'coverage'
       language: 'C++'
-    # Ubuntu (regression test)
-    Ubuntu-regression:
+    # Ubuntu (regression test, in Python, calling the CLI interface)
+    Ubuntu-regression-python:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
       cmakeConfigArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
       cmakeBuildArgs: '--target Regression'
+      jobType: 'regression-py'
+      language: 'C++'
+    # Ubuntu (regression test, in C++, using the library)
+    Ubuntu-regression:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      cmakeConfigArgs: ''
+      cmakeBuildArgs: '--target ASMC_regression'
       jobType: 'regression'
       language: 'C++'
     # macOS
@@ -114,18 +122,18 @@ steps:
     displayName: 'Python build'
     condition: eq(variables['language'], 'Python')
 
-  - script: python ASMC_SRC/TESTS/test_asmc.py -v
+  - script: python -m unittest discover ASMC_SRC/TESTS
     displayName: 'Python tests'
     condition: eq(variables['language'], 'Python')
 
-  - script: ctest -V
+  - script: ctest -R test1
     displayName: 'Unit tests'
     condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
-  - script: ctest -V
-    displayName: 'Unit tests'
-    condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
+  - script: ctest -R regression
+    displayName: 'Regression tests'
+    condition: and(in(variables['jobType'], 'regression', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
   - script: |

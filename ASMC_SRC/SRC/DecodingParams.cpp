@@ -32,9 +32,7 @@ DecodingParams::DecodingParams()
       , jobs(1)
       , jobInd(1)
       , decodingModeString("array")
-      , decodingMode(DecodingMode::arrayFolded)
       , decodingSequence(false)
-      , foldData(true)
       , usingCSFS(true)
       , compress(false)
       , useAncestral(false)
@@ -47,47 +45,25 @@ DecodingParams::DecodingParams()
       , doMajorMinorPosteriorSums(false)
       , doPerPairMAP(false)
   {
-      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
-
-      // TODO: eliminate some of these if-else branches
-      if(decodingModeString == string("sequence"))
-          decodingModeOverall = DecodingModeOverall::sequence;
-      else if(decodingModeString == string("array"))
-          decodingModeOverall = DecodingModeOverall::array;
-      else {
-         cerr << "Decoding mode should be one of {sequence, array}";
-         throw std::exception();
-      }
-      if(processOptions()) {
-        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
-        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
-        //           << endl;
-        //      throw std::exception();
-        // }
-      }
-      else
-          throw std::exception();
   }
 
 DecodingParams::DecodingParams(string _hapsFileRoot,
         string _decodingQuantFile,
-        string _outFileRoot = "",
-        int _jobs = 1,
-        int _jobInd = 1,
-        string _decodingModeString = "array",
-        DecodingMode _decodingMode = DecodingMode::arrayFolded,
-        bool _decodingSequence = false,
-        bool _foldData = true,
-        bool _usingCSFS = true,
-        bool _compress = false,
-        bool _useAncestral = false,
-        float _skipCSFSdistance = 0.f,
-        bool _noBatches = false,
-        bool _doPosteriorSums = false,
-        bool _doPerPairPosteriorMean = false,
-        string _expectedCoalTimesFile = "",
-        bool _withinOnly = false,
-        bool _doMajorMinorPosteriorSums = false
+        string _outFileRoot,
+        int _jobs,
+        int _jobInd,
+        string _decodingModeString,
+        bool _decodingSequence,
+        bool _usingCSFS,
+        bool _compress,
+        bool _useAncestral,
+        float _skipCSFSdistance,
+        bool _noBatches,
+        bool _doPosteriorSums,
+        bool _doPerPairPosteriorMean,
+        string _expectedCoalTimesFile,
+        bool _withinOnly,
+        bool _doMajorMinorPosteriorSums
         )
       : hapsFileRoot(_hapsFileRoot)
       , decodingQuantFile(_decodingQuantFile)
@@ -95,9 +71,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , jobs(_jobs)
       , jobInd(_jobInd)
       , decodingModeString(_decodingModeString)
-      , decodingMode(_decodingMode)
       , decodingSequence(_decodingSequence)
-      , foldData(_foldData)
       , usingCSFS(_usingCSFS)
       , compress(_compress)
       , useAncestral(_useAncestral)
@@ -110,25 +84,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
       , doMajorMinorPosteriorSums(_doMajorMinorPosteriorSums)
       , doPerPairMAP(false)
   {
-      outFileRoot = outFileRoot == "" ? hapsFileRoot : outFileRoot;
-
-      if(decodingModeString == string("sequence"))
-          decodingModeOverall = DecodingModeOverall::sequence;
-      else if(decodingModeString == string("array"))
-          decodingModeOverall = DecodingModeOverall::array;
-      else {
-         cerr << "Decoding mode should be one of {sequence, array}";
-         throw std::exception();
-      }
-      if(processOptions()) {
-        // if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
-        //      cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
-        //           << endl;
-        //      throw std::exception();
-        // }
-      }
-      else
-          throw std::exception();
+     if(!processOptions()) throw std::exception();
   }
 
 
@@ -208,14 +164,6 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
     return false;
   }
 
-  if(decodingModeString == string("sequence"))
-      decodingModeOverall = DecodingModeOverall::sequence;
-  else if(decodingModeString == string("array"))
-      decodingModeOverall = DecodingModeOverall::array;
-  else {
-     cerr << "Decoding mode should be one of {sequence, array}";
-     return false;
-  }
   if(processOptions()) {
     if (!doPosteriorSums && !doPerPairMAP && !doPerPairPosteriorMean && !doMajorMinorPosteriorSums) {
          cerr << "ERROR: At least one of --posteriorSums, --majorMinorPosteriorSums, must be specified"
@@ -257,6 +205,15 @@ bool DecodingParams::processOptions() {
     }
 
     boost::algorithm::to_lower(decodingModeString);
+    if(decodingModeString == string("sequence"))
+        decodingModeOverall = DecodingModeOverall::sequence;
+    else if(decodingModeString == string("array"))
+        decodingModeOverall = DecodingModeOverall::array;
+    else {
+       cerr << "Decoding mode should be one of {sequence, array}";
+       return false;
+    }
+
     if (decodingModeOverall == DecodingModeOverall::sequence) {
       decodingSequence = true;
       if (useAncestral) {
@@ -301,14 +258,12 @@ bool DecodingParams::processOptions() {
       cerr << "ERROR: --jobInd must be between 1 and --jobs inclusive" << endl;
       return false;
     }
-
     if (outFileRoot.empty()) {
       outFileRoot = hapsFileRoot;
       if (jobs > 0) {
         outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
       }
     }
-
    return true;
 }
 

@@ -74,6 +74,11 @@ set(ASMC_main
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_HMM.cpp
+  ${ASMC_test_dir}/test_decoding_params.cpp
+  )
+
+set(ASMC_regression
+  ${ASMC_test_dir}/test_regression.cpp
   )
 
 option(ASMC_PYTHON_BINDINGS "Whether to build the ASMC python bindings" OFF)
@@ -97,6 +102,11 @@ add_executable(ASMC_unit_tests ${ASMC_unit_tests})
 target_include_directories(ASMC_unit_tests PRIVATE ${ASMC_test_dir})
 target_link_libraries(ASMC_unit_tests PRIVATE ASMC)
 add_test(test1 ASMC_unit_tests)
+
+add_executable(ASMC_regression ${ASMC_regression})
+target_include_directories(ASMC_regression PRIVATE ${ASMC_test_dir})
+target_link_libraries(ASMC_regression PRIVATE ASMC)
+add_test(regression ASMC_regression)
 
 # boost as a required dependency for ASMC
 find_package(Boost REQUIRED COMPONENTS program_options iostreams)

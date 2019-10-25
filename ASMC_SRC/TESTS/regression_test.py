@@ -4,6 +4,15 @@ import subprocess
 import sys
 
 
+def list_files(startpath):
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print('{}{}/'.format(indent, os.path.basename(root)))
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print('{}{}'.format(subindent, f))
+
 def test_regession(asmc_exe):
     """
     Run the ASMC regression test, which will test the output of an example ASMC run with the cached result in
@@ -15,6 +24,11 @@ def test_regession(asmc_exe):
     script_dir = os.path.realpath(os.path.dirname(__file__))
     base_dir = os.path.realpath(os.path.join(script_dir, '..', '..'))
     old_file = os.path.join(script_dir, 'data', 'regression_test_original.gz')
+    print('-' * 35)
+    print('script dir', script_dir)
+    print('base dir', base_dir)
+    print('asmc exe', asmc_exe)
+    print('-' * 35)
     assert os.path.isfile(old_file)
 
     # Old file contents are before OxfordRSE involvement in ASMC
