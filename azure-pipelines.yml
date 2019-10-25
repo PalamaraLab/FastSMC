@@ -25,7 +25,7 @@ strategy:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
       cmakeConfigArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
-      cmakeBuildArgs: '--target ASMC_unit_tests'
+      cmakeBuildArgs: ''
       jobType: 'coverage'
       language: 'C++'
     # Ubuntu (regression test, in Python, calling the CLI interface)
@@ -126,12 +126,12 @@ steps:
     displayName: 'Python tests'
     condition: eq(variables['language'], 'Python')
 
-  - script: ctest test1
+  - script: ctest -R test1
     displayName: 'Unit tests'
     condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
-  - script: ctest regression
+  - script: ctest -R regression
     displayName: 'Regression tests'
     condition: and(in(variables['jobType'], 'regression', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
