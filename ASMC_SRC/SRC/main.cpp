@@ -26,6 +26,7 @@
 #include "HMM.hpp"
 #include "StringUtils.hpp"
 #include "Timer.hpp"
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -48,6 +49,9 @@ int main(int argc, char* argv[])
     cerr << "Error processing command line; exiting." << endl;
     exit(1);
   }
+
+  // Eigen output formatter to match original ASMC output
+  Eigen::IOFormat TabFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, "\t", "\n");
 
   cout << "\n";
 
@@ -124,7 +128,7 @@ int main(int argc, char* argv[])
     FileUtils::AutoGzOfstream fout;
     fout.openOrExit(params.outFileRoot + ".sumOverPairs.gz");
     cout << "Output file: " << params.outFileRoot << ".sumOverPairs.gz" << endl;
-    fout << decodingReturnValues.sumOverPairs << endl;
+    fout << decodingReturnValues.sumOverPairs.format(TabFmt) << endl;
     fout.close();
   }
   if (params.doMajorMinorPosteriorSums) {
@@ -148,7 +152,7 @@ int main(int argc, char* argv[])
     // Sum for 01
     FileUtils::AutoGzOfstream fout01;
     fout01.openOrExit(params.outFileRoot + ".01.sumOverPairs.gz");
-    fout01 << decodingReturnValues.sumOverPairs01 << endl;
+    fout01 << decodingReturnValues.sumOverPairs01.format(TabFmt) << endl;
     fout01.close();
     // Sum for 11
     FileUtils::AutoGzOfstream fout11;
