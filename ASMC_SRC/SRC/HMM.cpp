@@ -32,7 +32,7 @@
 #include "StringUtils.hpp"
 
 #include <sstream>
-
+#include <Eigen/Dense>
 #include <chrono>
 
 using namespace std;
@@ -197,17 +197,6 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant,
     currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
   }
 
-  m_decodingReturnValues.sumOverPairs
-      = vector<vector<float>>(sequenceLength, vector<float>(states));
-  if (decodingParams.doMajorMinorPosteriorSums) {
-    m_decodingReturnValues.sumOverPairs00
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-    m_decodingReturnValues.sumOverPairs01
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-    m_decodingReturnValues.sumOverPairs11
-        = vector<vector<float>>(sequenceLength, vector<float>(states));
-  }
-
   resetDecoding();
 
   // output for python interface (TODO: not sure if this is the right place)
@@ -339,14 +328,6 @@ void HMM::prepareEmissions()
   }
 }
 
-template <typename T> void HMM::zeroVectorOfVectors(vector<vector<T>>& v)
-{
-  for (size_t i = 0; i < m_decodingReturnValues.sumOverPairs.size(); ++i) {
-    vector<float>& row = m_decodingReturnValues.sumOverPairs[i];
-    std::fill(row.begin(), row.end(), static_cast<T>(0));
-  }
-}
-
 void HMM::resetDecoding()
 {
   if (decodingParams.doPerPairPosteriorMean) {
@@ -362,12 +343,12 @@ void HMM::resetDecoding()
     foutMAPPerPair.openOrExit(outFileRoot + ".perPairMAP.gz");
   }
 
-  zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs);
+  m_decodingReturnValues.sumOverPairs = Eigen::ArrayXXf::Zero(sequenceLength, states);
 
   if (decodingParams.doMajorMinorPosteriorSums) {
-    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs00);
-    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs01);
-    zeroVectorOfVectors(m_decodingReturnValues.sumOverPairs11);
+    m_decodingReturnValues.sumOverPairs00 = Eigen::ArrayXXf::Zero(sequenceLength, states);
+    m_decodingReturnValues.sumOverPairs01 = Eigen::ArrayXXf::Zero(sequenceLength, states);
+    m_decodingReturnValues.sumOverPairs11 = Eigen::ArrayXXf::Zero(sequenceLength, states);
   }
 }
 
@@ -1062,12 +1043,12 @@ void HMM::augmentSumOverPairs(
         }
       }
       if (decodingParams.doPosteriorSums) {
-        m_decodingReturnValues.sumOverPairs[pos][k] += sum;
+        m_decodingReturnValues.sumOverPairs(pos,k) += sum;
       }
       if (decodingParams.doMajorMinorPosteriorSums) {
-        m_decodingReturnValues.sumOverPairs00[pos][k] += sum00;
-        m_decodingReturnValues.sumOverPairs01[pos][k] += sum01;
-        m_decodingReturnValues.sumOverPairs11[pos][k] += sum11;
+        m_decodingReturnValues.sumOverPairs00(pos,k) += sum00;
+        m_decodingReturnValues.sumOverPairs01(pos,k) += sum01;
+        m_decodingReturnValues.sumOverPairs11(pos,k) += sum11;
       }
     }
   }
@@ -1236,7 +1217,7 @@ vector<vector<float>> HMM::decode(const PairObservations& observations)
   if (decodingParams.doPosteriorSums) {
     for (uint k = 0; k < m_decodingQuant.states; k++) {
       for (long int pos = 0; pos < sequenceLength; pos++) {
-        m_decodingReturnValues.sumOverPairs[pos][k] += posterior[k][pos];
+        m_decodingReturnValues.sumOverPairs(pos,k) += posterior[k][pos];
       }
     }
   }

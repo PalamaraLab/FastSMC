@@ -113,6 +113,10 @@ find_package(Boost REQUIRED COMPONENTS program_options iostreams)
 target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
 target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
 
+# Eigen is required
+find_package(Eigen3 REQUIRED)
+target_include_directories(ASMC PUBLIC ${EIGEN3_INCLUDE_DIRS})
+
 # zlib is required (at least on Linux) for boost iostreams
 find_package(ZLIB REQUIRED)
 target_link_libraries(ASMC PRIVATE ZLIB::ZLIB)

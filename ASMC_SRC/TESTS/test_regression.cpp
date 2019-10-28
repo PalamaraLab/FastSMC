@@ -54,18 +54,17 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
     fin.openOrExit(regressionFile);
     hmm.decodeAll(params.jobs, params.jobInd);
     const DecodingReturnValues& decodingReturnValues = hmm.getDecodingReturnValues();
-    const vector<vector<float>>& sumOverPairs = decodingReturnValues.sumOverPairs;
     int pos = 0;
     for( std::string line; getline(fin, line); )
     {
       std::ostringstream oss;
       for (uint k = 0; k < decodingQuantities.states; k++) {
         if (k) oss << "\t";
-        oss << sumOverPairs[pos][k];
+        oss << decodingReturnValues.sumOverPairs(pos,k);
       }
       REQUIRE(oss.str() == line);
       pos++;
     }
-    REQUIRE(pos == sumOverPairs.size());
+    REQUIRE(pos == decodingReturnValues.sumOverPairs.rows());
   }
 }
