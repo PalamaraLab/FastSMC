@@ -28,14 +28,6 @@ strategy:
       cmakeBuildArgs: ''
       jobType: 'coverage'
       language: 'C++'
-    # Ubuntu (regression test, in Python, calling the CLI interface)
-    Ubuntu-regression-python:
-      imageName: 'ubuntu-16.04'
-      installDeps: 'apt'
-      cmakeConfigArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
-      cmakeBuildArgs: '--target Regression'
-      jobType: 'regression-py'
-      language: 'C++'
     # Ubuntu (regression test, in C++, using the library)
     Ubuntu-regression:
       imageName: 'ubuntu-16.04'
@@ -122,8 +114,12 @@ steps:
     displayName: 'Python build'
     condition: eq(variables['language'], 'Python')
 
-  - script: python -m unittest discover ASMC_SRC/TESTS
-    displayName: 'Python tests'
+  - script: python -m unittest discover ASMC_SRC/TESTS "test_unit*.py"
+    displayName: 'Python unit tests'
+    condition: eq(variables['language'], 'Python')
+
+  - script: python -m unittest ASMC_SRC/TESTS/test_regression.py
+    displayName: 'Python regression tests'
     condition: eq(variables['language'], 'Python')
 
   - script: ctest -R test1
