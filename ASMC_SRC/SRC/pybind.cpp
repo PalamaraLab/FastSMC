@@ -27,7 +27,7 @@
 
 PYBIND11_MAKE_OPAQUE(std::vector<bool>)
 PYBIND11_MAKE_OPAQUE(std::vector<float>)
-//PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
+PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 PYBIND11_MAKE_OPAQUE(std::vector<Individual>)
 PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<float, std::vector<float>>)
