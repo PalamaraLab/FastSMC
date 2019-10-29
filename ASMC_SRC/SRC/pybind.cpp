@@ -17,6 +17,7 @@
 #include <vector>
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
+#include <pybind11/eigen.h>
 #include "ASMC.hpp"
 #include "Individual.hpp"
 #include "HMM.hpp"
@@ -26,7 +27,7 @@
 
 PYBIND11_MAKE_OPAQUE(std::vector<bool>)
 PYBIND11_MAKE_OPAQUE(std::vector<float>)
-PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
+//PYBIND11_MAKE_OPAQUE(std::vector <std::vector <float> >)
 PYBIND11_MAKE_OPAQUE(std::vector<Individual>)
 PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<float, std::vector<float>>)

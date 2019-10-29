@@ -24,6 +24,7 @@
 #include "Types.hpp"
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -39,16 +40,16 @@ struct PairObservations {
 struct DecodingReturnValues {
 
   /// output for sum over all pairs
-  vector<vector<float>> sumOverPairs;
+  Eigen::ArrayXXf sumOverPairs;
 
   /// output for sum over all pairs with genotype 00
-  vector<vector<float>> sumOverPairs00;
+  Eigen::ArrayXXf sumOverPairs00;
 
   /// output for sum over all pairs with genotype 01 or 10
-  vector<vector<float>> sumOverPairs01;
+  Eigen::ArrayXXf sumOverPairs01;
 
   /// output for sum over all pairs with genotype 11
-  vector<vector<float>> sumOverPairs11;
+  Eigen::ArrayXXf sumOverPairs11;
 
   int sites = 0;
   unsigned int states = 0;
@@ -162,9 +163,6 @@ class HMM {
   private:
   /// resets the internal state of HMM to a clean state
   void resetDecoding();
-
-  /// zero a vector of vectors of type T
-  template <typename T> void zeroVectorOfVectors(vector<vector<T>>& v);
 
   void prepareEmissions();
 

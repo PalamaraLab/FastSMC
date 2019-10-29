@@ -68,9 +68,9 @@ pool:
   vmImage: $(imageName)
 
 variables:
-  aptDeps: 'libboost-all-dev lcov'
-  brewDeps: 'boost libomp'
-  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
+  aptDeps: 'libboost-all-dev lcov libeigen3-dev'
+  brewDeps: 'boost libomp eigen'
+  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib eigen'
 
 steps:
 

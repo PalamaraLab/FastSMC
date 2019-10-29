@@ -26,6 +26,11 @@ class TestASMC(unittest.TestCase):
     def test_initialization(self):
         self.assertGreater(len(self.data.individuals), 20)
 
+    def test_sum_over_pairs_shape(self):
+        ret = self.hmm.getDecodingReturnValues()
+        self.assertEqual(ret.sumOverPairs.shape,
+                         (self.sequenceLength, self.decodingQuantities.states))
+
     def test_decode_pair(self):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
         self.hmm.decodePair(0, 9)
