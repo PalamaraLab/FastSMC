@@ -56,7 +56,7 @@ PYBIND11_MODULE(pyASMC, m) {
     py::bind_vector<std::vector<Individual>>(m, "VectorIndividual");
     py::bind_vector<std::vector<uint>>(m, "VectorUInt");
     py::bind_vector<std::vector<PairObservations>>(m, "VectorPairObservations");
-    //py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
+    py::bind_vector<std::vector<std::vector<float>>>(m, "Matrix");
     py::bind_map<std::unordered_map<float, std::vector<float>>>(m, "UMapFloatToVectorFloat");
     py::bind_map<std::unordered_map<int, std::vector<float>>>(m, "UMapIntToVectorFloat");
     py::class_<DecodingReturnValues>(m, "DecodingReturnValues")
