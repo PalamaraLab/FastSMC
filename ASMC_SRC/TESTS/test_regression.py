@@ -26,8 +26,8 @@ class TestASMCRegression(unittest.TestCase):
                        not self.params.noBatches, 1)
 
     def test_regression(self):
-        old_sumOverPairs = np.loadtxt(Path(__file__).parent / 'data' /
+        oldSumOverPairs = np.loadtxt(Path(__file__).parent / 'data' /
                                       'regression_test_original.gz')
         self.hmm.decodeAll(self.params.jobs, self.params.jobInd)
         ret = self.hmm.getDecodingReturnValues()
-        self.assertEqual(np.allclose(ret.sumOverPairs, old_sumOverPairs), True)
+        self.assertEqual(np.allclose(ret.sumOverPairs, oldSumOverPairs), True)
