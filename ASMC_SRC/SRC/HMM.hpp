@@ -24,6 +24,7 @@
 #include "Types.hpp"
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -39,22 +40,24 @@ struct PairObservations {
 struct DecodingReturnValues {
 
   /// output for sum over all pairs
-  vector<vector<float>> sumOverPairs;
+  Eigen::ArrayXXf sumOverPairs;
 
   /// output for sum over all pairs with genotype 00
-  vector<vector<float>> sumOverPairs00;
+  Eigen::ArrayXXf sumOverPairs00;
 
   /// output for sum over all pairs with genotype 01 or 10
-  vector<vector<float>> sumOverPairs01;
+  Eigen::ArrayXXf sumOverPairs01;
 
   /// output for sum over all pairs with genotype 11
-  vector<vector<float>> sumOverPairs11;
+  Eigen::ArrayXXf sumOverPairs11;
 
   int sites = 0;
   unsigned int states = 0;
   vector <bool> siteWasFlippedDuringFolding = {};
 };
 
+PairObservations makePairObs(
+    const Individual& iInd, int iHap, const Individual& jInd, int jHap);
 // does the linear-time decoding
 class HMM {
 
@@ -72,7 +75,7 @@ class HMM {
   // for decoding
   Data& data;
   const DecodingQuantities& m_decodingQuant;
-  const DecodingParams& decodingParams;
+  const DecodingParams decodingParams;
 
   string outFileRoot;
   string expectedCoalTimesFile;
@@ -105,13 +108,17 @@ class HMM {
   public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-      DecodingParams& _decodingParams, bool useBatches, int _scalingSkip = 1);
+      DecodingParams _decodingParams, bool useBatches, int _scalingSkip = 1);
 
   ~HMM();
 
   /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
   /// states).
   void decodeAll(int jobs, int jobInd);
+
+  vector<vector<float>> decode(const PairObservations& observations);
+
+  pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
 
   /// decode a single pair
   ///
@@ -167,9 +174,6 @@ class HMM {
   private:
   /// resets the internal state of HMM to a clean state
   void resetDecoding();
-
-  /// zero a vector of vectors of type T
-  template <typename T> void zeroVectorOfVectors(vector<vector<T>>& v);
 
   void prepareEmissions();
 
@@ -238,7 +242,6 @@ class HMM {
   void fillMatrixColumn(
       vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
 
-  vector<vector<float>> decode(const PairObservations& observations);
 
   float roundMorgans(float gen);
 

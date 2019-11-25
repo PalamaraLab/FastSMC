@@ -16,14 +16,14 @@
 #include "catch.hpp"
 
 #include "HMM.hpp"
+#include "FileUtils.hpp"
+#include <sstream>
 
 TEST_CASE("test hmm functions", "[HMM]")
 {
-
-  DecodingParams params;
-  params.hapsFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
-  params.decodingQuantFile
-      = ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz";
+  DecodingParams params(
+      ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
+      ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
   Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
@@ -31,6 +31,16 @@ TEST_CASE("test hmm functions", "[HMM]")
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
   REQUIRE(data.individuals.size() > 20);
+
+  SECTION("test decode pair summarize")
+  {
+    PairObservations pairObs = makePairObs(data.individuals[0], 1, data.individuals[0], 2);
+    vector<vector<float>> decodeResult = hmm.decode(pairObs);
+    pair<vector<float>, vector<float>> decodeSummary = hmm.decodeSummarize(pairObs);
+    // check that the MAP and posterior mean are the same length
+    REQUIRE(decodeSummary.first.size() == decodeSummary.second.size());
+    REQUIRE(decodeSummary.first.size() == decodeResult[0].size());
+  }
 
   SECTION("test decode pair")
   {

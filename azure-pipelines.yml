@@ -13,20 +13,29 @@ strategy:
       cmakeConfigArgs: ''
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
+      language: 'C++'
+    # Ubuntu (python module)
+    Ubuntu-python:
+      imageName: 'ubuntu-16.04'
+      installDeps: 'apt'
+      jobType: 'unit'
+      language: 'Python'
     # Ubuntu (coverage)
     Ubuntu-coverage:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
       cmakeConfigArgs: '-DASMC_ENABLE_COVERAGE:BOOL=TRUE'
-      cmakeBuildArgs: '--target ASMC_unit_tests'
+      cmakeBuildArgs: ''
       jobType: 'coverage'
-    # Ubuntu (regression test)
+      language: 'C++'
+    # Ubuntu (regression test, in C++, using the library)
     Ubuntu-regression:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
-      cmakeConfigArgs: '-DASMC_REGRESSION_TESTING:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release'
-      cmakeBuildArgs: '--target Regression'
+      cmakeConfigArgs: ''
+      cmakeBuildArgs: '--target ASMC_regression'
       jobType: 'regression'
+      language: 'C++'
     # macOS
     macOS-unit:
       imageName: 'macOS-10.13'
@@ -34,6 +43,7 @@ strategy:
       cmakeConfigArgs: ''
       cmakeBuildArgs: '--target ASMC_unit_tests'
       jobType: 'unit'
+      language: 'C++'
     # Windows
     #Windows-unit:
     #  imageName: 'windows-2019'
@@ -50,9 +60,9 @@ pool:
   vmImage: $(imageName)
 
 variables:
-  aptDeps: 'libboost-all-dev lcov'
-  brewDeps: 'boost libomp'
-  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib'
+  aptDeps: 'libboost-all-dev lcov libeigen3-dev'
+  brewDeps: 'boost libomp eigen'
+  vcpkgDeps: 'boost-algorithm boost-align boost-iostreams boost-program-options boost-math zlib eigen'
 
 steps:
 
@@ -90,17 +100,36 @@ steps:
     inputs:
       workingDirectory: 'build'
       cmakeArgs: '.. $(cmakeConfigArgs)'
+    condition: eq(variables['language'], 'C++')
     displayName: 'CMake'
 
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
       cmakeArgs: '--build . $(cmakeBuildArgs)'
+    condition: eq(variables['language'], 'C++')
     displayName: 'Build'
 
-  - script: ctest -V
+  - script: python -m pip install .
+    displayName: 'Python build'
+    condition: eq(variables['language'], 'Python')
+
+  - script: python -m unittest discover ASMC_SRC/TESTS "test_unit*.py"
+    displayName: 'Python unit tests'
+    condition: eq(variables['language'], 'Python')
+
+  - script: python -m unittest ASMC_SRC/TESTS/test_regression.py
+    displayName: 'Python regression tests'
+    condition: eq(variables['language'], 'Python')
+
+  - script: ctest -R test1
     displayName: 'Unit tests'
-    condition: in(variables['jobType'], 'unit', 'coverage')
+    condition: and(in(variables['jobType'], 'unit', 'coverage'), eq(variables['language'], 'C++'))
+    workingDirectory: 'build'
+
+  - script: ctest -R regression
+    displayName: 'Regression tests'
+    condition: and(in(variables['jobType'], 'regression', 'coverage'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
   - script: |
@@ -110,4 +139,4 @@ steps:
       bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
     displayName: 'Upload coverage'
     workingDirectory: 'build'
-    condition: eq(variables['jobType'], 'coverage')
+    condition: and(eq(variables['jobType'], 'coverage'), eq(variables['language'], 'C++'))

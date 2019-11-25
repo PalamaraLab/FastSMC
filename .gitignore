@@ -9,3 +9,11 @@ CMakeSettings.json
 # Untracked directories in the main repo
 FILES/EXAMPLE/*
 ASMC_SRC/BIN/*
+
+# Build directories
+build
+Build
+debug
+Debug
+release
+Release

@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 cmake_minimum_required(VERSION 3.12)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 
@@ -75,14 +74,26 @@ set(ASMC_main
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_HMM.cpp
+  ${ASMC_test_dir}/test_decoding_params.cpp
   )
 
-add_subdirectory(pybind11)
-pybind11_add_module(pyASMC ${ASMC_source_dir}/pybind.cpp)
+set(ASMC_regression
+  ${ASMC_test_dir}/test_regression.cpp
+  )
+
+option(ASMC_PYTHON_BINDINGS "Whether to build the ASMC python bindings" OFF)
+if (ASMC_PYTHON_BINDINGS)
+    add_subdirectory(pybind11)
+    pybind11_add_module(pyASMC ${ASMC_source_dir}/pybind.cpp)
+    target_link_libraries(pyASMC PRIVATE ASMC)
+endif ()
+
+# The main ASMC library
 add_library(ASMC ${ASMC_source} ${ASMC_headers})
 target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
+
+# The main ASMC executable
 add_executable(ASMC_exe ${ASMC_main})
-target_link_libraries(pyASMC PRIVATE ASMC)
 target_link_libraries(ASMC_exe PRIVATE ASMC)
 
 enable_testing()
@@ -92,10 +103,19 @@ target_include_directories(ASMC_unit_tests PRIVATE ${ASMC_test_dir})
 target_link_libraries(ASMC_unit_tests PRIVATE ASMC)
 add_test(test1 ASMC_unit_tests)
 
+add_executable(ASMC_regression ${ASMC_regression})
+target_include_directories(ASMC_regression PRIVATE ${ASMC_test_dir})
+target_link_libraries(ASMC_regression PRIVATE ASMC)
+add_test(regression ASMC_regression)
+
 # boost as a required dependency for ASMC
 find_package(Boost REQUIRED COMPONENTS program_options iostreams)
 target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
 target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
+
+# Eigen is required
+find_package(Eigen3 REQUIRED)
+target_include_directories(ASMC PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 # zlib is required (at least on Linux) for boost iostreams
 find_package(ZLIB REQUIRED)
