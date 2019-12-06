@@ -22,9 +22,9 @@
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
 using namespace std;
 
@@ -53,13 +53,13 @@ struct DecodingReturnValues {
 
   int sites = 0;
   unsigned int states = 0;
-  vector <bool> siteWasFlippedDuringFolding = {};
+  vector<bool> siteWasFlippedDuringFolding = {};
 };
 
-PairObservations makePairObs(
-    const Individual& iInd, int iHap, const Individual& jInd, int jHap);
+PairObservations makePairObs(const Individual& iInd, int iHap, const Individual& jInd, int jHap);
 // does the linear-time decoding
-class HMM {
+class HMM
+{
 
   int m_batchSize;
 
@@ -105,10 +105,10 @@ class HMM {
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
-  public:
+public:
   // constructor
-  HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-      DecodingParams _decodingParams, bool useBatches, int _scalingSkip = 1);
+  HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
+      int _scalingSkip = 1);
 
   ~HMM();
 
@@ -157,7 +157,10 @@ class HMM {
   void decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition);
 
   /// returns the current buffer of pair observations
-  const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
+  const vector<PairObservations>& getBatchBuffer()
+  {
+    return m_observationsBatch;
+  }
 
   /// returns the decoding quantities calculated thus far
   const DecodingReturnValues& getDecodingReturnValues()
@@ -171,15 +174,14 @@ class HMM {
   /// observationsBatch buffer and close output files
   void finishDecoding();
 
-  private:
+private:
   /// resets the internal state of HMM to a clean state
   void resetDecoding();
 
   void prepareEmissions();
 
   // add pair to batch and run if we have enough
-  void addToBatch(
-      vector<PairObservations>& obsBatch, const PairObservations& observations);
+  void addToBatch(vector<PairObservations>& obsBatch, const PairObservations& observations);
 
   // complete with leftover pairs
   void runLastBatch(vector<PairObservations>& obsBatch);
@@ -193,33 +195,27 @@ class HMM {
   void applyScaling(float* vec, float* scalings, int curBatchSize);
 
   // forward step
-  void forwardBatch(
-      const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
 
   // compute next alpha vector in linear time
-  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize,
-      const float* previousAlpha, uint pos, const float* obsIsZeroBatch,
-      const float* obsIsTwoBatch, float* AU, float* nextAlpha,
-      const vector<float>& emission1AtSite, const vector<float>& emission0minus1AtSite,
-      const vector<float>& emission2minus0AtSite);
+  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
+                           uint pos, const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* AU,
+                           float* nextAlpha, const vector<float>& emission1AtSite,
+                           const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite);
   // backward step
-  void backwardBatch(
-      const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
 
   // compute previous beta vector in linear time
-  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize,
-      const float* lastComputedBeta, int pos, const float* obsIsZeroBatch,
-      const float* obsIsTwoBatch, float* vec, float* BU, float* BL, float* currentBeta,
-      const vector<float>& emission1AtSite, const vector<float>& emission0minus1AtSite,
-      const vector<float>& emission2minus0AtSite);
+  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
+                              const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* vec, float* BU, float* BL,
+                              float* currentBeta, const vector<float>& emission1AtSite,
+                              const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite);
 
   // --posteriorSums
-  void augmentSumOverPairs(
-      vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize);
+  void augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize);
 
   // will eventually write binary output instead of gzipped
-  void writePerPairOutput(int actualBatchSize, int paddedBatchSize,
-      const vector<PairObservations>& obsBatch);
+  void writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch);
 
   // *********************************************************************
   // non-batched computations (for debugging and pedagogical reasons only)
@@ -231,40 +227,34 @@ class HMM {
 
   vector<float> elementWiseMultVectorScalar(const vector<float>& vec, float val);
 
-  vector<float> elementWiseMultVectorVector(
-      const vector<float>& vec, const vector<float>& factors);
+  vector<float> elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors);
 
-  vector<vector<float>> elementWiseMultMatrixMatrix(
-      const vector<vector<float>>& matrix1, const vector<vector<float>>& matrix2);
+  vector<vector<float>> elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
+                                                    const vector<vector<float>>& matrix2);
 
   vector<vector<float>> normalizeMatrixColumns(const vector<vector<float>>& matrix);
 
-  void fillMatrixColumn(
-      vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
-
+  void fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
 
   float roundMorgans(float gen);
 
   int roundPhysical(int phys);
 
-  vector<float> getEmission(
-      int pos, int distinguished, int undistinguished, int emissionIndex);
+  vector<float> getEmission(int pos, int distinguished, int undistinguished, int emissionIndex);
 
   // forward step
   vector<vector<float>> forward(const PairObservations& observations);
 
-  void getNextAlpha(float recDistFromPrevious, vector<float>& alphaC,
-      vector<float>& previousAlpha, vector<float>& nextAlpha,
-      vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
-      vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
+  void getNextAlpha(float recDistFromPrevious, vector<float>& alphaC, vector<float>& previousAlpha,
+                    vector<float>& nextAlpha, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
+                    vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
 
   // backward step
   vector<vector<float>> backward(const PairObservations& observations);
 
-  void getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputedBeta,
-      vector<float>& BL, vector<float>& BU, vector<float>& currentBeta,
-      vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
-      vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
+  void getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputedBeta, vector<float>& BL, vector<float>& BU,
+                       vector<float>& currentBeta, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
+                       vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
 };
 
 #endif // ASMC_HMM
