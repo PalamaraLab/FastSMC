@@ -459,335 +459,335 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-// add pair to batch and run if we have enough
-void addToBatchFastSMC(vector<PairObservations>& obsBatch, PairObservations& observations)
-{
-  obsBatch.push_back(observations);
-  if ((int)obsBatch.size() == batchSize) {
-
-    // taking the maximum To position and the minimum From position in the batch
-    startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
-    endBatch = *std::max_element(toBatch.begin(), toBatch.end());
-
-    unsigned int from = getFromPosition(startBatch);
-    unsigned int to = getToPosition(endBatch);
-    for (int i = 0; i < obsBatch.size(); i++) {
-      makeBits(obsBatch[i], from, to);
-    }
-
-    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x
-    // batchSize]
-    decodeBatchFastSMC(obsBatch, batchSize, batchSize, from, to);
-
-    // reinitializing batch variables
-    startBatch = sequenceLength;
-    endBatch = 0;
-    obsBatch.clear();
-  }
-}
-
-void makeBits(PairObservations& obs, unsigned int from, unsigned int to)
-{
-  unsigned int iInd = obs.iInd;
-  unsigned int jInd = obs.jInd;
-  obs.obsBits =
-      xorVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
-             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
-  obs.homMinorBits =
-      andVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
-             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
-}
-
-// backward step
-void backwardBatchFastSMC(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned int from,
-                          unsigned int to)
-{
-
-  // fill pos=sequenceLenght-1 in beta
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      betaBuffer[((to - 1) * states + k) * curBatchSize + v] = 1.0f;
-    }
-  }
-  float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
-
-  float* currentBeta = &betaBuffer[states * (to - 1) * curBatchSize];
-  scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize, to - 1);
-  applyScaling(currentBeta, scalingBuffer, curBatchSize, to - 1);
-  /*scaleBatch(betaBuffer, scalingBuffer, sums, curBatchSize, to-1);
-  applyScaling(betaBuffer, scalingBuffer, curBatchSize, to-1);*/
-
-  // Induction Step:
-  float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
-  float* BU = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
-  float* vec = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
-
-  double lastGeneticPos = data->geneticPositions[to - 1];
-  unsigned long int lastPhysicalPos = data->physicalPositions[to - 1];
-
-  for (long int pos = to - 2; pos >= from; pos--) {
-    // get distances and rates
-    double recDistFromPrevious = roundMorgans(std::max(minGenetic, lastGeneticPos - data->geneticPositions[pos]));
-    double currentRecRate = roundMorgans(data->recRateAtMarker[pos]);
-    float* currentBeta = &betaBuffer[pos * states * curBatchSize];
-    float* lastComputedBeta = &betaBuffer[(pos + 1) * states * curBatchSize];
-
-    if (decodingParams->decodingSequence) {
-      unsigned long int physDistFromPreviousMinusOne =
-          roundPhysical(lastPhysicalPos - data->physicalPositions[pos] - 1);
-      double recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
-      vector<float> homozEmission = decodingQuant->homozygousEmissionMap.at(physDistFromPreviousMinusOne);
-      getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize, lastComputedBeta, pos, allZeros, allZeros, vec,
-                             BU, BL, currentBeta, homozEmission, homozEmission, homozEmission);
-      lastComputedBeta = currentBeta;
-      getPreviousBetaBatched(currentRecRate, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch, vec,
-                             BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
-                             emission2minus0AtSite[pos + 1]);
-    } else {
-      getPreviousBetaBatched(recDistFromPrevious, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch,
-                             vec, BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
-                             emission2minus0AtSite[pos + 1]);
-    }
-
-    if (pos % scalingSkip == 0) {
-      // normalize betas using alpha scaling
-      memset(sums, 0, curBatchSize * sizeof(sums[0]));
-      scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize, pos);
-      applyScaling(currentBeta, scalingBuffer, curBatchSize, pos);
-    }
-
-    // update distances
-    lastGeneticPos = data->geneticPositions[pos];
-    lastPhysicalPos = data->physicalPositions[pos];
-  }
-
-  ALIGNED_FREE(sums);
-  ALIGNED_FREE(vec);
-  ALIGNED_FREE(BU);
-  ALIGNED_FREE(BL);
-}
-
-// forward step
-void forwardBatchFastSMC(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned int from,
-                         unsigned int to)
-{
-
-  assert(curBatchSize % VECX == 0);
-
-  float* alphaC = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
-  float* AU = ALIGNED_MALLOC_FLOATS(curBatchSize);
-
-  // fill pos=0 in alpha
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      float firstEmission = emission1AtSite[from][k] +
-                            emission0minus1AtSite[from][k] * obsIsZeroBatch[from * curBatchSize + v] +
-                            emission2minus0AtSite[from][k] * obsIsTwoBatch[from * curBatchSize + v];
-      alphaBuffer[(states * from + k) * curBatchSize + v] = decodingQuant->initialStateProb[k] * firstEmission;
-    }
-  }
-
-  float* sums = AU; // reuse buffer but rename to be less confusing
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
-  float* currentAlpha = &alphaBuffer[states * from * curBatchSize];
-  scaleBatch(currentAlpha, scalingBuffer, sums, curBatchSize, from);
-  applyScaling(currentAlpha, scalingBuffer, curBatchSize, from);
-  /*scaleBatch(alphaBuffer, scalingBuffer, sums, curBatchSize, from);
-  applyScaling(alphaBuffer, scalingBuffer, curBatchSize, from);*/
-
-  // Induction Step:
-  double lastGeneticPos = data->geneticPositions[from];
-  unsigned long int lastPhysicalPos = data->physicalPositions[from];
-
-  for (long int pos = from + 1; pos < to; pos++) {
-    // get distances and rates
-    double recDistFromPrevious = roundMorgans(std::max(minGenetic, data->geneticPositions[pos] - lastGeneticPos));
-    double currentRecRate = roundMorgans(data->recRateAtMarker[pos]);
-    float* previousAlpha = &alphaBuffer[(pos - 1) * states * curBatchSize];
-    float* nextAlpha = &alphaBuffer[pos * states * curBatchSize];
-
-    if (decodingParams->decodingSequence) {
-      unsigned long int physDistFromPreviousMinusOne =
-          roundPhysical(data->physicalPositions[pos] - lastPhysicalPos - 1);
-      double recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
-      vector<float> homozEmission = decodingQuant->homozygousEmissionMap.at(physDistFromPreviousMinusOne);
-      getNextAlphaBatched(recDistFromPreviousMinusOne, alphaC, curBatchSize, previousAlpha, pos, allZeros, allZeros, AU,
-                          nextAlpha, homozEmission, homozEmission, homozEmission);
-      previousAlpha = nextAlpha;
-      getNextAlphaBatched(currentRecRate, alphaC, curBatchSize, previousAlpha, pos, obsIsZeroBatch, obsIsTwoBatch, AU,
-                          nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
-    } else {
-      getNextAlphaBatched(recDistFromPrevious, alphaC, curBatchSize, previousAlpha, pos, obsIsZeroBatch, obsIsTwoBatch,
-                          AU, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
-    }
-    float* sums = AU; // reuse buffer but rename to be less confusing
-    memset(sums, 0, curBatchSize * sizeof(sums[0]));
-
-    if (pos % scalingSkip == 0) {
-      scaleBatch(nextAlpha, scalingBuffer, sums, curBatchSize, pos);
-      applyScaling(nextAlpha, scalingBuffer, curBatchSize, pos);
-    }
-    // update distances
-    lastGeneticPos = data->geneticPositions[pos];
-    lastPhysicalPos = data->physicalPositions[pos];
-  }
-
-  ALIGNED_FREE(AU);
-  ALIGNED_FREE(alphaC);
-}
-
-void decodeBatchFastSMC(const vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize,
-                        unsigned int from, unsigned int to)
-{
-
-  int curBatchSize = obsBatch.size();
-  float* obsIsZeroBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
-  float* obsIsTwoBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      obsIsZeroBatch[pos * curBatchSize + v] = (!obsBatch[v].obsBits[pos - from] ? 1.0f : 0.0f);
-      obsIsTwoBatch[pos * curBatchSize + v] = (obsBatch[v].homMinorBits[pos - from] ? 1.0f : 0.0f);
-    }
-  }
-
-  uint64 t0 = Timer::rdtsc();
-
-  // run forward
-  forwardBatchFastSMC(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
-
-  uint64 t1 = Timer::rdtsc();
-  ticksForward += t1 - t0;
-  // cout << "ticksForward : " << ticksForward << endl;
-
-  // run backward
-  backwardBatchFastSMC(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
-  uint64 t2 = Timer::rdtsc();
-  ticksBackward += t2 - t1;
-
-  // combine (alpha * beta), normalize and store
-  float* scale = obsIsZeroBatch; // reuse buffer but rename to be less confusing
-  memset(scale, 0, sequenceLength * curBatchSize * sizeof(scale[0]));
-#ifdef NO_SSE
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int k = 0; k < states; k++) {
-      for (int v = 0; v < curBatchSize; v++) {
-        long int ind = (pos * states + k) * curBatchSize + v;
-        alphaBuffer[ind] *= betaBuffer[ind];
-        scale[pos * curBatchSize + v] += alphaBuffer[ind];
-      }
-    }
-  }
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      scale[pos * curBatchSize + v] = 1.0f / scale[pos * curBatchSize + v];
-    }
-  }
-
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int k = 0; k < states; k++) {
-      for (int v = 0; v < curBatchSize; v++) {
-        alphaBuffer[(pos * states + k) * curBatchSize + v] *= scale[pos * curBatchSize + v];
-      }
-    }
-  }
-#else
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int k = 0; k < states; k++) {
-      for (int v = 0; v < curBatchSize; v += VECX) {
-        long int ind = (pos * states + k) * curBatchSize + v;
-
-        FLOAT prod = MULT(LOAD(&alphaBuffer[ind]), LOAD(&betaBuffer[ind]));
-        STORE(&alphaBuffer[ind], prod);
-        STORE(&scale[pos * curBatchSize + v], ADD(LOAD(&scale[pos * curBatchSize + v]), prod));
-      }
-    }
-  }
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int v = 0; v < curBatchSize; v += VECX) {
-      long int ind = pos * curBatchSize + v;
-      STORE(&scale[ind], RECIPROCAL(LOAD(&scale[ind])));
-    }
-  }
-  for (unsigned int pos = from; pos < to; pos++) {
-    for (int k = 0; k < states; k++) {
-      for (int v = 0; v < curBatchSize; v += VECX) {
-        long int ind = (pos * states + k) * curBatchSize + v;
-        STORE(&alphaBuffer[ind], MULT(LOAD(&alphaBuffer[ind]), LOAD(&scale[pos * curBatchSize + v])));
-      }
-    }
-  }
-
-#endif
-
-  uint64 t3 = Timer::rdtsc();
-  ticksCombine += t3 - t2;
-  ALIGNED_FREE(obsIsZeroBatch);
-  ALIGNED_FREE(obsIsTwoBatch);
-  writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
-}
-
-void HMM::decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition)
-{
-
-  assert(i < individuals.size());
-  assert(j < individuals.size());
-  assert(fromPosition < sequenceLength);
-  assert(toPosition < sequenceLength);
-
-  timerASMC.update_time();
-  // ID of individual j must be smaller than ID of individual i
-  unsigned int jInd = i / 2;
-  unsigned int iInd = j / 2;
-
-  PairObservations observation = makePairObs(data->individuals[jInd], i % 2 == 0 ? '1' : '2', jInd,
-                                             data->individuals[iInd], j % 2 == 0 ? '1' : '2', iInd);
-
-  if (noBatches) {
-    decode(observation, fromPosition, toPosition);
-  } else {
-    nbBatch = cpt % batchSize;
-    fromBatch[nbBatch] = fromPosition;
-    toBatch[nbBatch] = toPosition;
-    addToBatchFastSMC(batchObservations, observation);
-    cpt++;
-  }
-  if (cpt % 10000 == 0) {
-    cout << "\rnumber of decoded segments: " << cpt << "\t"
-         << "\tdetected segments: " << nbSegmentsDetected << flush;
-  }
-  timeASMC += timerASMC.update_time();
-}
-
-void finishFromGERMLINE()
-{
-  timerASMC.update_time();
-
-  if (!noBatches) {
-    runLastBatchFastSMC(batchObservations);
-  }
-
-  // dealloc here
-  ALIGNED_FREE(betaBuffer);
-  ALIGNED_FREE(alphaBuffer);
-  ALIGNED_FREE(scalingBuffer);
-  ALIGNED_FREE(allZeros);
-
-  // close output file
-  gzclose(gzoutIBD);
-
-  // print some stats (will remove)
-  timeASMC += timerASMC.update_time();
-  double ticksDecodeAll = ticksForward + ticksBackward + ticksCombine + ticksOutputPerPair;
-  // printf("\n\n*** ASMC decoded %Ld pairs in %.3f seconds. ***\n\n", cpt, timeASMC);
-  printf("\n");
-  printPctTime("forward", ticksForward / ticksDecodeAll);
-  printPctTime("backward", ticksBackward / ticksDecodeAll);
-  printPctTime("combine", ticksCombine / ticksDecodeAll);
-  // printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
-  printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
-  cout << flush;
-}
+//// add pair to batch and run if we have enough
+//void addToBatchFastSMC(vector<PairObservations>& obsBatch, PairObservations& observations)
+//{
+//  obsBatch.push_back(observations);
+//  if ((int)obsBatch.size() == batchSize) {
+//
+//    // taking the maximum To position and the minimum From position in the batch
+//    startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
+//    endBatch = *std::max_element(toBatch.begin(), toBatch.end());
+//
+//    unsigned int from = getFromPosition(startBatch);
+//    unsigned int to = getToPosition(endBatch);
+//    for (int i = 0; i < obsBatch.size(); i++) {
+//      makeBits(obsBatch[i], from, to);
+//    }
+//
+//    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x
+//    // batchSize]
+//    decodeBatchFastSMC(obsBatch, batchSize, batchSize, from, to);
+//
+//    // reinitializing batch variables
+//    startBatch = sequenceLength;
+//    endBatch = 0;
+//    obsBatch.clear();
+//  }
+//}
+//
+//void makeBits(PairObservations& obs, unsigned int from, unsigned int to)
+//{
+//  unsigned int iInd = obs.iInd;
+//  unsigned int jInd = obs.jInd;
+//  obs.obsBits =
+//      xorVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
+//             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
+//  obs.homMinorBits =
+//      andVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
+//             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
+//}
+//
+//// backward step
+//void backwardBatchFastSMC(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned int from,
+//                          unsigned int to)
+//{
+//
+//  // fill pos=sequenceLenght-1 in beta
+//  for (int k = 0; k < states; k++) {
+//    for (int v = 0; v < curBatchSize; v++) {
+//      betaBuffer[((to - 1) * states + k) * curBatchSize + v] = 1.0f;
+//    }
+//  }
+//  float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
+//  memset(sums, 0, curBatchSize * sizeof(sums[0]));
+//
+//  float* currentBeta = &betaBuffer[states * (to - 1) * curBatchSize];
+//  scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize, to - 1);
+//  applyScaling(currentBeta, scalingBuffer, curBatchSize, to - 1);
+//  /*scaleBatch(betaBuffer, scalingBuffer, sums, curBatchSize, to-1);
+//  applyScaling(betaBuffer, scalingBuffer, curBatchSize, to-1);*/
+//
+//  // Induction Step:
+//  float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
+//  float* BU = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
+//  float* vec = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
+//
+//  double lastGeneticPos = data->geneticPositions[to - 1];
+//  unsigned long int lastPhysicalPos = data->physicalPositions[to - 1];
+//
+//  for (long int pos = to - 2; pos >= from; pos--) {
+//    // get distances and rates
+//    double recDistFromPrevious = roundMorgans(std::max(minGenetic, lastGeneticPos - data->geneticPositions[pos]));
+//    double currentRecRate = roundMorgans(data->recRateAtMarker[pos]);
+//    float* currentBeta = &betaBuffer[pos * states * curBatchSize];
+//    float* lastComputedBeta = &betaBuffer[(pos + 1) * states * curBatchSize];
+//
+//    if (decodingParams->decodingSequence) {
+//      unsigned long int physDistFromPreviousMinusOne =
+//          roundPhysical(lastPhysicalPos - data->physicalPositions[pos] - 1);
+//      double recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+//      vector<float> homozEmission = decodingQuant->homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+//      getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize, lastComputedBeta, pos, allZeros, allZeros, vec,
+//                             BU, BL, currentBeta, homozEmission, homozEmission, homozEmission);
+//      lastComputedBeta = currentBeta;
+//      getPreviousBetaBatched(currentRecRate, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch, vec,
+//                             BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
+//                             emission2minus0AtSite[pos + 1]);
+//    } else {
+//      getPreviousBetaBatched(recDistFromPrevious, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch,
+//                             vec, BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
+//                             emission2minus0AtSite[pos + 1]);
+//    }
+//
+//    if (pos % scalingSkip == 0) {
+//      // normalize betas using alpha scaling
+//      memset(sums, 0, curBatchSize * sizeof(sums[0]));
+//      scaleBatch(currentBeta, scalingBuffer, sums, curBatchSize, pos);
+//      applyScaling(currentBeta, scalingBuffer, curBatchSize, pos);
+//    }
+//
+//    // update distances
+//    lastGeneticPos = data->geneticPositions[pos];
+//    lastPhysicalPos = data->physicalPositions[pos];
+//  }
+//
+//  ALIGNED_FREE(sums);
+//  ALIGNED_FREE(vec);
+//  ALIGNED_FREE(BU);
+//  ALIGNED_FREE(BL);
+//}
+//
+//// forward step
+//void forwardBatchFastSMC(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned int from,
+//                         unsigned int to)
+//{
+//
+//  assert(curBatchSize % VECX == 0);
+//
+//  float* alphaC = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
+//  float* AU = ALIGNED_MALLOC_FLOATS(curBatchSize);
+//
+//  // fill pos=0 in alpha
+//  for (int k = 0; k < states; k++) {
+//    for (int v = 0; v < curBatchSize; v++) {
+//      float firstEmission = emission1AtSite[from][k] +
+//                            emission0minus1AtSite[from][k] * obsIsZeroBatch[from * curBatchSize + v] +
+//                            emission2minus0AtSite[from][k] * obsIsTwoBatch[from * curBatchSize + v];
+//      alphaBuffer[(states * from + k) * curBatchSize + v] = decodingQuant->initialStateProb[k] * firstEmission;
+//    }
+//  }
+//
+//  float* sums = AU; // reuse buffer but rename to be less confusing
+//  memset(sums, 0, curBatchSize * sizeof(sums[0]));
+//  float* currentAlpha = &alphaBuffer[states * from * curBatchSize];
+//  scaleBatch(currentAlpha, scalingBuffer, sums, curBatchSize, from);
+//  applyScaling(currentAlpha, scalingBuffer, curBatchSize, from);
+//  /*scaleBatch(alphaBuffer, scalingBuffer, sums, curBatchSize, from);
+//  applyScaling(alphaBuffer, scalingBuffer, curBatchSize, from);*/
+//
+//  // Induction Step:
+//  double lastGeneticPos = data->geneticPositions[from];
+//  unsigned long int lastPhysicalPos = data->physicalPositions[from];
+//
+//  for (long int pos = from + 1; pos < to; pos++) {
+//    // get distances and rates
+//    double recDistFromPrevious = roundMorgans(std::max(minGenetic, data->geneticPositions[pos] - lastGeneticPos));
+//    double currentRecRate = roundMorgans(data->recRateAtMarker[pos]);
+//    float* previousAlpha = &alphaBuffer[(pos - 1) * states * curBatchSize];
+//    float* nextAlpha = &alphaBuffer[pos * states * curBatchSize];
+//
+//    if (decodingParams->decodingSequence) {
+//      unsigned long int physDistFromPreviousMinusOne =
+//          roundPhysical(data->physicalPositions[pos] - lastPhysicalPos - 1);
+//      double recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+//      vector<float> homozEmission = decodingQuant->homozygousEmissionMap.at(physDistFromPreviousMinusOne);
+//      getNextAlphaBatched(recDistFromPreviousMinusOne, alphaC, curBatchSize, previousAlpha, pos, allZeros, allZeros, AU,
+//                          nextAlpha, homozEmission, homozEmission, homozEmission);
+//      previousAlpha = nextAlpha;
+//      getNextAlphaBatched(currentRecRate, alphaC, curBatchSize, previousAlpha, pos, obsIsZeroBatch, obsIsTwoBatch, AU,
+//                          nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
+//    } else {
+//      getNextAlphaBatched(recDistFromPrevious, alphaC, curBatchSize, previousAlpha, pos, obsIsZeroBatch, obsIsTwoBatch,
+//                          AU, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
+//    }
+//    float* sums = AU; // reuse buffer but rename to be less confusing
+//    memset(sums, 0, curBatchSize * sizeof(sums[0]));
+//
+//    if (pos % scalingSkip == 0) {
+//      scaleBatch(nextAlpha, scalingBuffer, sums, curBatchSize, pos);
+//      applyScaling(nextAlpha, scalingBuffer, curBatchSize, pos);
+//    }
+//    // update distances
+//    lastGeneticPos = data->geneticPositions[pos];
+//    lastPhysicalPos = data->physicalPositions[pos];
+//  }
+//
+//  ALIGNED_FREE(AU);
+//  ALIGNED_FREE(alphaC);
+//}
+//
+//void decodeBatchFastSMC(const vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize,
+//                        unsigned int from, unsigned int to)
+//{
+//
+//  int curBatchSize = obsBatch.size();
+//  float* obsIsZeroBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
+//  float* obsIsTwoBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int v = 0; v < curBatchSize; v++) {
+//      obsIsZeroBatch[pos * curBatchSize + v] = (!obsBatch[v].obsBits[pos - from] ? 1.0f : 0.0f);
+//      obsIsTwoBatch[pos * curBatchSize + v] = (obsBatch[v].homMinorBits[pos - from] ? 1.0f : 0.0f);
+//    }
+//  }
+//
+//  uint64 t0 = Timer::rdtsc();
+//
+//  // run forward
+//  forwardBatchFastSMC(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
+//
+//  uint64 t1 = Timer::rdtsc();
+//  ticksForward += t1 - t0;
+//  // cout << "ticksForward : " << ticksForward << endl;
+//
+//  // run backward
+//  backwardBatchFastSMC(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
+//  uint64 t2 = Timer::rdtsc();
+//  ticksBackward += t2 - t1;
+//
+//  // combine (alpha * beta), normalize and store
+//  float* scale = obsIsZeroBatch; // reuse buffer but rename to be less confusing
+//  memset(scale, 0, sequenceLength * curBatchSize * sizeof(scale[0]));
+//#ifdef NO_SSE
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int k = 0; k < states; k++) {
+//      for (int v = 0; v < curBatchSize; v++) {
+//        long int ind = (pos * states + k) * curBatchSize + v;
+//        alphaBuffer[ind] *= betaBuffer[ind];
+//        scale[pos * curBatchSize + v] += alphaBuffer[ind];
+//      }
+//    }
+//  }
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int v = 0; v < curBatchSize; v++) {
+//      scale[pos * curBatchSize + v] = 1.0f / scale[pos * curBatchSize + v];
+//    }
+//  }
+//
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int k = 0; k < states; k++) {
+//      for (int v = 0; v < curBatchSize; v++) {
+//        alphaBuffer[(pos * states + k) * curBatchSize + v] *= scale[pos * curBatchSize + v];
+//      }
+//    }
+//  }
+//#else
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int k = 0; k < states; k++) {
+//      for (int v = 0; v < curBatchSize; v += VECX) {
+//        long int ind = (pos * states + k) * curBatchSize + v;
+//
+//        FLOAT prod = MULT(LOAD(&alphaBuffer[ind]), LOAD(&betaBuffer[ind]));
+//        STORE(&alphaBuffer[ind], prod);
+//        STORE(&scale[pos * curBatchSize + v], ADD(LOAD(&scale[pos * curBatchSize + v]), prod));
+//      }
+//    }
+//  }
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int v = 0; v < curBatchSize; v += VECX) {
+//      long int ind = pos * curBatchSize + v;
+//      STORE(&scale[ind], RECIPROCAL(LOAD(&scale[ind])));
+//    }
+//  }
+//  for (unsigned int pos = from; pos < to; pos++) {
+//    for (int k = 0; k < states; k++) {
+//      for (int v = 0; v < curBatchSize; v += VECX) {
+//        long int ind = (pos * states + k) * curBatchSize + v;
+//        STORE(&alphaBuffer[ind], MULT(LOAD(&alphaBuffer[ind]), LOAD(&scale[pos * curBatchSize + v])));
+//      }
+//    }
+//  }
+//
+//#endif
+//
+//  uint64 t3 = Timer::rdtsc();
+//  ticksCombine += t3 - t2;
+//  ALIGNED_FREE(obsIsZeroBatch);
+//  ALIGNED_FREE(obsIsTwoBatch);
+//  writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
+//}
+//
+//void HMM::decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition)
+//{
+//
+//  assert(i < individuals.size());
+//  assert(j < individuals.size());
+//  assert(fromPosition < sequenceLength);
+//  assert(toPosition < sequenceLength);
+//
+//  timerASMC.update_time();
+//  // ID of individual j must be smaller than ID of individual i
+//  unsigned int jInd = i / 2;
+//  unsigned int iInd = j / 2;
+//
+//  PairObservations observation = makePairObs(data->individuals[jInd], i % 2 == 0 ? '1' : '2', jInd,
+//                                             data->individuals[iInd], j % 2 == 0 ? '1' : '2', iInd);
+//
+//  if (noBatches) {
+//    decode(observation, fromPosition, toPosition);
+//  } else {
+//    nbBatch = cpt % batchSize;
+//    fromBatch[nbBatch] = fromPosition;
+//    toBatch[nbBatch] = toPosition;
+//    addToBatchFastSMC(batchObservations, observation);
+//    cpt++;
+//  }
+//  if (cpt % 10000 == 0) {
+//    cout << "\rnumber of decoded segments: " << cpt << "\t"
+//         << "\tdetected segments: " << nbSegmentsDetected << flush;
+//  }
+//  timeASMC += timerASMC.update_time();
+//}
+//
+//void finishFromGERMLINE()
+//{
+//  timerASMC.update_time();
+//
+//  if (!noBatches) {
+//    runLastBatchFastSMC(batchObservations);
+//  }
+//
+//  // dealloc here
+//  ALIGNED_FREE(betaBuffer);
+//  ALIGNED_FREE(alphaBuffer);
+//  ALIGNED_FREE(scalingBuffer);
+//  ALIGNED_FREE(allZeros);
+//
+//  // close output file
+//  gzclose(gzoutIBD);
+//
+//  // print some stats (will remove)
+//  timeASMC += timerASMC.update_time();
+//  double ticksDecodeAll = ticksForward + ticksBackward + ticksCombine + ticksOutputPerPair;
+//  // printf("\n\n*** ASMC decoded %Ld pairs in %.3f seconds. ***\n\n", cpt, timeASMC);
+//  printf("\n");
+//  printPctTime("forward", ticksForward / ticksDecodeAll);
+//  printPctTime("backward", ticksBackward / ticksDecodeAll);
+//  printPctTime("combine", ticksCombine / ticksDecodeAll);
+//  // printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
+//  printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
+//  cout << flush;
+//}
 
 void HMM::finishDecoding()
 {
@@ -816,35 +816,35 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
   }
 }
 
-// complete with leftover pairs
-void runLastBatchFastSMC(vector<PairObservations>& obsBatch)
-{
-  if (!obsBatch.empty()) {
-
-    int actualBatchSize = obsBatch.size();
-
-    // taking the maximum To position and the minimum From position in the batch
-    startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
-    endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
-
-    unsigned int from = getFromPosition(startBatch);
-    unsigned int to = getToPosition(endBatch);
-
-    for (uint i = 0; i < obsBatch.size(); i++) {
-      makeBits(obsBatch[i], from, to);
-    }
-
-    while (obsBatch.size() % VECX != 0) { // fill to size divisible by VECX
-      obsBatch.push_back(obsBatch.back());
-    }
-
-    int paddedBatchSize = obsBatch.size();
-
-    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x paddedBatchSize]
-    decodeBatchFastSMC(obsBatch, actualBatchSize, paddedBatchSize, from, to);
-    obsBatch.clear();
-  }
-}
+//// complete with leftover pairs
+//void runLastBatchFastSMC(vector<PairObservations>& obsBatch)
+//{
+//  if (!obsBatch.empty()) {
+//
+//    int actualBatchSize = obsBatch.size();
+//
+//    // taking the maximum To position and the minimum From position in the batch
+//    startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
+//    endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
+//
+//    unsigned int from = getFromPosition(startBatch);
+//    unsigned int to = getToPosition(endBatch);
+//
+//    for (uint i = 0; i < obsBatch.size(); i++) {
+//      makeBits(obsBatch[i], from, to);
+//    }
+//
+//    while (obsBatch.size() % VECX != 0) { // fill to size divisible by VECX
+//      obsBatch.push_back(obsBatch.back());
+//    }
+//
+//    int paddedBatchSize = obsBatch.size();
+//
+//    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x paddedBatchSize]
+//    decodeBatchFastSMC(obsBatch, actualBatchSize, paddedBatchSize, from, to);
+//    obsBatch.clear();
+//  }
+//}
 
 // complete with leftover pairs
 void HMM::runLastBatch(vector<PairObservations>& obsBatch)
