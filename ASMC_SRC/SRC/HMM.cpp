@@ -144,8 +144,8 @@ void printPctTime(const char* str, double fracTime)
 PairObservations makePairObs(const Individual& iInd, int iHap, const Individual& jInd, int jHap)
 {
   PairObservations ret;
-  ret.iName = iInd.name;
-  ret.jName = jInd.name;
+//  ret.iName = iInd.name;
+//  ret.jName = jInd.name;
   ret.iHap = iHap;
   ret.jHap = jHap;
   ret.obsBits = xorVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2);
@@ -491,11 +491,11 @@ void HMM::decodePair(const uint i, const uint j)
 //  unsigned int iInd = obs.iInd;
 //  unsigned int jInd = obs.jInd;
 //  obs.obsBits =
-//      xorVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
-//             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
+//      xorVec(obs.iHap == 1 ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
+//             obs.jHap == 1 ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
 //  obs.homMinorBits =
-//      andVec(obs.iHap == '1' ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
-//             obs.jHap == '1' ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
+//      andVec(obs.iHap == 1 ? data->individuals[iInd].genotype1 : data->individuals[iInd].genotype2,
+//             obs.jHap == 1 ? data->individuals[jInd].genotype1 : data->individuals[jInd].genotype2, from, to);
 //}
 //
 //// backward step
@@ -1385,8 +1385,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
   if (decodingParams.doPerPairPosteriorMean) {
     for (int v = 0; v < actualBatchSize; v++) {
-      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
+//      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
+//      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutPosteriorMeanPerPair << " " << meanPost[pos * actualBatchSize + v];
       }
@@ -1396,8 +1396,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
   if (decodingParams.doPerPairMAP) {
     for (int v = 0; v < actualBatchSize; v++) {
-      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
+//      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
+//      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutMAPPerPair << " " << MAP[pos * actualBatchSize + v];
       }

@@ -23,6 +23,7 @@
 #include "Individual.hpp"
 #include "Types.hpp"
 #include <Eigen/Dense>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -30,8 +31,12 @@ using namespace std;
 
 // individual ids and XOR/AND of genotypes
 struct PairObservations {
-  string iName, jName;
-  int iHap, jHap;
+  uint_least8_t iHap;
+  uint_least8_t jHap;
+
+  unsigned int iInd;
+  unsigned int jInd;
+
   vector<bool> obsBits;
   vector<bool> homMinorBits;
 };
