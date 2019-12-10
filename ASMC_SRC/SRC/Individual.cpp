@@ -13,18 +13,19 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #include "Individual.hpp"
 
-Individual::Individual(string _famId, string _IId, int numOfSites) {
-	famId = _famId;
-	IId = _IId;
-	name = famId + "\t" + IId;
-	genotype1 = vector <bool> (numOfSites);
-	genotype2 = vector <bool> (numOfSites);
+Individual::Individual(int numOfSites)
+{
+  genotype1 = std::vector<bool>(numOfSites);
+  genotype2 = std::vector<bool>(numOfSites);
 }
 
-void Individual::setGenotype(int hap, int pos, bool val) {
-	if (hap == 1) genotype1[pos] = val;
-	else genotype2[pos] = val;
+void Individual::setGenotype(int_least8_t hap, int pos, bool val)
+{
+  if (hap == 1) {
+    genotype1[pos] = val;
+  } else {
+    genotype2[pos] = val;
+  }
 }
