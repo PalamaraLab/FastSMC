@@ -18,6 +18,7 @@
 #include <cassert>
 #include <exception>
 #include <iostream>
+#include <limits>
 #include <map>
 
 #include <emmintrin.h>
@@ -89,23 +90,39 @@ std::chrono::high_resolution_clock::duration ticksForward(0), ticksBackward(0), 
     ticksOutputPerPair(0);
 
 // gets genotypes for decoding  (xor --> 1 if het)
-vector<bool> xorVec(const vector<bool>& x, const vector<bool>& y)
+vector<bool> xorVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
+                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
 {
-  vector<bool> ret(x.size());
-  for (uint i = 0; i < x.size(); i++) {
-    ret[i] = x[i] ^ y[i];
+  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
+
+  assert(x.size() == y.size());
+  assert(from < min_to);
+
+  vector<bool> ret(min_to - from);
+
+  for (unsigned i = from; i < min_to; i++) {
+    ret[i - from] = x[i] ^ y[i];
   }
+
   return ret;
 }
 
 // computes and of genotype, used to distinguish homozygous minor/derived from
 // homozygous major/ancestral
-vector<bool> andVec(const vector<bool>& x, const vector<bool>& y)
+vector<bool> andVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
+                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
 {
-  vector<bool> ret(x.size());
-  for (uint i = 0; i < x.size(); i++) {
-    ret[i] = x[i] & y[i];
+  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
+
+  assert(x.size() == y.size());
+  assert(from < min_to);
+
+  vector<bool> ret(min_to - from);
+
+  for (unsigned i = from; i < min_to; i++) {
+    ret[i - from] = x[i] & y[i];
   }
+
   return ret;
 }
 
