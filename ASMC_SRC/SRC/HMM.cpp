@@ -35,6 +35,7 @@
 #include <Eigen/Dense>
 #include <chrono>
 #include <sstream>
+#include <utility>
 
 using namespace std;
 
@@ -157,19 +158,6 @@ void printPctTime(const char* str, double fracTime)
   printf("Time in %-15s: %4.1f%%\n", str, 100 * fracTime);
 }
 
-// build a pair for two individuals
-PairObservations makePairObs(const Individual& iInd, int iHap, const Individual& jInd, int jHap)
-{
-  PairObservations ret;
-//  ret.iName = iInd.name;
-//  ret.jName = jInd.name;
-  ret.iHap = iHap;
-  ret.jHap = jHap;
-  ret.obsBits = xorVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2);
-  ret.homMinorBits = andVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2);
-  return ret;
-}
-
 // constructor
 HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
          int _scalingSkip)
@@ -228,6 +216,34 @@ HMM::~HMM()
     ALIGNED_FREE(MAP);
     ALIGNED_FREE(currentMAPValue);
   }
+}
+
+PairObservations HMM::makePairObs(const Individual& iInd, int_least8_t iHap, unsigned int ind1, const Individual& jInd,
+                                  int_least8_t jHap, unsigned int ind2, int from, int to)
+{
+  PairObservations ret;
+  ret.iHap = iHap;
+  ret.jHap = jHap;
+  ret.iInd = ind1;
+  ret.jInd = ind2;
+  if (!decodingParams.GERMLINE || noBatches) {
+    ret.obsBits = xorVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2, 0,
+                         sequenceLength);
+    ret.homMinorBits = andVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2,
+                              0, sequenceLength);
+  }
+  return ret;
+}
+
+void HMM::makeBits(PairObservations& obs, unsigned from, unsigned to)
+{
+  unsigned iInd = obs.iInd;
+  unsigned jInd = obs.jInd;
+  obs.obsBits = xorVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+                       obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
+  obs.homMinorBits =
+      andVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+             obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
 }
 
 void HMM::prepareEmissions()
