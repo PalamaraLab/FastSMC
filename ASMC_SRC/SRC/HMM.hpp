@@ -99,6 +99,17 @@ class HMM
   bool noBatches;
   uint64 currPair = 0;
 
+  // New members copied from fastSMC
+  vector<PairObservations> batchObservations;
+  unsigned int startBatch;
+  unsigned int endBatch;
+  vector<unsigned int> fromBatch;
+  vector<unsigned int> toBatch;
+  unsigned long int cpt = 0;
+  unsigned long int nbSegmentsDetected = 0;
+  unsigned long int nbBatch;
+  float probabilityThreshold;
+
   const int precision = 2;
   const float minGenetic = 1e-10f;
 
@@ -162,6 +173,9 @@ public:
   /// @param j index of second individual
   ///
   void decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition);
+
+  /// convert generation threshold into state threshold
+  uint getStateThreshold();
 
   /// returns the current buffer of pair observations
   const vector<PairObservations>& getBatchBuffer()

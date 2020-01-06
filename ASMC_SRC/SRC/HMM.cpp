@@ -175,6 +175,29 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   emission0minus1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   emission2minus0AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   prepareEmissions();
+
+  for (int i = 0; i < m_batchSize; i++) {
+    fromBatch.push_back(0);
+    toBatch.push_back(sequenceLength);
+  }
+
+  // get state threshold
+  stateThreshold = getStateThreshold();
+  // probabilityThreshold = (1./decodingQuant->states)*stateThreshold;
+  probabilityThreshold = 0;
+  for (int i = 0; i < stateThreshold; i++) {
+    probabilityThreshold += m_decodingQuant.initialStateProb[i];
+  }
+
+  if (decodingParams.noConditionalAgeEstimates) {
+    ageThreshold = states;
+  } else {
+    ageThreshold = stateThreshold;
+  }
+
+  startBatch = sequenceLength;
+  endBatch = 0;
+
   if (decodingParams.doPerPairPosteriorMean) {
     expectedCoalTimes = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
   }
@@ -815,6 +838,18 @@ unsigned HMM::getToPosition(unsigned to, double cmDist)
 //  }
 //  timeASMC += timerASMC.update_time();
 //}
+
+uint HMM::getStateThreshold()
+{
+  uint result = 0u;
+  const vector <float>& disc = m_decodingQuant.discretization;
+
+  while (disc[result] < static_cast<float>(decodingParams.time) && result < m_decodingQuant.states) {
+    result++;
+  }
+  return stateThreshold;
+}
+
 //
 //void finishFromGERMLINE()
 //{
