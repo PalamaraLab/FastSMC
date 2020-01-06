@@ -199,6 +199,12 @@ private:
   // decode a batch
   void decodeBatch(const vector<PairObservations>& obsBatch);
 
+  // return the position of a site cmDist centimorgans before, defaulting to 0.5 cM
+  unsigned getFromPosition(unsigned from, double cmDist = 0.5);
+
+  // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
+  unsigned getToPosition(unsigned from, double cmDist = 0.5);
+
   // compute scaling factor for an alpha vector
   void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize);
 

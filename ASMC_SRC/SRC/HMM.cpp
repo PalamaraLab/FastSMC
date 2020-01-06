@@ -492,6 +492,30 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
+unsigned HMM::getFromPosition(unsigned from, double cmDist)
+{
+  assert(cmDist > 0.0);
+
+  double cumGenDist = 0.0;
+  while (cumGenDist < cmDist && from > 0) {
+    from--;
+    cumGenDist += (data.geneticPositions[from + 1] - data.geneticPositions[from]) * 100.0;
+  }
+  return from;
+}
+
+unsigned HMM::getToPosition(unsigned to, double cmDist)
+{
+  assert(cmDist > 0.0);
+
+  double cumGenDist = 0.0;
+  while (cumGenDist < cmDist && to < sequenceLength) {
+    cumGenDist += (data.geneticPositions[to] - data.geneticPositions[to - 1]) * 100.0;
+    to++;
+  }
+  return to;
+}
+
 //// add pair to batch and run if we have enough
 //void addToBatchFastSMC(vector<PairObservations>& obsBatch, PairObservations& observations)
 //{
