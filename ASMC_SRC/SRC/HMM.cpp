@@ -539,7 +539,39 @@ unsigned HMM::getToPosition(unsigned to, const double cmDist)
   return to;
 }
 
+void HMM::decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition)
+{
+  const vector<Individual>& individuals = data.individuals;
 
+  assert(i < individuals.size());
+  assert(j < individuals.size());
+  assert(fromPosition < sequenceLength);
+  assert(toPosition < sequenceLength);
+
+  Timer timerASMC;
+
+  // ID of individual j must be smaller than ID of individual i
+  unsigned int jInd = i / 2;
+  unsigned int iInd = j / 2;
+
+  PairObservations observation = makePairObs(individuals[jInd], i % 2 == 0 ? 1 : 2, jInd,
+                                             individuals[iInd], j % 2 == 0 ? 1 : 2, iInd);
+
+  if (noBatches) {
+    decode(observation, fromPosition, toPosition);
+  } else {
+    nbBatch = cpt % static_cast<unsigned long>(m_batchSize);
+    fromBatch[nbBatch] = fromPosition;
+    toBatch[nbBatch] = toPosition;
+    addToBatch(batchObservations, observation);
+    cpt++;
+  }
+  if (cpt % 10000 == 0) {
+    cout << "\rnumber of decoded segments: " << cpt << "\t"
+         << "\tdetected segments: " << nbSegmentsDetected << flush;
+  }
+  timeASMC += timerASMC.update_time();
+}
 
 uint HMM::getStateThreshold()
 {

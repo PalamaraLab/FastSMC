@@ -176,7 +176,7 @@ public:
   /// @param i index of first individual
   /// @param j index of second individual
   ///
-  void decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition);
+  void decodeFromGERMLINE(uint i, uint j, uint fromPosition, uint toPosition);
 
   /// convert generation threshold into state threshold
   uint getStateThreshold();
