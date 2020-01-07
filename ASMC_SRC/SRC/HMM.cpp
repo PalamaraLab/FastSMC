@@ -638,15 +638,28 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
     return;
   }
 
+  auto actualBatchSize = obsBatch.size();
+
+  // taking the maximum To position and the minimum From position in the batch
+  startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
+  endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
+
+  unsigned int from = getFromPosition(startBatch);
+  unsigned int to = getToPosition(endBatch);
+
+  for (auto & obs : obsBatch) {
+    makeBits(obs, from, to);
+  }
+
   // fill to size divisible by VECX
-  int actualBatchSize = static_cast<int>(obsBatch.size());
   while (obsBatch.size() % VECX != 0) {
     obsBatch.push_back(obsBatch.back());
   }
-  int paddedBatchSize = static_cast<int>(obsBatch.size());
+
+  auto paddedBatchSize = obsBatch.size();
 
   // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x paddedBatchSize]
-  decodeBatch(obsBatch, 0, sequenceLength);
+  decodeBatch(obsBatch, from, to);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
 
   if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
