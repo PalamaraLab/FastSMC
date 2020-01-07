@@ -717,13 +717,13 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
 }
 
 // compute scaling factor for an alpha vector
-void HMM::scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize)
+void HMM::scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, const int pos)
 {
 #ifdef NO_SSE
   // compute scaling (sum of current alpha vector)
   for (int k = 0; k < states; k++) {
     for (int v = 0; v < curBatchSize; v++) {
-      sums[v] += alpha[k * curBatchSize + v];
+      sums[v] += alpha[(0 * states + k) * curBatchSize + v];
     }
   }
   for (int v = 0; v < curBatchSize; v++) {
@@ -815,9 +815,10 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
     }
     float* sums = AU; // reuse buffer but rename to be less confusing
     memset(sums, 0, curBatchSize * sizeof(sums[0]));
+
     if (pos % scalingSkip == 0) {
-      scaleBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize);
-      applyScaling(nextAlpha, m_scalingBuffer, curBatchSize);
+      scaleBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, pos);
+      applyScaling(nextAlpha, m_scalingBuffer, curBatchSize, pos);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];

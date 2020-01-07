@@ -224,9 +224,9 @@ private:
   unsigned getToPosition(unsigned from, double cmDist = 0.5);
 
   // compute scaling factor for an alpha vector
-  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize);
+  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, int pos);
 
-  void applyScaling(float* vec, float* scalings, int curBatchSize);
+  void applyScaling(float* vec, float* scalings, int curBatchSize, int pos);
 
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
