@@ -66,6 +66,7 @@ public:
 
 
   // main tasks
+  bool noConditionalAgeEstimates = false;
   bool doPosteriorSums = false;
   bool doPerPairMAP = false;            // output MAP for each pair
   bool doPerPairPosteriorMean = false;  // output posterior mean for each pair

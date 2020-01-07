@@ -634,19 +634,25 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
 // complete with leftover pairs
 void HMM::runLastBatch(vector<PairObservations>& obsBatch)
 {
-  if (obsBatch.empty())
+  if (obsBatch.empty()) {
     return;
+  }
+
+  // fill to size divisible by VECX
   int actualBatchSize = static_cast<int>(obsBatch.size());
-  while (obsBatch.size() % VECX != 0) // fill to size divisible by VECX
+  while (obsBatch.size() % VECX != 0) {
     obsBatch.push_back(obsBatch.back());
+  }
   int paddedBatchSize = static_cast<int>(obsBatch.size());
-  // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x
-  // paddedBatchSize]
-  decodeBatch(obsBatch);
+
+  // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x paddedBatchSize]
+  decodeBatch(obsBatch, 0, sequenceLength);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
+
   if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
     writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
   }
+
   obsBatch.clear();
 }
 
@@ -1341,8 +1347,8 @@ pair<vector<float>, vector<float>> HMM::decodeSummarize(const PairObservations& 
 float HMM::roundMorgans(float gen)
 {
   float gene1e10 = gen * 1e10f;
-  int L10 = std::max(0, (int)floor(log10(gene1e10)) - precision);
-  float factor = static_cast<float>(pow(10, L10));
+  float L10 = std::max<float>(0.f, floor(log10(gene1e10)) - precision);
+  float factor = powf(10.f, L10);
   float rounded = round(gene1e10 / factor) * factor;
   return std::max(minGenetic, rounded / 1e10f);
 }

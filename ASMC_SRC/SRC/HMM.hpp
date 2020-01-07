@@ -85,6 +85,8 @@ class HMM
   string expectedCoalTimesFile;
 
   long int sequenceLength;
+  uint stateThreshold;
+  uint ageThreshold;
   int states;
 
   int scalingSkip;
@@ -98,6 +100,8 @@ class HMM
 
   bool noBatches;
   uint64 currPair = 0;
+
+  double timeASMC = 0.0;
 
   // New members copied from fastSMC
   vector<PairObservations> batchObservations;

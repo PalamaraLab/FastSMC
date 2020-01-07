@@ -48,7 +48,7 @@ Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound,
   siteWasFlippedDuringFolding = vector<bool>(sites, false);
   // and the number of sites
   for (uint i = 0; i < famAndIndNameList.size(); i++) {
-    individuals.push_back(Individual(FamIDList[i], IIDList[i], sites));
+    individuals.push_back(Individual(sites));
   }
   // now read all the data
   readHaps(hapsFileRoot, foldToMinorAlleles);
