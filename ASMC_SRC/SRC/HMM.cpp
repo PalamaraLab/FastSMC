@@ -515,7 +515,7 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-unsigned HMM::getFromPosition(unsigned from, double cmDist)
+unsigned HMM::getFromPosition(unsigned from, const double cmDist)
 {
   assert(cmDist > 0.0);
 
@@ -527,7 +527,7 @@ unsigned HMM::getFromPosition(unsigned from, double cmDist)
   return from;
 }
 
-unsigned HMM::getToPosition(unsigned to, double cmDist)
+unsigned HMM::getToPosition(unsigned to, const double cmDist)
 {
   assert(cmDist > 0.0);
 
