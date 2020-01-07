@@ -404,6 +404,11 @@ void HMM::decodeAll(int jobs, int jobInd)
   uint64 N = individuals.size();
   uint64 pairs = 0, pairsJob = 0;
 
+  if (decodingParams.GERMLINE) {
+    // logic in FastSMC was to create IBD output file
+    return;
+  }
+
   // calculate total number of pairs to decode
   uint64 totPairs;
   if (!decodingParams.withinOnly) {
@@ -426,7 +431,7 @@ void HMM::decodeAll(int jobs, int jobInd)
         for (int iHap = 1; iHap <= 2; iHap++) {
           for (int jHap = 1; jHap <= 2; jHap++) {
             if (pairsStart <= pairs && pairs < pairsEnd) {
-              PairObservations observations = makePairObs(individuals[i], iHap, individuals[j], jHap);
+              PairObservations observations = makePairObs(individuals[j], jHap, j, individuals[i], iHap, i);
               if (noBatches) {
                 decode(observations);
               } else {
@@ -442,7 +447,7 @@ void HMM::decodeAll(int jobs, int jobInd)
     }
     // this is the same individual; only decode across chromosomes
     if (pairsStart <= pairs && pairs < pairsEnd) {
-      PairObservations observations = makePairObs(individuals[i], 1, individuals[i], 2);
+      PairObservations observations = makePairObs(individuals[i], 1, i, individuals[i], 2, i);
       if (noBatches) {
         decode(observations);
       } else {
@@ -496,7 +501,7 @@ void HMM::decodePair(const uint i, const uint j)
     // different individuals; decode 2 haps x 2 haps
     for (int iHap = 1; iHap <= 2; iHap++) {
       for (int jHap = 1; jHap <= 2; jHap++) {
-        PairObservations observations = makePairObs(individuals[i], iHap, individuals[j], jHap);
+        PairObservations observations = makePairObs(individuals[i], iHap, i, individuals[j], jHap, j);
         if (noBatches) {
           decode(observations);
         } else {
@@ -506,7 +511,7 @@ void HMM::decodePair(const uint i, const uint j)
     }
   } else {
     // this is the same individual; only decode across chromosomes
-    PairObservations observations = makePairObs(individuals[i], 1, individuals[i], 2);
+    PairObservations observations = makePairObs(individuals[i], 1, i, individuals[i], 2, i);
     if (noBatches) {
       decode(observations);
     } else {
