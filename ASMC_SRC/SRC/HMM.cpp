@@ -599,47 +599,32 @@ void HMM::finishDecoding()
 void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations& observations)
 {
   obsBatch.push_back(observations);
-  if ((int)obsBatch.size() == m_batchSize) {
-    // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x
-    // m_batchSize]
-    decodeBatch(obsBatch);
+  if (static_cast<int>(obsBatch.size()) == m_batchSize) {
+
+    // taking the maximum To position and the minimum From position in the batch
+    startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
+    endBatch = *std::max_element(toBatch.begin(), toBatch.end());
+
+    unsigned int from = getFromPosition(startBatch);
+    unsigned int to = getToPosition(endBatch);
+    for (int i = 0; i < obsBatch.size(); i++) {
+      makeBits(obsBatch[i], from, to);
+    }
+
+    // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x m_batchSize]
+    decodeBatch(obsBatch, from, to);
+
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
     if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
       writePerPairOutput(m_batchSize, m_batchSize, obsBatch);
     }
+
+    // reinitializing batch variables
+    startBatch = sequenceLength;
+    endBatch = 0;
     obsBatch.clear();
   }
 }
-
-//// complete with leftover pairs
-//void runLastBatchFastSMC(vector<PairObservations>& obsBatch)
-//{
-//  if (!obsBatch.empty()) {
-//
-//    int actualBatchSize = obsBatch.size();
-//
-//    // taking the maximum To position and the minimum From position in the batch
-//    startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
-//    endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
-//
-//    unsigned int from = getFromPosition(startBatch);
-//    unsigned int to = getToPosition(endBatch);
-//
-//    for (uint i = 0; i < obsBatch.size(); i++) {
-//      makeBits(obsBatch[i], from, to);
-//    }
-//
-//    while (obsBatch.size() % VECX != 0) { // fill to size divisible by VECX
-//      obsBatch.push_back(obsBatch.back());
-//    }
-//
-//    int paddedBatchSize = obsBatch.size();
-//
-//    // decodeBatch saves posteriors into alphaBuffer [sequenceLength x states x paddedBatchSize]
-//    decodeBatchFastSMC(obsBatch, actualBatchSize, paddedBatchSize, from, to);
-//    obsBatch.clear();
-//  }
-//}
 
 // complete with leftover pairs
 void HMM::runLastBatch(vector<PairObservations>& obsBatch)
