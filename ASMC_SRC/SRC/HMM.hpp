@@ -131,6 +131,10 @@ public:
   /// states).
   void decodeAll(int jobs, int jobInd);
 
+  /// The FastSMC version that takes a from and a to
+  vector<vector<float>> decode(const PairObservations& observations, unsigned from, unsigned to);
+
+  /// Original decode version, which calls the three-parameter version with sensible defaults
   vector<vector<float>> decode(const PairObservations& observations);
 
   pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
@@ -273,14 +277,14 @@ private:
   vector<float> getEmission(int pos, int distinguished, int undistinguished, int emissionIndex);
 
   // forward step
-  vector<vector<float>> forward(const PairObservations& observations);
+  vector<vector<float>> forward(const PairObservations& observations, unsigned from, unsigned to);
 
   void getNextAlpha(float recDistFromPrevious, vector<float>& alphaC, vector<float>& previousAlpha,
                     vector<float>& nextAlpha, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
                     vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
 
   // backward step
-  vector<vector<float>> backward(const PairObservations& observations);
+  vector<vector<float>> backward(const PairObservations& observations, unsigned from, unsigned to);
 
   void getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputedBeta, vector<float>& BL, vector<float>& BU,
                        vector<float>& currentBeta, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,

@@ -1247,15 +1247,19 @@ void HMM::fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& v
   }
 }
 
-vector<vector<float>> HMM::decode(const PairObservations& observations)
+vector<vector<float>> HMM::decode(const PairObservations& observations) {
+  return decode(observations, 0, sequenceLength);
+}
+
+vector<vector<float>> HMM::decode(const PairObservations& observations, const unsigned from, const unsigned to)
 {
 
   auto t0 = std::chrono::high_resolution_clock().now();
-  vector<vector<float>> forwardOut = forward(observations);
+  vector<vector<float>> forwardOut = forward(observations, from, to);
   auto t1 = std::chrono::high_resolution_clock().now();
   ticksForward += t1 - t0;
 
-  vector<vector<float>> backwardOut = backward(observations);
+  vector<vector<float>> backwardOut = backward(observations, from, to);
   auto t2 = std::chrono::high_resolution_clock().now();
   ticksBackward += t2 - t1;
 
@@ -1343,17 +1347,17 @@ vector<float> HMM::getEmission(int pos, int distinguished, int undistinguished, 
 }
 
 // forward step
-vector<vector<float>> HMM::forward(const PairObservations& observations)
+vector<vector<float>> HMM::forward(const PairObservations& observations, const unsigned from, const unsigned to)
 {
 
   vector<vector<float>> alpha(states, vector<float>(sequenceLength));
 
-  uint emissionIndex = observations.obsBits[0] ? 1 : 0;
+  uint emissionIndex = observations.obsBits[from] ? 1 : 0;
   // if both samples are carriers, there are two distinguished, otherwise, it's the or
   // (use previous xor). This affects the number of undistinguished for the site
-  uint distinguished = observations.homMinorBits[0] ? 2 : emissionIndex;
-  uint undistinguished = useCSFSatThisPosition[0] ? data.undistinguishedCounts[0][distinguished] : -1;
-  vector<float> emission = getEmission(0, distinguished, undistinguished, emissionIndex);
+  uint distinguished = observations.homMinorBits[from] ? 2 : emissionIndex;
+  uint undistinguished = useCSFSatThisPosition[from] ? data.undistinguishedCounts[from][distinguished] : -1;
+  vector<float> emission = getEmission(from, distinguished, undistinguished, emissionIndex);
 
   vector<float> firstAlpha = elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
 
@@ -1362,15 +1366,15 @@ vector<vector<float>> HMM::forward(const PairObservations& observations)
   // normalize current alpha vector to 1
   firstAlpha = elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
 
-  fillMatrixColumn(alpha, firstAlpha, 0);
+  fillMatrixColumn(alpha, firstAlpha, from);
   // Induction Step:
   vector<float> nextAlpha(states);
   vector<float> alphaC(states + 1);
   vector<float> previousAlpha = firstAlpha;
-  float lastGeneticPos = data.geneticPositions[0];
-  int lastPhysicalPos = data.physicalPositions[0];
+  float lastGeneticPos = data.geneticPositions[from];
+  int lastPhysicalPos = data.physicalPositions[from];
 
-  for (long int pos = 1; pos < sequenceLength; pos++) {
+  for (long int pos = from + 1; pos < to; pos++) {
     auto t0 = std::chrono::high_resolution_clock().now();
     // get distances and rates
     float recDistFromPrevious = roundMorgans(std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
@@ -1437,9 +1441,8 @@ void HMM::getNextAlpha(float recDistFromPrevious, vector<float>& alphaC, vector<
 }
 
 // backward step
-vector<vector<float>> HMM::backward(const PairObservations& observations)
+vector<vector<float>> HMM::backward(const PairObservations& observations, const unsigned from, const unsigned to)
 {
-
   vector<vector<float>> beta(states, vector<float>(sequenceLength));
 
   vector<float> lastBeta(states);
@@ -1449,15 +1452,16 @@ vector<vector<float>> HMM::backward(const PairObservations& observations)
   // normalize current alpha vector to 1
   float m_scalingBuffer = 1.f / getSumOfVector(lastBeta);
   lastBeta = elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
-  fillMatrixColumn(beta, lastBeta, sequenceLength - 1);
+  fillMatrixColumn(beta, lastBeta, to - 1);
   // Induction Step:
   vector<float> currentBeta(states);
   vector<float> BL(states);
   vector<float> BU(states);
   vector<float> lastComputedBeta = lastBeta;
-  float lastGeneticPos = data.geneticPositions[sequenceLength - 1];
-  int lastPhysicalPos = data.physicalPositions[sequenceLength - 1];
-  for (long int pos = sequenceLength - 2; pos >= 0; pos--) {
+  float lastGeneticPos = data.geneticPositions[to - 1];
+  int lastPhysicalPos = data.physicalPositions[to - 1];
+
+  for (long int pos = to - 2; pos >= from; pos--) {
     // get distances and rates
     float recDistFromPrevious = roundMorgans(std::max(minGenetic, lastGeneticPos - data.geneticPositions[pos]));
     float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
