@@ -215,7 +215,7 @@ private:
   void runLastBatch(vector<PairObservations>& obsBatch);
 
   // decode a batch
-  void decodeBatch(const vector<PairObservations>& obsBatch);
+  void decodeBatch(const vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
   // return the position of a site cmDist centimorgans before, defaulting to 0.5 cM
   unsigned getFromPosition(unsigned from, double cmDist = 0.5);
@@ -229,7 +229,7 @@ private:
   void applyScaling(float* vec, float* scalings, int curBatchSize);
 
   // forward step
-  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
   // compute next alpha vector in linear time
   void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
@@ -237,7 +237,7 @@ private:
                            float* nextAlpha, const vector<float>& emission1AtSite,
                            const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite);
   // backward step
-  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
   // compute previous beta vector in linear time
   void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
