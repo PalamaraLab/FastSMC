@@ -17,3 +17,6 @@ debug
 Debug
 release
 Release
+
+# Virtual environments
+venv
