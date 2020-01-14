@@ -32,7 +32,7 @@ strategy:
     Ubuntu-regression:
       imageName: 'ubuntu-16.04'
       installDeps: 'apt'
-      cmakeConfigArgs: ''
+      cmakeConfigArgs: '-DCMAKE_BUILD_TYPE=Release'
       cmakeBuildArgs: '--target ASMC_regression'
       jobType: 'regression'
       language: 'C++'
