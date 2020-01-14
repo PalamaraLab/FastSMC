@@ -1359,11 +1359,13 @@ pair<vector<float>, vector<float>> HMM::decodeSummarize(const PairObservations& 
 
 float HMM::roundMorgans(float gen)
 {
-  float gene1e10 = gen * 1e10f;
-  float L10 = std::max<float>(0.f, floor(log10(gene1e10)) - precision);
-  float factor = powf(10.f, L10);
-  float rounded = round(gene1e10 / factor) * factor;
-  return std::max(minGenetic, rounded / 1e10f);
+  const float correction = 10.f - static_cast<float>(precision);
+  const float L10 = std::max<float>(0.f, floorf(log10f(gen)) + correction);
+
+  const float factor = powf(10.f, 10.f - L10);
+  const float rounded = roundf(gen * factor) / factor;
+
+  return std::max(minGenetic, rounded);
 }
 
 int HMM::roundPhysical(int phys)

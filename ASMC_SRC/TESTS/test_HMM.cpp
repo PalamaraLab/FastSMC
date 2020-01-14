@@ -15,9 +15,14 @@
 
 #include "catch.hpp"
 
-#include "HMM.hpp"
 #include "FileUtils.hpp"
 #include <sstream>
+
+// Hack to allow direct testing of private methods
+#define private public
+#include "HMM.hpp"
+#undef private
+
 
 TEST_CASE("test hmm functions", "[HMM]")
 {
@@ -88,5 +93,13 @@ TEST_CASE("test hmm functions", "[HMM]")
 
     // buffer should be empty now
     REQUIRE(hmm.getBatchBuffer().size() == 0);
+  }
+
+  SECTION("test rounding")
+  {
+    REQUIRE(hmm.roundMorgans(1e-12f) == Approx(1e-10f));
+    REQUIRE(hmm.roundMorgans(0.123f) == Approx(0.123f));
+    REQUIRE(hmm.roundMorgans(2.34f) == Approx(2.34f));
+    REQUIRE(hmm.roundMorgans(10.25f) == Approx(10.3f));
   }
 }
