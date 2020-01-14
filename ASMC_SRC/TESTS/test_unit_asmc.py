@@ -3,8 +3,7 @@ from asmc import (
     HMM,
     DecodingQuantities,
     DecodingParams,
-    Data,
-    makePairObs
+    Data
 )
 
 
@@ -35,31 +34,13 @@ class TestASMC(unittest.TestCase):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
         self.hmm.decodePair(0, 9)
         self.assertEqual(len(self.hmm.getBatchBuffer()), 4)
-        for i in range(4):
-            self.assertEqual(self.hmm.getBatchBuffer()[0].iName,
-                             self.data.individuals[0].name)
-            self.assertEqual(self.hmm.getBatchBuffer()[0].jName,
-                             self.data.individuals[9].name)
         self.hmm.decodePair(1, 1)
         self.assertEqual(len(self.hmm.getBatchBuffer()), 5)
-        self.assertEqual(self.hmm.getBatchBuffer()[4].iName,
-                         self.data.individuals[1].name)
-        self.assertEqual(self.hmm.getBatchBuffer()[4].jName,
-                         self.data.individuals[1].name)
 
     def test_decode_pairs(self):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
         self.hmm.decodePairs([0, 1], [9, 1])
         self.assertEqual(len(self.hmm.getBatchBuffer()), 5)
-        for i in range(4):
-            self.assertEqual(self.hmm.getBatchBuffer()[0].iName,
-                             self.data.individuals[0].name)
-            self.assertEqual(self.hmm.getBatchBuffer()[0].jName,
-                             self.data.individuals[9].name)
-        self.assertEqual(self.hmm.getBatchBuffer()[4].iName,
-                         self.data.individuals[1].name)
-        self.assertEqual(self.hmm.getBatchBuffer()[4].jName,
-                         self.data.individuals[1].name)
 
     def test_decode_pair_observation(self):
         self.assertEqual(len(self.decodingQuantities.discretization),
@@ -67,9 +48,9 @@ class TestASMC(unittest.TestCase):
         self.assertEqual(self.data.sites, self.sequenceLength)
 
         for p in [
-            makePairObs(self.data.individuals[0], 1, self.data.individuals[0], 2),
-            makePairObs(self.data.individuals[0], 1, self.data.individuals[1], 1),
-            makePairObs(self.data.individuals[0], 2, self.data.individuals[1], 2)]:
+            self.hmm.makePairObs(self.data.individuals[0], 1, 0, self.data.individuals[0], 2, 0),
+            self.hmm.makePairObs(self.data.individuals[0], 1, 0, self.data.individuals[1], 1, 0),
+            self.hmm.makePairObs(self.data.individuals[0], 2, 0, self.data.individuals[1], 2, 0)]:
             d = self.hmm.decode(p)
             self.assertEqual(len(d), len(self.decodingQuantities.expectedTimes))
             for i in range(len(d)):
@@ -87,6 +68,7 @@ class TestASMC(unittest.TestCase):
             self.hmm.decodePair(0, i)
         # buffer should be empty now
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
+
 
 class TestASMCDecodingParams(unittest.TestCase):
     def test_no_compress(self):
@@ -106,7 +88,7 @@ class TestASMCDecodingParams(unittest.TestCase):
                     params.usingCSFS)
         hmm = HMM(data, decodingQuantities, params, not params.noBatches, 1)
 
-        p = makePairObs(data.individuals[0], 1, data.individuals[0], 2)
+        p = hmm.makePairObs(data.individuals[0], 1, 0, data.individuals[0], 2, 0)
         d = hmm.decode(p)
         self.assertEqual(len(d), len(decodingQuantities.expectedTimes))
         for i in range(len(d)):

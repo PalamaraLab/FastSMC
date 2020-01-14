@@ -68,19 +68,14 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("states", &DecodingReturnValues::states)
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
     py::class_<Individual>(m, "Individual")
-        .def(py::init<string, string, int>(),
-                "famId"_a = "", "IId"_a = "", "numOfSites"_a = 0)
+        .def(py::init<int>(),
+                "numOfSites"_a = 0)
         .def("setGenotype", &Individual::setGenotype,
                 "hap"_a, "pos"_a, "val"_a)
-        .def_readwrite("famId", &Individual::famId)
-        .def_readwrite("IId", &Individual::IId)
-        .def_readwrite("name", &Individual::name)
         .def_readwrite("genotype1", &Individual::genotype1)
         .def_readwrite("genotype2", &Individual::genotype2)
         ;
     py::class_<PairObservations>(m, "PairObservations")
-        .def_readwrite("iName", &PairObservations::iName)
-        .def_readwrite("jName", &PairObservations::jName)
         .def_readwrite("obsBits", &PairObservations::obsBits)
         .def_readwrite("homMinorBits", &PairObservations::homMinorBits);
     py::class_<DecodingQuantities>(m, "DecodingQuantities")
@@ -168,7 +163,8 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
-        .def("decode", &HMM::decode)
+        .def("decode", py::overload_cast<const PairObservations&>(&HMM::decode))
+        .def("decode", py::overload_cast<const PairObservations&, unsigned, unsigned>(&HMM::decode))
         .def("decodeAll", &HMM::decodeAll)
         .def("decodeSummarize", &HMM::decodeSummarize)
         .def("getDecodingReturnValues", &HMM::getDecodingReturnValues)
@@ -176,8 +172,8 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("decodePairs", &HMM::decodePairs)
         .def("getBatchBuffer", &HMM::getBatchBuffer)
         .def("finishDecoding", &HMM::finishDecoding)
-        ;
-    m.def("makePairObs", &makePairObs);
+        .def("makePairObs", &HMM::makePairObs, "iInd"_a, "iHap"_a, "ind1"_a, "jInd"_a, "jHap"_a, "ind2"_a, "from"_a = 0,
+             "to"_a = 0);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "hapsFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
