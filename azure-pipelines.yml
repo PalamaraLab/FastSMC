@@ -129,7 +129,7 @@ steps:
 
   - script: ctest -R regression
     displayName: 'Regression tests'
-    condition: and(in(variables['jobType'], 'regression', 'coverage'), eq(variables['language'], 'C++'))
+    condition: and(in(variables['jobType'], 'regression'), eq(variables['language'], 'C++'))
     workingDirectory: 'build'
 
   - script: |
