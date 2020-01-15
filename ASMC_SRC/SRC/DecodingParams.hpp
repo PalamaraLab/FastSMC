@@ -60,7 +60,7 @@ public:
   float min_m = 1;
   bool GERMLINE = false;
   bool BIN_OUT = false;
-  int time; // state threshold for IBD detection
+  int time = 100; // state threshold for IBD detection
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

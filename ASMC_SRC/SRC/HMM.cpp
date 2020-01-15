@@ -184,11 +184,9 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   // get state threshold
   stateThreshold = getStateThreshold();
   // probabilityThreshold = (1./decodingQuant->states)*stateThreshold;
-  //\todo: this loop is out of range!!!
-  probabilityThreshold = 0;
-  cout <<__FILE__ << ":" << __LINE__ <<  " stateThreshold: " << stateThreshold << '\n';
-  cout <<__FILE__ << ":" << __LINE__ <<  " initialStateProb size: " << m_decodingQuant.initialStateProb.size() << '\n';
-  for (int i = 0; i < std::min<int>(stateThreshold, m_decodingQuant.initialStateProb.size()-1); i++) {
+
+  probabilityThreshold = 0.f;
+  for (int i = 0; i < stateThreshold; i++) {
     probabilityThreshold += m_decodingQuant.initialStateProb.at(i);
   }
 
@@ -589,7 +587,7 @@ uint HMM::getStateThreshold()
   while (disc[result] < static_cast<float>(decodingParams.time) && result < m_decodingQuant.states) {
     result++;
   }
-  return stateThreshold;
+  return result;
 }
 
 void HMM::finishDecoding()
