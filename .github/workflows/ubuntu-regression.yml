@@ -1,4 +1,4 @@
-name: Ubuntu regression
+name: Regression test
 
 on: [push, pull_request]
 

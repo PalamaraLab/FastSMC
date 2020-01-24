@@ -1,4 +1,4 @@
-name: Ubuntu python unit & regression
+name: Python 3.5 3.8
 
 on: [push, pull_request]
 
