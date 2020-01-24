@@ -31,7 +31,7 @@ jobs:
         run: cmake --build . --parallel 2 --target ASMC_unit_tests
         working-directory: asmc_build_dir
 
-      - name: cmake regression test
+      - name: cmake test
         run: ctest -j2 -R Asmc_unit_tests --output-on-failure
         working-directory: asmc_build_dir
 

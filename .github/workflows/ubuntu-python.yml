@@ -7,9 +7,18 @@ jobs:
   build-and-test:
     name: Unit tests via Python on Ubuntu 18.04
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.8]
 
     steps:
       - uses: actions/checkout@v1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
 
       - name: checkout submodule
         run: git submodule update --init
