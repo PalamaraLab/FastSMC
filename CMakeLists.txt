@@ -101,7 +101,7 @@ enable_testing()
 add_executable(ASMC_unit_tests ${ASMC_unit_tests})
 target_include_directories(ASMC_unit_tests PRIVATE ${ASMC_test_dir})
 target_link_libraries(ASMC_unit_tests PRIVATE ASMC)
-add_test(test1 ASMC_unit_tests)
+add_test(Asmc_unit_tests ASMC_unit_tests)
 
 add_executable(ASMC_regression ${ASMC_regression})
 target_include_directories(ASMC_regression PRIVATE ${ASMC_test_dir})
