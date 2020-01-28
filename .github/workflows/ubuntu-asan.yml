@@ -27,8 +27,7 @@ jobs:
         run: cmake .. -DASMC_MEMCHECK:BOOL=TRUE
         working-directory: asmc_build_dir
         env:
-          CC: clang
-          CXX: clang++
+          CXX: clang++-8
 
       - name: cmake build
         run: cmake --build . --parallel 2 --target ASMC_unit_tests
