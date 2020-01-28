@@ -26,9 +26,9 @@
 #include <pmmintrin.h>
 #include <xmmintrin.h>
 
+#include "HmmUtils.hpp"
 #include "MemoryUtils.hpp"
 #include "Timer.hpp"
-//#include <sys/types.h>
 
 #include "StringUtils.hpp"
 
@@ -90,42 +90,6 @@ std::chrono::high_resolution_clock::duration t1sum(0), t2sum(0), t1sumBack(0);
 std::chrono::high_resolution_clock::duration ticksForward(0), ticksBackward(0), ticksCombine(0), ticksSumOverPairs(0),
     ticksOutputPerPair(0);
 
-// gets genotypes for decoding  (xor --> 1 if het)
-vector<bool> xorVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
-                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
-{
-  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
-
-  assert(x.size() == y.size());
-  assert(from < min_to);
-
-  vector<bool> ret(min_to - from);
-
-  for (unsigned i = from; i < min_to; i++) {
-    ret[i - from] = x[i] ^ y[i];
-  }
-
-  return ret;
-}
-
-// computes and of genotype, used to distinguish homozygous minor/derived from
-// homozygous major/ancestral
-vector<bool> andVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
-                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
-{
-  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
-
-  assert(x.size() == y.size());
-  assert(from < min_to);
-
-  vector<bool> ret(min_to - from);
-
-  for (unsigned i = from; i < min_to; i++) {
-    ret[i - from] = x[i] & y[i];
-  }
-
-  return ret;
-}
 
 // read expected times from a file
 vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
@@ -262,11 +226,12 @@ void HMM::makeBits(PairObservations& obs, unsigned from, unsigned to)
 {
   unsigned iInd = obs.iInd;
   unsigned jInd = obs.jInd;
-  obs.obsBits = xorVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
-                       obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
+  obs.obsBits =
+      asmc::subsetXorVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+                         obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
   obs.homMinorBits =
-      andVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
-             obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
+      asmc::subsetAndVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+                         obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
 }
 
 void HMM::prepareEmissions()
