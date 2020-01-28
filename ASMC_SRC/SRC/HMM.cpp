@@ -252,7 +252,7 @@ PairObservations HMM::makePairObs(const Individual& iInd, int_least8_t iHap, uns
   ret.jInd = ind2;
 
   //\todo: ideally all calls to makeBits would be in one place, but GERMLINE calls are in addToBatch and runLastBatch
-  if (decodingParams.GERMLINE) {
+  if (!decodingParams.GERMLINE) {
     makeBits(ret, 0, sequenceLength);
   }
 
