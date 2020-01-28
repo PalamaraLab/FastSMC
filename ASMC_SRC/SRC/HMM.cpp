@@ -978,10 +978,9 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
   float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
   memset(sums, 0, curBatchSize * sizeof(sums[0]));
 
-  //\todo investigate this line
-//  float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
-  scaleBatch(m_betaBuffer, m_scalingBuffer, sums, curBatchSize, to - 1);
-  applyScaling(m_betaBuffer, m_scalingBuffer, curBatchSize, to - 1);
+  float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
+  scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, to - 1);
+  applyScaling(currentBeta, m_scalingBuffer, curBatchSize, to - 1);
 
   // Induction Step:
   float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
