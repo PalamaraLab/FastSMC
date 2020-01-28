@@ -613,8 +613,11 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
 
     unsigned int from = getFromPosition(startBatch);
     unsigned int to = getToPosition(endBatch);
-    for (int i = 0; i < obsBatch.size(); i++) {
-      makeBits(obsBatch[i], from, to);
+
+    if (decodingParams.GERMLINE) {
+      for (int i = 0; i < obsBatch.size(); i++) {
+        makeBits(obsBatch[i], from, to);
+      }
     }
 
     // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x m_batchSize]
@@ -648,8 +651,10 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   unsigned int from = getFromPosition(startBatch);
   unsigned int to = getToPosition(endBatch);
 
-  for (auto & obs : obsBatch) {
-    makeBits(obs, from, to);
+  if (decodingParams.GERMLINE) {
+    for (auto& obs : obsBatch) {
+      makeBits(obs, from, to);
+    }
   }
 
   // fill to size divisible by VECX
