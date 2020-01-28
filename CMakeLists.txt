@@ -43,6 +43,7 @@ add_definitions(-DASMC_FILE_DIR=\"${ASMC_file_dir}\")
 
 set(ASMC_source
   ${ASMC_source_dir}/HMM.cpp
+  ${ASMC_source_dir}/HmmUtils.cpp
   ${ASMC_source_dir}/Data.cpp
   ${ASMC_source_dir}/DecodingParams.cpp
   ${ASMC_source_dir}/DecodingQuantities.cpp
@@ -56,6 +57,7 @@ set(ASMC_source
 
 set(ASMC_headers
   ${ASMC_source_dir}/HMM.hpp
+  ${ASMC_source_dir}/HmmUtils.hpp
   ${ASMC_source_dir}/Data.hpp
   ${ASMC_source_dir}/DecodingParams.hpp
   ${ASMC_source_dir}/DecodingQuantities.hpp
@@ -74,6 +76,7 @@ set(ASMC_main
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_HMM.cpp
+  ${ASMC_test_dir}/test_hmm_utils.cpp
   ${ASMC_test_dir}/test_decoding_params.cpp
   )
 
