@@ -607,7 +607,7 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
   obsBatch.push_back(observations);
   if (static_cast<int>(obsBatch.size()) == m_batchSize) {
 
-    // taking the maximum To position and the minimum From position in the batch
+    // taking the maximum 'to' position and the minimum 'from' position in the batch
     startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
     endBatch = *std::max_element(toBatch.begin(), toBatch.end());
 
