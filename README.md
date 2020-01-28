@@ -1,4 +1,7 @@
-[![Build Status](https://dev.azure.com/OxfordRSE/ASMC/_apis/build/status/OxfordRSE.ASMC?branchName=master)](https://dev.azure.com/OxfordRSE/ASMC/_build/latest?definitionId=4&branchName=master)
+[![Ubuntu unit tests](https://github.com/OxfordRSE/ASMC/workflows/Ubuntu%20unit/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
+[![macOS unit tests](https://github.com/OxfordRSE/ASMC/workflows/macOS%20unit/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
+[![Python tests](https://github.com/OxfordRSE/ASMC/workflows/Python%203.5%203.8/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
+[![Regression test](https://github.com/OxfordRSE/ASMC/workflows/Regression%20test/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
 [![codecov](https://codecov.io/gh/OxfordRSE/ASMC/branch/master/graph/badge.svg)](https://codecov.io/gh/OxfordRSE/ASMC)
 
 ```
