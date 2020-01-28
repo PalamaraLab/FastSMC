@@ -22,16 +22,21 @@
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
+#include <Eigen/Dense>
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
 using namespace std;
 
 // individual ids and XOR/AND of genotypes
 struct PairObservations {
-  string iName, jName;
-  int iHap, jHap;
+  uint_least8_t iHap;
+  uint_least8_t jHap;
+
+  unsigned int iInd;
+  unsigned int jInd;
+
   vector<bool> obsBits;
   vector<bool> homMinorBits;
 };
@@ -53,13 +58,12 @@ struct DecodingReturnValues {
 
   int sites = 0;
   unsigned int states = 0;
-  vector <bool> siteWasFlippedDuringFolding = {};
+  vector<bool> siteWasFlippedDuringFolding = {};
 };
 
-PairObservations makePairObs(
-    const Individual& iInd, int iHap, const Individual& jInd, int jHap);
 // does the linear-time decoding
-class HMM {
+class HMM
+{
 
   int m_batchSize;
 
@@ -81,6 +85,8 @@ class HMM {
   string expectedCoalTimesFile;
 
   long int sequenceLength;
+  uint stateThreshold;
+  uint ageThreshold;
   int states;
 
   int scalingSkip;
@@ -95,6 +101,19 @@ class HMM {
   bool noBatches;
   uint64 currPair = 0;
 
+  double timeASMC = 0.0;
+
+  // New members copied from fastSMC
+  vector<PairObservations> batchObservations;
+  unsigned int startBatch;
+  unsigned int endBatch;
+  vector<unsigned int> fromBatch;
+  vector<unsigned int> toBatch;
+  unsigned long int cpt = 0;
+  unsigned long int nbSegmentsDetected = 0;
+  unsigned long int nbBatch;
+  float probabilityThreshold;
+
   const int precision = 2;
   const float minGenetic = 1e-10f;
 
@@ -105,10 +124,10 @@ class HMM {
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
-  public:
+public:
   // constructor
-  HMM(Data& _data, const DecodingQuantities& _decodingQuant,
-      DecodingParams _decodingParams, bool useBatches, int _scalingSkip = 1);
+  HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
+      int _scalingSkip = 1);
 
   ~HMM();
 
@@ -116,9 +135,15 @@ class HMM {
   /// states).
   void decodeAll(int jobs, int jobInd);
 
+  /// The FastSMC version that takes a from and a to
+  vector<vector<float>> decode(const PairObservations& observations, unsigned from, unsigned to);
+
+  /// Original decode version, which calls the three-parameter version with sensible defaults
   vector<vector<float>> decode(const PairObservations& observations);
 
   pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
+
+  PairObservations makePairObs(int_least8_t iHap, unsigned int ind1, int_least8_t jHap, unsigned int ind2);
 
   /// decode a single pair
   ///
@@ -143,10 +168,27 @@ class HMM {
   ///
   void decodePairs(const vector<uint>& individualsA, const vector<uint>& individualsB);
 
+  /// decode a single pair over a segment of the genome
+  ///
+  /// i and j must be a valid index in `individuals`, `fromPosition` and `toPosition`
+  /// must be less than the size of ?
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full. This is only efficient if subseqent pairs overlap
+  /// in the range `fromPosition` -> `toPosition`
+  ///
+  /// @param i index of first individual
+  /// @param j index of second individual
+  ///
+  void decodeFromGERMLINE(uint i, uint j, uint fromPosition, uint toPosition);
 
+  /// convert generation threshold into state threshold
+  uint getStateThreshold();
 
   /// returns the current buffer of pair observations
-  const vector<PairObservations>& getBatchBuffer() { return m_observationsBatch; }
+  const vector<PairObservations>& getBatchBuffer()
+  {
+    return m_observationsBatch;
+  }
 
   /// returns the decoding quantities calculated thus far
   const DecodingReturnValues& getDecodingReturnValues()
@@ -160,55 +202,57 @@ class HMM {
   /// observationsBatch buffer and close output files
   void finishDecoding();
 
-  private:
+private:
+
+  void makeBits(PairObservations &obs, unsigned from, unsigned to);
+
   /// resets the internal state of HMM to a clean state
   void resetDecoding();
 
   void prepareEmissions();
 
   // add pair to batch and run if we have enough
-  void addToBatch(
-      vector<PairObservations>& obsBatch, const PairObservations& observations);
+  void addToBatch(vector<PairObservations>& obsBatch, const PairObservations& observations);
 
   // complete with leftover pairs
   void runLastBatch(vector<PairObservations>& obsBatch);
 
   // decode a batch
-  void decodeBatch(const vector<PairObservations>& obsBatch);
+  void decodeBatch(const vector<PairObservations>& obsBatch, unsigned from, unsigned to);
+
+  // return the position of a site cmDist centimorgans before, defaulting to 0.5 cM
+  unsigned getFromPosition(unsigned from, double cmDist = 0.5);
+
+  // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
+  unsigned getToPosition(unsigned from, double cmDist = 0.5);
 
   // compute scaling factor for an alpha vector
-  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize);
+  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, int pos);
 
-  void applyScaling(float* vec, float* scalings, int curBatchSize);
+  void applyScaling(float* vec, float* scalings, int curBatchSize, int pos);
 
   // forward step
-  void forwardBatch(
-      const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
   // compute next alpha vector in linear time
-  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize,
-      const float* previousAlpha, uint pos, const float* obsIsZeroBatch,
-      const float* obsIsTwoBatch, float* AU, float* nextAlpha,
-      const vector<float>& emission1AtSite, const vector<float>& emission0minus1AtSite,
-      const vector<float>& emission2minus0AtSite);
+  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
+                           uint pos, const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* AU,
+                           float* nextAlpha, const vector<float>& emission1AtSite,
+                           const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite);
   // backward step
-  void backwardBatch(
-      const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize);
+  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
   // compute previous beta vector in linear time
-  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize,
-      const float* lastComputedBeta, int pos, const float* obsIsZeroBatch,
-      const float* obsIsTwoBatch, float* vec, float* BU, float* BL, float* currentBeta,
-      const vector<float>& emission1AtSite, const vector<float>& emission0minus1AtSite,
-      const vector<float>& emission2minus0AtSite);
+  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
+                              const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* vec, float* BU, float* BL,
+                              float* currentBeta, const vector<float>& emission1AtSite,
+                              const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite);
 
   // --posteriorSums
-  void augmentSumOverPairs(
-      vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize);
+  void augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize);
 
   // will eventually write binary output instead of gzipped
-  void writePerPairOutput(int actualBatchSize, int paddedBatchSize,
-      const vector<PairObservations>& obsBatch);
+  void writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch);
 
   // *********************************************************************
   // non-batched computations (for debugging and pedagogical reasons only)
@@ -220,40 +264,34 @@ class HMM {
 
   vector<float> elementWiseMultVectorScalar(const vector<float>& vec, float val);
 
-  vector<float> elementWiseMultVectorVector(
-      const vector<float>& vec, const vector<float>& factors);
+  vector<float> elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors);
 
-  vector<vector<float>> elementWiseMultMatrixMatrix(
-      const vector<vector<float>>& matrix1, const vector<vector<float>>& matrix2);
+  vector<vector<float>> elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
+                                                    const vector<vector<float>>& matrix2);
 
   vector<vector<float>> normalizeMatrixColumns(const vector<vector<float>>& matrix);
 
-  void fillMatrixColumn(
-      vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
-
+  void fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
 
   float roundMorgans(float gen);
 
   int roundPhysical(int phys);
 
-  vector<float> getEmission(
-      int pos, int distinguished, int undistinguished, int emissionIndex);
+  vector<float> getEmission(int pos, int distinguished, int undistinguished, int emissionIndex);
 
   // forward step
-  vector<vector<float>> forward(const PairObservations& observations);
+  vector<vector<float>> forward(const PairObservations& observations, unsigned from, unsigned to);
 
-  void getNextAlpha(float recDistFromPrevious, vector<float>& alphaC,
-      vector<float>& previousAlpha, vector<float>& nextAlpha,
-      vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
-      vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
+  void getNextAlpha(float recDistFromPrevious, vector<float>& alphaC, vector<float>& previousAlpha,
+                    vector<float>& nextAlpha, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
+                    vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
 
   // backward step
-  vector<vector<float>> backward(const PairObservations& observations);
+  vector<vector<float>> backward(const PairObservations& observations, unsigned from, unsigned to);
 
-  void getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputedBeta,
-      vector<float>& BL, vector<float>& BU, vector<float>& currentBeta,
-      vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
-      vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
+  void getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputedBeta, vector<float>& BL, vector<float>& BU,
+                       vector<float>& currentBeta, vector<float>& emission1AtSite, vector<float>& emission0minus1AtSite,
+                       vector<float>& emission2minus0AtSite, float obsIsZero, float obsIsHomMinor);
 };
 
 #endif // ASMC_HMM
