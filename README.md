@@ -2,6 +2,7 @@
 [![macOS unit tests](https://github.com/OxfordRSE/ASMC/workflows/macOS%20unit/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
 [![Python tests](https://github.com/OxfordRSE/ASMC/workflows/Python%203.5%203.8/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
 [![Regression test](https://github.com/OxfordRSE/ASMC/workflows/Regression%20test/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
+[![Ubuntu asan](https://github.com/OxfordRSE/ASMC/workflows/Ubuntu%20asan/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
 [![codecov](https://codecov.io/gh/OxfordRSE/ASMC/branch/master/graph/badge.svg)](https://codecov.io/gh/OxfordRSE/ASMC)
 
 ```
