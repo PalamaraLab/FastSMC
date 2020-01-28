@@ -242,8 +242,7 @@ HMM::~HMM()
   }
 }
 
-PairObservations HMM::makePairObs(const Individual& iInd, int_least8_t iHap, unsigned int ind1, const Individual& jInd,
-                                  int_least8_t jHap, unsigned int ind2, int from, int to)
+PairObservations HMM::makePairObs(int_least8_t iHap, unsigned int ind1, int_least8_t jHap, unsigned int ind2)
 {
   PairObservations ret;
   ret.iHap = iHap;
@@ -252,7 +251,7 @@ PairObservations HMM::makePairObs(const Individual& iInd, int_least8_t iHap, uns
   ret.jInd = ind2;
 
   //\todo: ideally all calls to makeBits would be in one place, but GERMLINE calls are in addToBatch and runLastBatch
-  if (!decodingParams.GERMLINE) {
+  if (!decodingParams.GERMLINE || noBatches) {
     makeBits(ret, 0, sequenceLength);
   }
 
@@ -432,7 +431,7 @@ void HMM::decodeAll(int jobs, int jobInd)
         for (int iHap = 1; iHap <= 2; iHap++) {
           for (int jHap = 1; jHap <= 2; jHap++) {
             if (pairsStart <= pairs && pairs < pairsEnd) {
-              PairObservations observations = makePairObs(individuals[j], jHap, j, individuals[i], iHap, i);
+              PairObservations observations = makePairObs(jHap, j, iHap, i);
               if (noBatches) {
                 decode(observations);
               } else {
@@ -448,7 +447,7 @@ void HMM::decodeAll(int jobs, int jobInd)
     }
     // this is the same individual; only decode across chromosomes
     if (pairsStart <= pairs && pairs < pairsEnd) {
-      PairObservations observations = makePairObs(individuals[i], 1, i, individuals[i], 2, i);
+      PairObservations observations = makePairObs(1, i, 2, i);
       if (noBatches) {
         decode(observations);
       } else {
@@ -502,7 +501,7 @@ void HMM::decodePair(const uint i, const uint j)
     // different individuals; decode 2 haps x 2 haps
     for (int iHap = 1; iHap <= 2; iHap++) {
       for (int jHap = 1; jHap <= 2; jHap++) {
-        PairObservations observations = makePairObs(individuals[i], iHap, i, individuals[j], jHap, j);
+        PairObservations observations = makePairObs(iHap, i, jHap, j);
         if (noBatches) {
           decode(observations);
         } else {
@@ -512,7 +511,7 @@ void HMM::decodePair(const uint i, const uint j)
     }
   } else {
     // this is the same individual; only decode across chromosomes
-    PairObservations observations = makePairObs(individuals[i], 1, i, individuals[i], 2, i);
+    PairObservations observations = makePairObs(1, i, 2, i);
     if (noBatches) {
       decode(observations);
     } else {
@@ -545,23 +544,22 @@ unsigned HMM::getToPosition(unsigned to, const double cmDist)
   return to;
 }
 
-void HMM::decodeFromGERMLINE(const uint i, const uint j, const uint fromPosition, const uint toPosition)
+void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
 {
   const vector<Individual>& individuals = data.individuals;
 
-  assert(i < individuals.size());
-  assert(j < individuals.size());
+  assert(indivID1 < individuals.size());
+  assert(indivID2 < individuals.size());
   assert(fromPosition < sequenceLength);
   assert(toPosition < sequenceLength);
 
   Timer timerASMC;
 
   // ID of individual j must be smaller than ID of individual i
-  unsigned int jInd = i / 2;
-  unsigned int iInd = j / 2;
+  unsigned int jInd = indivID1 / 2;
+  unsigned int iInd = indivID2 / 2;
 
-  PairObservations observation = makePairObs(individuals[jInd], i % 2 == 0 ? 1 : 2, jInd,
-                                             individuals[iInd], j % 2 == 0 ? 1 : 2, iInd);
+  PairObservations observation = makePairObs(indivID1 % 2 == 0 ? 1 : 2, jInd, indivID2 % 2 == 0 ? 1 : 2, iInd);
 
   if (noBatches) {
     decode(observation, fromPosition, toPosition);

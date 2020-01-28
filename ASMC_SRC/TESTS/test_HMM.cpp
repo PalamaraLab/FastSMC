@@ -39,7 +39,7 @@ TEST_CASE("test hmm functions", "[HMM]")
 
   SECTION("test decode pair summarize")
   {
-    PairObservations pairObs = hmm.makePairObs(data.individuals[0], 1, 0, data.individuals[0], 2, 0);
+    PairObservations pairObs = hmm.makePairObs(1, 0, 2, 0);
     vector<vector<float>> decodeResult = hmm.decode(pairObs);
     pair<vector<float>, vector<float>> decodeSummary = hmm.decodeSummarize(pairObs);
     // check that the MAP and posterior mean are the same length

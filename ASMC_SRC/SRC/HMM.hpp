@@ -143,8 +143,7 @@ public:
 
   pair<vector<float>, vector<float>> decodeSummarize(const PairObservations& observations);
 
-  PairObservations makePairObs(const Individual& iInd, int_least8_t iHap, unsigned int ind1, const Individual& jInd,
-                               int_least8_t jHap, unsigned int ind2, int from = 0, int to = 0);
+  PairObservations makePairObs(int_least8_t iHap, unsigned int ind1, int_least8_t jHap, unsigned int ind2);
 
   /// decode a single pair
   ///

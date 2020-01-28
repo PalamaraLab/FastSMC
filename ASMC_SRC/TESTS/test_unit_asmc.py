@@ -48,9 +48,9 @@ class TestASMC(unittest.TestCase):
         self.assertEqual(self.data.sites, self.sequenceLength)
 
         for p in [
-            self.hmm.makePairObs(self.data.individuals[0], 1, 0, self.data.individuals[0], 2, 0),
-            self.hmm.makePairObs(self.data.individuals[0], 1, 0, self.data.individuals[1], 1, 0),
-            self.hmm.makePairObs(self.data.individuals[0], 2, 0, self.data.individuals[1], 2, 0)]:
+            self.hmm.makePairObs(1, 0, 2, 0),
+            self.hmm.makePairObs(1, 0, 1, 0),
+            self.hmm.makePairObs(2, 0, 2, 0)]:
             d = self.hmm.decode(p)
             self.assertEqual(len(d), len(self.decodingQuantities.expectedTimes))
             for i in range(len(d)):
@@ -88,7 +88,7 @@ class TestASMCDecodingParams(unittest.TestCase):
                     params.usingCSFS)
         hmm = HMM(data, decodingQuantities, params, not params.noBatches, 1)
 
-        p = hmm.makePairObs(data.individuals[0], 1, 0, data.individuals[0], 2, 0)
+        p = hmm.makePairObs(1, 0, 2, 0)
         d = hmm.decode(p)
         self.assertEqual(len(d), len(decodingQuantities.expectedTimes))
         for i in range(len(d)):
