@@ -1,0 +1,39 @@
+name: Ubuntu asan
+
+on: [push, pull_request]
+
+jobs:
+
+  build-and-test:
+    name: Unit tests with address sanitizer on Ubuntu 18.04
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: checkout submodule
+        run: git submodule update --init
+
+      - name: install dependencies
+        run: |
+          sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
+          sudo apt install libeigen3-dev
+          sudo apt install llvm-8-tools
+
+      - name: make build directory
+        run: mkdir asmc_build_dir
+
+      - name: cmake configure
+        run: cmake .. -DASMC_MEMCHECK:BOOL=TRUE
+        working-directory: asmc_build_dir
+        env:
+          CC: clang-8
+          CXX: clang++-8
+
+      - name: cmake build
+        run: cmake --build . --parallel 2 --target ASMC_unit_tests
+        working-directory: asmc_build_dir
+
+      - name: cmake test
+        run: ctest -j2 -R Asmc_unit_tests --output-on-failure
+        working-directory: asmc_build_dir
