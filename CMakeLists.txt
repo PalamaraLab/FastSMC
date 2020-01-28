@@ -165,18 +165,18 @@ endif()
 # LLVM AddressSanitizer to detecting memory errors
 # Note that there are many other sanitizers in LLVM to help detect errors, see
 # http://travistoptips.blogspot.co.uk/2015/11/sanitize-all-things.html
-option(Template_MEMCHECK "Use LLVM AddressSanitizer to detecting memory errors" OFF)
-if (Template_MEMCHECK)
+option(ASMC_MEMCHECK "Use LLVM AddressSanitizer to detecting memory errors" OFF)
+if (ASMC_MEMCHECK)
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         message(STATUS "Configuring with LLVM AddressSanitizer")
-        set(Template_MEMCHECK_FLAGS -fno-optimize-sibling-calls 
+        set(ASMC_MEMCHECK_FLAGS -fno-optimize-sibling-calls
                                     -fsanitize=address 
                                     -fsanitize-address-use-after-scope
                                     )
-        target_compile_options(ASMC PUBLIC -O1 -g -fno-omit-frame-pointer ${Template_MEMCHECK_FLAGS})
-        target_link_libraries(ASMC PUBLIC -g ${Template_MEMCHECK_FLAGS})
+        target_compile_options(ASMC PUBLIC -O1 -g -fno-omit-frame-pointer ${ASMC_MEMCHECK_FLAGS})
+        target_link_libraries(ASMC PUBLIC -g ${ASMC_MEMCHECK_FLAGS})
     else()
-        message(FATAL_ERROR "clang compiler required with Template_MEMCHECK: found ${CMAKE_CXX_COMPILER_ID}")
+        message(FATAL_ERROR "clang compiler required with ASMC_MEMCHECK: found ${CMAKE_CXX_COMPILER_ID}")
     endif()
 endif()
 
