@@ -250,12 +250,12 @@ PairObservations HMM::makePairObs(const Individual& iInd, int_least8_t iHap, uns
   ret.jHap = jHap;
   ret.iInd = ind1;
   ret.jInd = ind2;
-  if (!decodingParams.GERMLINE || noBatches) {
-    ret.obsBits = xorVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2, 0,
-                         sequenceLength);
-    ret.homMinorBits = andVec(iHap == 1 ? iInd.genotype1 : iInd.genotype2, jHap == 1 ? jInd.genotype1 : jInd.genotype2,
-                              0, sequenceLength);
+
+  //\todo: ideally all calls to makeBits would be in one place, but GERMLINE calls are in addToBatch and runLastBatch
+  if (decodingParams.GERMLINE) {
+    makeBits(ret, 0, sequenceLength);
   }
+
   return ret;
 }
 
@@ -615,8 +615,8 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     unsigned int to = getToPosition(endBatch);
 
     if (decodingParams.GERMLINE) {
-      for (int i = 0; i < obsBatch.size(); i++) {
-        makeBits(obsBatch[i], from, to);
+      for (auto& obs : obsBatch) {
+        makeBits(obs, from, to);
       }
     }
 
