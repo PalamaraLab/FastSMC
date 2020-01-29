@@ -176,4 +176,31 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
       REQUIRE(asmc::roundMorgans(a, 4, minGenetic) == 0.12346f);
     }
   }
+
+  SECTION("test roundPhysical")
+  {
+    // Check small values round to 1
+    {
+      REQUIRE(asmc::roundPhysical(-1, 0) == 1);
+      REQUIRE(asmc::roundPhysical(-1, 1) == 1);
+      REQUIRE(asmc::roundPhysical(-1, 2) == 1);
+      REQUIRE(asmc::roundPhysical(0, 0) == 1);
+      REQUIRE(asmc::roundPhysical(0, 1) == 1);
+      REQUIRE(asmc::roundPhysical(0, 2) == 1);
+      REQUIRE(asmc::roundPhysical(1, 0) == 1);
+      REQUIRE(asmc::roundPhysical(1, 1) == 1);
+      REQUIRE(asmc::roundPhysical(1, 2) == 1);
+    }
+
+    // Check rounding as expected
+    {
+      const int a = 123456;
+      REQUIRE(asmc::roundPhysical(a, 0) == 100000);
+      REQUIRE(asmc::roundPhysical(a, 1) == 120000);
+      REQUIRE(asmc::roundPhysical(a, 2) == 123000);
+      REQUIRE(asmc::roundPhysical(a, 3) == 123500);
+      REQUIRE(asmc::roundPhysical(a, 4) == 123460);
+      REQUIRE(asmc::roundPhysical(a, 5) == 123456);
+    }
+  }
 }

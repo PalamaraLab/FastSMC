@@ -81,6 +81,21 @@ std::vector<bool> subsetAndVec(const std::vector<bool>& v1, const std::vector<bo
 float roundMorgans(float value, int precision, float min) noexcept;
 
 /**
+ * Round an integer to (precision + 1) significant figures.
+ *
+ * This function never returns a value smaller than 1.
+ *
+ * For example:
+ *  - -1, 0 and 1 will all round to 1
+ *  - 1234 will round to 1000 (with precision 0), to 1200 (with precision 1), to 1230 (with precision 2), etc.
+ *
+ * @param value the value to round
+ * @param precision
+ * @return the rounded value
+ */
+int roundPhysical(int value, int precision) noexcept;
+
+/**
  * Print a tab-separated vector, to std::cout by default
  *
  * @tparam T the vector value type

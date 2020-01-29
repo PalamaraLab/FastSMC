@@ -811,7 +811,8 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
     float* nextAlpha = &m_alphaBuffer[pos * states * curBatchSize];
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1, precision);
       float recDistFromPreviousMinusOne =
           asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
@@ -967,7 +968,8 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     float* lastComputedBeta = &m_betaBuffer[(pos + 1) * states * curBatchSize];
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1);
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1, precision);
       float recDistFromPreviousMinusOne = asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize, lastComputedBeta, pos, m_allZeros, m_allZeros,
@@ -1255,21 +1257,6 @@ pair<vector<float>, vector<float>> HMM::decodeSummarize(const PairObservations& 
   return std::make_pair(posterior_map, posterior_mean);
 }
 
-int HMM::roundPhysical(int phys)
-{
-  // Since HMM for sequence uses distance-1, it can be -1.
-  if (phys < -1) {
-    cerr << "ERROR. Int overflow " << phys << endl;
-    exit(1);
-  }
-  // map 0 or -1 to 1. Since HMM for sequence uses distance-1, it can be -1.
-  phys = std::max(1, phys);
-  int L10 = std::max(0, (int)floor(log10(phys)) - precision);
-  int factor = (int)pow(10, L10);
-  int rounded = static_cast<int>(round(phys / (float)factor)) * factor;
-  return rounded;
-}
-
 vector<float> HMM::getEmission(int pos, int distinguished, int undistinguished, int emissionIndex)
 {
   vector<float> emission;
@@ -1330,7 +1317,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
     float obsIsHomMinor = observations.homMinorBits[pos] ? 1.0f : 0.0f;
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
+      int physDistFromPreviousMinusOne = asmc::roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1, precision);
       float recDistFromPreviousMinusOne =
           asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
@@ -1416,7 +1403,8 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
     float obsIsZero = !observations.obsBits[pos + 1] ? 1.0f : 0.0f;
     float obsIsHomMinor = observations.homMinorBits[pos + 1] ? 1.0f : 0.0f;
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1);
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1, precision);
       float recDistFromPreviousMinusOne =
           asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);

@@ -72,4 +72,19 @@ float roundMorgans(const float value, const int precision, const float min) noex
   return roundf(value * factor) / factor;
 }
 
+int roundPhysical(const int value, const int precision) noexcept
+{
+  assert(precision >= 0);
+  assert(value > -2); // Since HMM for sequence uses distance-1, it can be -1
+
+  if (value <= 1) {
+    return 1;
+  }
+
+  int L10 = std::max<int>(0, static_cast<int>(floor(log10(value))) - precision);
+  int factor = static_cast<int>(pow(10, L10));
+
+  return static_cast<int>(round(value / static_cast<double>(factor))) * factor;
+}
+
 } // namespace asmc
