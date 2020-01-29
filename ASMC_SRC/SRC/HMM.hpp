@@ -258,21 +258,6 @@ private:
   // non-batched computations (for debugging and pedagogical reasons only)
   // *********************************************************************
 
-  float printVector(const vector<float>& vec);
-
-  float getSumOfVector(const vector<float>& vec);
-
-  vector<float> elementWiseMultVectorScalar(const vector<float>& vec, float val);
-
-  vector<float> elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors);
-
-  vector<vector<float>> elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
-                                                    const vector<vector<float>>& matrix2);
-
-  vector<vector<float>> normalizeMatrixColumns(const vector<vector<float>>& matrix);
-
-  void fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
-
   float roundMorgans(float gen);
 
   int roundPhysical(int phys);

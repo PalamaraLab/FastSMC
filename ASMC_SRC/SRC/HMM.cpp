@@ -1200,77 +1200,6 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 // non-batched computations (for debugging and pedagogical reasons only)
 // *********************************************************************
 
-float HMM::printVector(const vector<float>& vec)
-{
-  float sum = 0.f;
-  for (uint i = 0; i < vec.size(); i++) {
-    cout << vec[i] << "\t";
-  }
-  cout << endl;
-  return sum;
-}
-
-float HMM::getSumOfVector(const vector<float>& vec)
-{
-  float sum = 0.f;
-  for (uint i = 0; i < vec.size(); i++) {
-    sum += vec[i];
-  }
-  return sum;
-}
-
-vector<float> HMM::elementWiseMultVectorScalar(const vector<float>& vec, float val)
-{
-  vector<float> ret(vec.size());
-  for (uint i = 0; i < vec.size(); i++) {
-    ret[i] = vec[i] * val;
-  }
-  return ret;
-}
-
-vector<float> HMM::elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors)
-{
-  vector<float> ret(vec.size());
-  for (uint i = 0; i < vec.size(); i++) {
-    ret[i] = vec[i] * factors[i];
-  }
-  return ret;
-}
-
-vector<vector<float>> HMM::elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
-                                                       const vector<vector<float>>& matrix2)
-{
-  vector<vector<float>> ret(matrix1.size(), vector<float>(matrix1[0].size()));
-  for (uint i = 0; i < matrix1.size(); i++) {
-    for (uint j = 0; j < matrix1[0].size(); j++) {
-      ret[i][j] = matrix1[i][j] * matrix2[i][j];
-    }
-  }
-  return ret;
-}
-
-vector<vector<float>> HMM::normalizeMatrixColumns(const vector<vector<float>>& matrix)
-{
-  vector<vector<float>> ret(matrix.size(), vector<float>(matrix[0].size()));
-  for (uint j = 0; j < matrix[0].size(); j++) {
-    float sum = 0.f;
-    for (uint i = 0; i < matrix.size(); i++) {
-      sum += matrix[i][j];
-    }
-    for (uint i = 0; i < matrix.size(); i++) {
-      ret[i][j] = matrix[i][j] / sum;
-    }
-  }
-  return ret;
-}
-
-void HMM::fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos)
-{
-  for (uint i = 0; i < vec.size(); i++) {
-    matrix[i][pos] = vec[i];
-  }
-}
-
 vector<vector<float>> HMM::decode(const PairObservations& observations) {
   return decode(observations, 0, sequenceLength);
 }
@@ -1287,8 +1216,8 @@ vector<vector<float>> HMM::decode(const PairObservations& observations, const un
   auto t2 = std::chrono::high_resolution_clock().now();
   ticksBackward += t2 - t1;
 
-  vector<vector<float>> posterior = elementWiseMultMatrixMatrix(forwardOut, backwardOut);
-  posterior = normalizeMatrixColumns(posterior);
+  vector<vector<float>> posterior = asmc::elementWiseMultMatrixMatrix(forwardOut, backwardOut);
+  posterior = asmc::normalizeMatrixColumns(posterior);
 
   auto t3 = std::chrono::high_resolution_clock().now();
   ticksCombine += t3 - t2;
@@ -1385,14 +1314,14 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   uint undistinguished = useCSFSatThisPosition[from] ? data.undistinguishedCounts[from][distinguished] : -1;
   vector<float> emission = getEmission(from, distinguished, undistinguished, emissionIndex);
 
-  vector<float> firstAlpha = elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
+  vector<float> firstAlpha = asmc::elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
 
   // cumpute scaling (sum of current alpha vector)
-  float m_scalingBuffer = 1.f / getSumOfVector(firstAlpha);
+  float m_scalingBuffer = 1.f / asmc::getSumOfVector(firstAlpha);
   // normalize current alpha vector to 1
-  firstAlpha = elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
+  firstAlpha = asmc::elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
 
-  fillMatrixColumn(alpha, firstAlpha, from);
+  asmc::fillMatrixColumn(alpha, firstAlpha, from);
   // Induction Step:
   vector<float> nextAlpha(states);
   vector<float> alphaC(states + 1);
@@ -1426,11 +1355,11 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
     auto t1 = std::chrono::high_resolution_clock().now();
     if (pos % scalingSkip == 0) {
       // compute scaling (sum of current alpha vector)
-      m_scalingBuffer = 1.f / getSumOfVector(nextAlpha);
+      m_scalingBuffer = 1.f / asmc::getSumOfVector(nextAlpha);
       // normalize current alpha vector to 1
-      nextAlpha = elementWiseMultVectorScalar(nextAlpha, m_scalingBuffer);
+      nextAlpha = asmc::elementWiseMultVectorScalar(nextAlpha, m_scalingBuffer);
     }
-    fillMatrixColumn(alpha, nextAlpha, pos);
+    asmc::fillMatrixColumn(alpha, nextAlpha, pos);
     previousAlpha = nextAlpha;
     auto t2 = std::chrono::high_resolution_clock().now();
     t1sum += t1 - t0;
@@ -1476,9 +1405,9 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
     lastBeta[i] = 1.f;
   }
   // normalize current alpha vector to 1
-  float m_scalingBuffer = 1.f / getSumOfVector(lastBeta);
-  lastBeta = elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
-  fillMatrixColumn(beta, lastBeta, to - 1);
+  float m_scalingBuffer = 1.f / asmc::getSumOfVector(lastBeta);
+  lastBeta = asmc::elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
+  asmc::fillMatrixColumn(beta, lastBeta, to - 1);
   // Induction Step:
   vector<float> currentBeta(states);
   vector<float> BL(states);
@@ -1509,10 +1438,10 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
                       emission0minus1AtSite[pos + 1], emission2minus0AtSite[pos + 1], obsIsZero, obsIsHomMinor);
     }
     if (pos % scalingSkip == 0) {
-      m_scalingBuffer = 1.f / getSumOfVector(currentBeta);
-      currentBeta = elementWiseMultVectorScalar(currentBeta, m_scalingBuffer);
+      m_scalingBuffer = 1.f / asmc::getSumOfVector(currentBeta);
+      currentBeta = asmc::elementWiseMultVectorScalar(currentBeta, m_scalingBuffer);
     }
-    fillMatrixColumn(beta, currentBeta, pos);
+    asmc::fillMatrixColumn(beta, currentBeta, pos);
     lastComputedBeta = currentBeta;
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
