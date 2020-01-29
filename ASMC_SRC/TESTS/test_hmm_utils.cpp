@@ -152,4 +152,28 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
       }
     }
   }
+
+  SECTION("test roundMorgans")
+  {
+    // Check smaller than minGenetic rounds to minGenetic
+    {
+      const float minGenetic = 0.5f;
+      REQUIRE(asmc::roundMorgans(0.4f, 0, minGenetic) == minGenetic);
+      REQUIRE(asmc::roundMorgans(0.4f, 1, minGenetic) == minGenetic);
+      REQUIRE(asmc::roundMorgans(0.4f, 2, minGenetic) == minGenetic);
+      REQUIRE(asmc::roundMorgans(0.f, 5, minGenetic) == minGenetic);
+      REQUIRE(asmc::roundMorgans(-1.f, 7, minGenetic) == minGenetic);
+    }
+
+    // Check rounding as expected
+    {
+      const float minGenetic = 1e-10f;
+      const float a = 0.123456f;
+      REQUIRE(asmc::roundMorgans(a, 0, minGenetic) == 0.1f);
+      REQUIRE(asmc::roundMorgans(a, 1, minGenetic) == 0.12f);
+      REQUIRE(asmc::roundMorgans(a, 2, minGenetic) == 0.123f);
+      REQUIRE(asmc::roundMorgans(a, 3, minGenetic) == 0.1235f);
+      REQUIRE(asmc::roundMorgans(a, 4, minGenetic) == 0.12346f);
+    }
+  }
 }

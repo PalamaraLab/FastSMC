@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 namespace asmc
 {
@@ -53,6 +54,22 @@ std::vector<bool> subsetAndVec(const std::vector<bool>& v1, const std::vector<bo
   }
 
   return ret;
+}
+
+float roundMorgans(const float value, const int precision, const float min) noexcept
+{
+  assert(precision >= 0);
+  assert(min > 0.f);
+
+  if (value <= min) {
+    return min;
+  }
+
+  const float correction = 10.f - static_cast<float>(precision);
+  const float L10 = std::max<float>(0.f, floorf(log10f(value)) + correction);
+  const float factor = powf(10.f, 10.f - L10);
+
+  return roundf(value * factor) / factor;
 }
 
 } // namespace asmc

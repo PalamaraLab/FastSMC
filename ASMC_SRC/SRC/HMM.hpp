@@ -258,8 +258,6 @@ private:
   // non-batched computations (for debugging and pedagogical reasons only)
   // *********************************************************************
 
-  float roundMorgans(float gen);
-
   int roundPhysical(int phys);
 
   vector<float> getEmission(int pos, int distinguished, int undistinguished, int emissionIndex);

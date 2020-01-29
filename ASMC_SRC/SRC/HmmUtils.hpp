@@ -62,6 +62,25 @@ std::vector<bool> subsetAndVec(const std::vector<bool>& v1, const std::vector<bo
                                unsigned long to = std::numeric_limits<unsigned long>::max()) noexcept;
 
 /**
+ * Round a float to an integer number of multiples of 10^-10. The number of significant digits in the rounded value is
+ * controlled by the precision, with (precision + 1) being the number of significant digits in the rounded value.
+ *
+ * This is very similar to just rounding to (precision + 1) significant figures.
+ *
+ * This function never returns a value lower than the given minimum value.
+ *
+ * For example:
+ *  - 0.1 will be unchanged no matter the precision.
+ *  - 0.77426 will round to 0.8 (with precision 0), to 0.77 (with precision 1), to 0.774 (with precision 2), etc.
+ *
+ * @param value the value to round
+ * @param precision one less than the number of significant figures to keep
+ * @param min the minimum allowed value after rounding
+ * @return the rounded value
+ */
+float roundMorgans(float value, int precision, float min) noexcept;
+
+/**
  * Print a tab-separated vector, to std::cout by default
  *
  * @tparam T the vector value type
