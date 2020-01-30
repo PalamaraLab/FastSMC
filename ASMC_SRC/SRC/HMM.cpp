@@ -16,26 +16,22 @@
 #include "HMM.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <map>
+#include <utility>
 
 #include <emmintrin.h>
-#include <math.h>
 #include <pmmintrin.h>
 #include <xmmintrin.h>
 
 #include "HmmUtils.hpp"
 #include "MemoryUtils.hpp"
+#include "StringUtils.hpp"
 #include "Timer.hpp"
 
-#include "StringUtils.hpp"
-
 #include <Eigen/Dense>
-#include <chrono>
-#include <sstream>
-#include <utility>
 
 using namespace std;
 
