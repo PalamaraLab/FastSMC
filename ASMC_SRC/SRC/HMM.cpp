@@ -22,64 +22,16 @@
 #include <limits>
 #include <utility>
 
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#include <xmmintrin.h>
+#include <Eigen/Dense>
 
+#include "AvxDefinitions.hpp"
 #include "HmmUtils.hpp"
 #include "MemoryUtils.hpp"
 #include "StringUtils.hpp"
 #include "Timer.hpp"
 
-#include <Eigen/Dense>
-
 using namespace std;
 
-#ifdef NO_SSE
-#define MODE "NO_SSE"
-#define VECX 4
-#endif
-
-// SSE vectorization (block size = 4)
-#ifdef SSE
-#define MODE "SSE"
-#define VECX 4
-#define FLOAT __m128
-#define LOAD _mm_load_ps
-#define STORE _mm_store_ps
-#define MULT _mm_mul_ps
-#define ADD _mm_add_ps
-#define RECIPROCAL _mm_rcp_ps
-#define LOAD1 _mm_load1_ps
-#endif
-
-// AVX vectorization (block size = 8)
-#ifdef AVX
-#define MODE "AVX"
-#include <immintrin.h>
-#define VECX 8
-#define FLOAT __m256
-#define LOAD _mm256_load_ps
-#define STORE _mm256_store_ps
-#define MULT _mm256_mul_ps
-#define ADD _mm256_add_ps
-#define RECIPROCAL _mm256_rcp_ps
-#define LOAD1 _mm256_broadcast_ss
-#endif
-
-// AVX512 vectorization (block size = 16)
-#ifdef AVX512
-#define MODE "AVX512"
-#include <immintrin.h>
-#define VECX 16
-#define FLOAT __m512
-#define LOAD _mm512_load_ps
-#define STORE _mm512_store_ps
-#define MULT _mm512_mul_ps
-#define ADD _mm512_add_ps
-#define RECIPROCAL _mm512_rcp14_ps
-#define LOAD1 _mm512_set1_ps
-#endif
 
 // read expected times from a file
 vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)

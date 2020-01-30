@@ -56,6 +56,7 @@ set(ASMC_source
   )
 
 set(ASMC_headers
+  ${ASMC_source_dir}/AvxDefinitions.hpp
   ${ASMC_source_dir}/HMM.hpp
   ${ASMC_source_dir}/HmmUtils.hpp
   ${ASMC_source_dir}/Data.hpp
