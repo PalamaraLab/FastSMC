@@ -96,33 +96,51 @@ void printPctTime(const std::string& str, double fracTime, std::ostream& os)
      << std::setprecision(1) << std::fixed << 100.0 * fracTime << "%\n" << std::flush;
 }
 
-void calculateScalingBatch(float* vec, float* scalings, float* sums, const int curBatchSize, const int numStates)
+void calculateScalingBatch(float* vec, float* scalings, float* sums, const int batchSize, const int numStates)
 {
-  for (int i = 0; i < curBatchSize; ++i) {
+  for (int i = 0; i < batchSize; ++i) {
     sums[i] = 0.f;
   }
-
-  std::cout << "VECX in func: " << VECX << '\n';
 
 #ifdef NO_SSE
   // compute scaling (sum of current alpha/beta vector)
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
-    for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
-      sums[batchItem] += vec[stateIdx * curBatchSize + batchItem];
+    for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
+      sums[batchItem] += vec[stateIdx * batchSize + batchItem];
     }
   }
-  for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
+  for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
     scalings[batchItem] = 1.0f / sums[batchItem];
   }
 #else
   // compute scaling (sum of current alpha/beta vector)
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
-    for (int batchItem = 0; batchItem < curBatchSize; batchItem += VECX) {
-      STORE(&sums[batchItem], ADD(LOAD(&sums[batchItem]), LOAD(&vec[stateIdx * curBatchSize + batchItem])));
+    for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
+      STORE(&sums[batchItem], ADD(LOAD(&sums[batchItem]), LOAD(&vec[stateIdx * batchSize + batchItem])));
     }
   }
-  for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
+  for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
     scalings[batchItem] = 1.0f / sums[batchItem];
+  }
+#endif
+}
+
+void applyScalingBatch(float* vec, float* scalings, const int batchSize, const int numStates)
+{
+#ifdef NO_SSE
+  // modify current alpha/beta vector by prescribed scaling
+  for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+    for (int batchItem = 0; batchItem < batchSize; batchItem++) {
+      vec[stateIdx * batchSize + batchItem] *= scalings[batchItem];
+    }
+  }
+#else
+  // modify current alpha/beta vector by prescribed scaling
+  for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+    for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
+      STORE(&vec[stateIdx * batchSize + batchItem],
+            MULT(LOAD(&vec[stateIdx * batchSize + batchItem]), LOAD(&scalings[batchItem])));
+    }
   }
 #endif
 }

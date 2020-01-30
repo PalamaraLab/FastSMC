@@ -663,26 +663,7 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   ALIGNED_FREE(obsIsTwoBatch);
 }
 
-// apply scaling factor to alpha/beta vector
-void HMM::applyScaling(float* vec, float* scalings, int curBatchSize, const int pos)
-{
-#ifdef NO_SSE
-  // normalize current alpha vector to 1
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      vec[(0 * states + k) * curBatchSize + v] *= scalings[v];
-    }
-  }
-#else
-  // normalize current alpha vector to 1
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v += VECX) {
-      STORE(&vec[(0 * states + k) * curBatchSize + v],
-            MULT(LOAD(&vec[(0 * states + k) * curBatchSize + v]), LOAD(&scalings[v])));
-    }
-  }
-#endif
-}
+
 
 // forward step
 void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, const unsigned from,
@@ -707,7 +688,7 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
   float* sums = AU; // reuse buffer but rename to be less confusing
   float* currentAlpha = &m_alphaBuffer[states * from * curBatchSize];
   asmc::calculateScalingBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, states);
-  applyScaling(currentAlpha, m_scalingBuffer, curBatchSize, from);
+  asmc::applyScalingBatch(currentAlpha, m_scalingBuffer, curBatchSize, states);
 
   // Induction Step:
   float lastGeneticPos = data.geneticPositions[from];
@@ -739,7 +720,7 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
 
     if (pos % scalingSkip == 0) {
       asmc::calculateScalingBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, states);
-      applyScaling(nextAlpha, m_scalingBuffer, curBatchSize, pos);
+      asmc::applyScalingBatch(nextAlpha, m_scalingBuffer, curBatchSize, states);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
@@ -858,7 +839,7 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
 
   float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
   asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
-  applyScaling(currentBeta, m_scalingBuffer, curBatchSize, to - 1);
+  asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
 
   // Induction Step:
   float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
@@ -894,7 +875,7 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     if (pos % scalingSkip == 0) {
       // normalize betas using alpha scaling
       asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
-      applyScaling(currentBeta, m_scalingBuffer, curBatchSize, pos);
+      asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];

@@ -227,10 +227,8 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 
   SECTION("test calculateScalingBatch")
   {
-    std::cout << "VECX in test: " << VECX << '\n';
-
     // We need to make sure that this test will work independent of VECX and which AVX/SSE instructions are being used
-    const int batchSize = 2 * VECX;
+    const int batchSize = std::max<int>(2, 2 * VECX);
     const int numStates = 2;
 
     auto data = ALIGNED_MALLOC_FLOATS(batchSize * numStates);
@@ -259,5 +257,45 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     ALIGNED_FREE(data);
     ALIGNED_FREE(scalings);
     ALIGNED_FREE(sums);
+  }
+
+  SECTION("test applyScalingBatch")
+  {
+    // We need to make sure that this test will work independent of VECX and which AVX/SSE instructions are being used
+    const int batchSize = std::max<int>(2, 2 * VECX);
+    const int numStates = 2;
+
+    auto data = ALIGNED_MALLOC_FLOATS(batchSize * numStates);
+    auto scalings = ALIGNED_MALLOC_FLOATS(batchSize);
+
+    // set up data like 1, 2, 3, ..., 1, 2, 3, ..., ...
+    for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+      for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
+        data[stateIdx * batchSize + batchItem] = 1.f + static_cast<float>(batchItem);
+      }
+    }
+
+    // set up scalings to be 5, 6, 7, ...
+    for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
+      scalings[batchItem] = static_cast<float>(batchItem) + 5.f;
+    }
+
+    // Calculate explicit answers by hand
+    std::vector<float> answers(batchSize * numStates);
+    for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+      for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
+        answers.at(stateIdx * batchSize + batchItem) =
+            (1.f + static_cast<float>(batchItem)) * (static_cast<float>(batchItem) + 5.f);
+      }
+    }
+
+    asmc::applyScalingBatch(data, scalings, batchSize, numStates);
+
+    for (auto i = 0; i < batchSize * numStates; ++i) {
+      REQUIRE(data[i] == answers.at(i));
+    }
+
+    ALIGNED_FREE(data);
+    ALIGNED_FREE(scalings);
   }
 }

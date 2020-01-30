@@ -267,10 +267,24 @@ void fillMatrixColumn(std::vector<std::vector<RealType>>& matrix, const std::vec
  * @param vec the buffer of length curBatchSize * numStates containing the data
  * @param scalings a buffer of length curBatchSize to write calculated scaling factors into
  * @param sums a buffer of length curBatchSize for storing intermediate sums
- * @param curBatchSize the number of items in the current batch
+ * @param batchSize the number of items in the batch
  * @param numStates the number of states over which to normalise
  */
-void calculateScalingBatch(float* vec, float* scalings, float* sums, int curBatchSize, int numStates);
+void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSize, int numStates);
+
+/**
+ * Apply scaling factors to a contiguous array of curBatchSize * numStates floats. The scale factors are applied per
+ * item to each state, and each state is separated in the data array by a stride length of batchSize.
+ *
+ * This method takes two buffers; one with data that is modified in-place, and one with scale factors that is just read
+ * from.
+ *
+ * @param vec the buffer of length curBatchSize * numStates containing the data
+ * @param scalings a buffer of length curBatchSize containing the prescribed scale factors
+ * @param batchSize the number of items in the batch
+ * @param numStates the number of states over which to normalise
+ */
+void applyScalingBatch(float* vec, float* scalings, int batchSize, int numStates);
 
 } // namespace asmc
 

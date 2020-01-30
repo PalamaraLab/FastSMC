@@ -238,8 +238,6 @@ private:
   // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
   unsigned getToPosition(unsigned from, double cmDist = 0.5);
 
-  void applyScaling(float* vec, float* scalings, int curBatchSize, int pos);
-
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
