@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iomanip>
 
 namespace asmc
 {
@@ -85,6 +86,12 @@ int roundPhysical(const int value, const int precision) noexcept
   int factor = static_cast<int>(pow(10, L10));
 
   return static_cast<int>(round(value / static_cast<double>(factor))) * factor;
+}
+
+void printPctTime(const std::string& str, double fracTime, std::ostream& os)
+{
+  os << "Time in " << std::setw(14) << std::left << str << " : " << std::setw(5) << std::right
+     << std::setprecision(1) << std::fixed << 100.0 * fracTime << "%\n" << std::flush;
 }
 
 } // namespace asmc

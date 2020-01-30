@@ -111,6 +111,15 @@ template <typename T> void printVector(const std::vector<T>& v, std::ostream& os
 }
 
 /**
+ * Helper to print a percentage of time spent in certain functions.
+ *
+ * @param str description of the function (forward, backward etc)
+ * @param fracTime fraction of time spent in that function
+ * @param os the ostream to send output to, default is std::cout
+ */
+void printPctTime(const std::string& str, double fracTime, std::ostream& os = std::cout);
+
+/**
  * Calculate the sum of elements in a vector
  *
  * @tparam Summable the vector value type

@@ -61,6 +61,25 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     REQUIRE(answer == ss.str());
   }
 
+  SECTION("test printPctTime")
+  {
+    std::stringstream ss1;
+    std::stringstream ss2;
+    std::stringstream ss3;
+
+    asmc::printPctTime("outputPerPair", 0.23678, ss1);
+    asmc::printPctTime("combine", 1.0, ss2);
+    asmc::printPctTime("other", 0.0, ss3);
+
+    std::string answer1 = "Time in outputPerPair  :  23.7%\n";
+    std::string answer2 = "Time in combine        : 100.0%\n";
+    std::string answer3 = "Time in other          :   0.0%\n";
+
+    REQUIRE(answer1 == ss1.str());
+    REQUIRE(answer2 == ss2.str());
+    REQUIRE(answer3 == ss3.str());
+  }
+
   SECTION("test getSumOfVector")
   {
     std::vector<float> v1 = {1.23f, 2.34f, -3.45f};

@@ -85,12 +85,6 @@ using namespace std;
 #define LOAD1 _mm512_set1_ps
 #endif
 
-// to keep track of time
-std::chrono::high_resolution_clock::duration t1sum(0), t2sum(0), t1sumBack(0);
-std::chrono::high_resolution_clock::duration ticksForward(0), ticksBackward(0), ticksCombine(0), ticksSumOverPairs(0),
-    ticksOutputPerPair(0);
-
-
 // read expected times from a file
 vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 {
@@ -114,12 +108,6 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
     expCoalTimes.push_back(StringUtils::stof(splitString[1]));
   }
   return expCoalTimes;
-}
-
-// to print time
-void printPctTime(const char* str, double fracTime)
-{
-  printf("Time in %-15s: %4.1f%%\n", str, 100 * fracTime);
 }
 
 // constructor
@@ -359,7 +347,7 @@ void HMM::resetDecoding()
 void HMM::decodeAll(int jobs, int jobInd)
 {
 
-  // auto t0 = std::chrono::high_resolution_clock().now();
+   auto t0 = std::chrono::high_resolution_clock::now();
   Timer timer;
 
   resetDecoding();
@@ -430,18 +418,19 @@ void HMM::decodeAll(int jobs, int jobInd)
     lastPercentage = percentage;
   }
 
-  // auto t1 = std::chrono::high_resolution_clock().now();
-  // double ticksDecodeAll = t1 - t0;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto ticksDecodeAll = t1 - t0;
   printf("\nDecoded %" PRIu64 " pairs in %.9f seconds.\n", pairsJob, timer.update_time());
-  // print some stats (will remove)
-  //    printPctTime("forward", ticksForward / ticksDecodeAll);
-  //    printPctTime("backward", ticksBackward / ticksDecodeAll);
-  //    printPctTime("combine", ticksCombine / ticksDecodeAll);
-  //    printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
-  //    printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
-  //    printPctTime("other", 1 - (ticksForward + ticksBackward + ticksCombine +
-  //    ticksSumOverPairs + ticksOutputPerPair) / ticksDecodeAll);
-  cout << flush;
+
+  // print some stats
+  asmc::printPctTime("forward", ticksForward / ticksDecodeAll);
+  asmc::printPctTime("backward", ticksBackward / ticksDecodeAll);
+  asmc::printPctTime("combine", ticksCombine / ticksDecodeAll);
+  asmc::printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
+  asmc::printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
+  asmc::printPctTime("other",
+                     1 - (ticksForward + ticksBackward + ticksCombine + ticksSumOverPairs + ticksOutputPerPair) /
+                             ticksDecodeAll);
 
   finishDecoding();
 }
@@ -654,18 +643,18 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
     }
   }
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   // run forward
   forwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksForward += t1 - t0;
 
   // run backward
   backwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
 
-  auto t2 = std::chrono::high_resolution_clock().now();
+  auto t2 = std::chrono::high_resolution_clock::now();
   ticksBackward += t2 - t1;
 
   // combine (alpha * beta), normalize and store
@@ -720,7 +709,7 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   }
 #endif
 
-  auto t3 = std::chrono::high_resolution_clock().now();
+  auto t3 = std::chrono::high_resolution_clock::now();
   ticksCombine += t3 - t2;
   ALIGNED_FREE(obsIsZeroBatch);
   ALIGNED_FREE(obsIsTwoBatch);
@@ -1102,7 +1091,7 @@ void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, co
 void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   if (!decodingParams.doPosteriorSums && !decodingParams.doMajorMinorPosteriorSums)
     return;
@@ -1138,7 +1127,7 @@ void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatc
     }
   }
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksSumOverPairs += t1 - t0;
 }
 
@@ -1146,7 +1135,7 @@ void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatc
 void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   if (decodingParams.doPerPairMAP) {
     memset(MAP, 0, sequenceLength * actualBatchSize * sizeof(MAP[0]));
@@ -1195,7 +1184,7 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
     }
   }
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksOutputPerPair += t1 - t0;
 }
 
@@ -1210,19 +1199,19 @@ vector<vector<float>> HMM::decode(const PairObservations& observations) {
 vector<vector<float>> HMM::decode(const PairObservations& observations, const unsigned from, const unsigned to)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
   vector<vector<float>> forwardOut = forward(observations, from, to);
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksForward += t1 - t0;
 
   vector<vector<float>> backwardOut = backward(observations, from, to);
-  auto t2 = std::chrono::high_resolution_clock().now();
+  auto t2 = std::chrono::high_resolution_clock::now();
   ticksBackward += t2 - t1;
 
   vector<vector<float>> posterior = asmc::elementWiseMultMatrixMatrix(forwardOut, backwardOut);
   posterior = asmc::normalizeMatrixColumns(posterior);
 
-  auto t3 = std::chrono::high_resolution_clock().now();
+  auto t3 = std::chrono::high_resolution_clock::now();
   ticksCombine += t3 - t2;
 
   if (decodingParams.doPosteriorSums) {
@@ -1307,7 +1296,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   int lastPhysicalPos = data.physicalPositions[from];
 
   for (long int pos = from + 1; pos < to; pos++) {
-    auto t0 = std::chrono::high_resolution_clock().now();
+    auto t0 = std::chrono::high_resolution_clock::now();
     // get distances and rates
     float recDistFromPrevious = asmc::roundMorgans(data.geneticPositions[pos] - lastGeneticPos, precision, minGenetic);
     float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
@@ -1330,7 +1319,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
       getNextAlpha(recDistFromPrevious, alphaC, previousAlpha, nextAlpha, emission1AtSite[pos],
                    emission0minus1AtSite[pos], emission2minus0AtSite[pos], obsIsZero, obsIsHomMinor);
     }
-    auto t1 = std::chrono::high_resolution_clock().now();
+    auto t1 = std::chrono::high_resolution_clock::now();
     if (pos % scalingSkip == 0) {
       // compute scaling (sum of current alpha vector)
       m_scalingBuffer = 1.f / asmc::getSumOfVector(nextAlpha);
@@ -1339,7 +1328,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
     }
     asmc::fillMatrixColumn(alpha, nextAlpha, pos);
     previousAlpha = nextAlpha;
-    auto t2 = std::chrono::high_resolution_clock().now();
+    auto t2 = std::chrono::high_resolution_clock::now();
     t1sum += t1 - t0;
     t2sum += t2 - t1;
     // update distances

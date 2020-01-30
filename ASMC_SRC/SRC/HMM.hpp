@@ -22,7 +22,10 @@
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
+
 #include <Eigen/Dense>
+
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -123,6 +126,15 @@ class HMM
   DecodingReturnValues m_decodingReturnValues;
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
+
+  // timing
+  std::chrono::duration<double> t1sum = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> t2sum = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksForward = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksBackward = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksCombine = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksSumOverPairs = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksOutputPerPair = std::chrono::high_resolution_clock::duration::zero();
 
 public:
   // constructor
