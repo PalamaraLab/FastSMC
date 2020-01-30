@@ -13,17 +13,17 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #include "Timer.hpp"
 
-Timer::Timer(void) {
+Timer::Timer()
+{
   update_time();
 }
 
-double Timer::update_time(void) {
+double Timer::update_time()
+{
   prevtime = curtime;
   curtime = timer_t::now();
   std::chrono::duration<double> diff = curtime - prevtime;
   return diff.count();
 }
-
