@@ -238,9 +238,6 @@ private:
   // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
   unsigned getToPosition(unsigned from, double cmDist = 0.5);
 
-  // compute scaling factor for an alpha vector
-  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, int pos);
-
   void applyScaling(float* vec, float* scalings, int curBatchSize, int pos);
 
   // forward step

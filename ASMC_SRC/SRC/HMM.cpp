@@ -663,32 +663,6 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   ALIGNED_FREE(obsIsTwoBatch);
 }
 
-// compute scaling factor for an alpha vector
-void HMM::scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, const int pos)
-{
-#ifdef NO_SSE
-  // compute scaling (sum of current alpha vector)
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      sums[v] += alpha[(0 * states + k) * curBatchSize + v];
-    }
-  }
-  for (int v = 0; v < curBatchSize; v++) {
-    scalings[v] = 1.0f / sums[v];
-  }
-#else
-  // compute scaling (sum of current alpha vector)
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v += VECX) {
-      STORE(&sums[v], ADD(LOAD(&sums[v]), LOAD(&alpha[(0 * states + k) * curBatchSize + v])));
-    }
-  }
-  for (int v = 0; v < curBatchSize; v++) {
-    scalings[v] = 1.0f / sums[v];
-  }
-#endif
-}
-
 // apply scaling factor to alpha/beta vector
 void HMM::applyScaling(float* vec, float* scalings, int curBatchSize, const int pos)
 {
@@ -731,9 +705,8 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
   }
 
   float* sums = AU; // reuse buffer but rename to be less confusing
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
   float* currentAlpha = &m_alphaBuffer[states * from * curBatchSize];
-  scaleBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, from);
+  asmc::calculateScalingBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, states);
   applyScaling(currentAlpha, m_scalingBuffer, curBatchSize, from);
 
   // Induction Step:
@@ -763,10 +736,9 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
                           AU, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
     }
     float* sums = AU; // reuse buffer but rename to be less confusing
-    memset(sums, 0, curBatchSize * sizeof(sums[0]));
 
     if (pos % scalingSkip == 0) {
-      scaleBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, pos);
+      asmc::calculateScalingBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, states);
       applyScaling(nextAlpha, m_scalingBuffer, curBatchSize, pos);
     }
     // update distances
@@ -883,10 +855,9 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     }
   }
   float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
 
   float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
-  scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, to - 1);
+  asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
   applyScaling(currentBeta, m_scalingBuffer, curBatchSize, to - 1);
 
   // Induction Step:
@@ -922,8 +893,7 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     }
     if (pos % scalingSkip == 0) {
       // normalize betas using alpha scaling
-      memset(sums, 0, curBatchSize * sizeof(sums[0]));
-      scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, pos);
+      asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
       applyScaling(currentBeta, m_scalingBuffer, curBatchSize, pos);
     }
     // update distances

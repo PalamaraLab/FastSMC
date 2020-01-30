@@ -254,6 +254,24 @@ void fillMatrixColumn(std::vector<std::vector<RealType>>& matrix, const std::vec
   }
 }
 
+/**
+ * Calculate scaling factors for a contiguous array of curBatchSize * numStates floats. The computed scaling factors
+ * are normalised across all states for each item in the batch.
+ *
+ * This method takes three buffers; one with data, one for storing calculated scaling factors, and one for temporarily
+ * storing intermediate sums. It is assumed that all three buffers are appropriately allocated and deallocated outside
+ * this function.
+ *
+ * The sums buffer is set to zeros in this method.
+ *
+ * @param vec the buffer of length curBatchSize * numStates containing the data
+ * @param scalings a buffer of length curBatchSize to write calculated scaling factors into
+ * @param sums a buffer of length curBatchSize for storing intermediate sums
+ * @param curBatchSize the number of items in the current batch
+ * @param numStates the number of states over which to normalise
+ */
+void calculateScalingBatch(float* vec, float* scalings, float* sums, int curBatchSize, int numStates);
+
 } // namespace asmc
 
 #endif // HMMUTILS_HPP

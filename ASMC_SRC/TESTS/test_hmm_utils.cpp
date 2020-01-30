@@ -19,7 +19,9 @@
 #include <string>
 #include <vector>
 
+#include "AvxDefinitions.hpp"
 #include "HmmUtils.hpp"
+#include "MemoryUtils.hpp"
 
 TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 {
@@ -221,5 +223,41 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
       REQUIRE(asmc::roundPhysical(a, 4) == 123460);
       REQUIRE(asmc::roundPhysical(a, 5) == 123456);
     }
+  }
+
+  SECTION("test calculateScalingBatch")
+  {
+    std::cout << "VECX in test: " << VECX << '\n';
+
+    // We need to make sure that this test will work independent of VECX and which AVX/SSE instructions are being used
+    const int batchSize = 2 * VECX;
+    const int numStates = 2;
+
+    auto data = ALIGNED_MALLOC_FLOATS(batchSize * numStates);
+    auto scalings = ALIGNED_MALLOC_FLOATS(batchSize);
+    auto sums = ALIGNED_MALLOC_FLOATS(batchSize);
+
+    // set up data like 1, 2, 3, ..., 1, 2, 3, ..., ... so that scalings should be 1/(1+1), 1/(2+2), 1/(3+3) etc
+    for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+      for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
+        data[stateIdx * batchSize + batchItem] = 1.f + static_cast<float>(batchItem);
+      }
+    }
+
+    // Calculate explicit answers by hand
+    std::vector<float> answers(batchSize);
+    for (auto i = 0; i < batchSize; ++i) {
+      answers.at(i) = 1.f / (static_cast<float>(1ul + i) + static_cast<float>(1ul + i));
+    }
+
+    asmc::calculateScalingBatch(data, scalings, sums, batchSize, numStates);
+
+    for (auto i = 0; i < batchSize; ++i) {
+      REQUIRE(scalings[i] == answers.at(i));
+    }
+
+    ALIGNED_FREE(data);
+    ALIGNED_FREE(scalings);
+    ALIGNED_FREE(sums);
   }
 }

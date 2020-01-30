@@ -15,6 +15,8 @@
 
 #include "HmmUtils.hpp"
 
+#include "AvxDefinitions.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -92,6 +94,37 @@ void printPctTime(const std::string& str, double fracTime, std::ostream& os)
 {
   os << "Time in " << std::setw(14) << std::left << str << " : " << std::setw(5) << std::right
      << std::setprecision(1) << std::fixed << 100.0 * fracTime << "%\n" << std::flush;
+}
+
+void calculateScalingBatch(float* vec, float* scalings, float* sums, const int curBatchSize, const int numStates)
+{
+  for (int i = 0; i < curBatchSize; ++i) {
+    sums[i] = 0.f;
+  }
+
+  std::cout << "VECX in func: " << VECX << '\n';
+
+#ifdef NO_SSE
+  // compute scaling (sum of current alpha/beta vector)
+  for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+    for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
+      sums[batchItem] += vec[stateIdx * curBatchSize + batchItem];
+    }
+  }
+  for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
+    scalings[batchItem] = 1.0f / sums[batchItem];
+  }
+#else
+  // compute scaling (sum of current alpha/beta vector)
+  for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
+    for (int batchItem = 0; batchItem < curBatchSize; batchItem += VECX) {
+      STORE(&sums[batchItem], ADD(LOAD(&sums[batchItem]), LOAD(&vec[stateIdx * curBatchSize + batchItem])));
+    }
+  }
+  for (int batchItem = 0; batchItem < curBatchSize; ++batchItem) {
+    scalings[batchItem] = 1.0f / sums[batchItem];
+  }
+#endif
 }
 
 } // namespace asmc
