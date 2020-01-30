@@ -298,4 +298,40 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     ALIGNED_FREE(data);
     ALIGNED_FREE(scalings);
   }
+
+  SECTION("test getFromPosition")
+  {
+    std::vector<float> geneticPositions = {0.12f, 0.23f, 0.34f, 0.45f, 0.56f, 0.67f};
+    const unsigned from = 4u;  // the 0.56f element
+
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 1.f) == 3u);  // 56 - 1 = 55, so 0.45f will be picked
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 21.f) == 2u);  // 56 - 21 = 35, so 0.34f will be picked
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 23.f) == 1u);  // 56 - 23 = 33, so 0.23f will be picked
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 30.f) == 1u);  // 56 - 30 = 26, so 0.23f will be picked
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 45.f) == 0u);  // 56 - 45 = 11, so 0.12f will be picked
+    REQUIRE(asmc::getFromPosition(geneticPositions, from, 60.f) == 0u);  // anything bigger should return zero index
+
+    // For regular ASMC, from will always be 0, and 0 should be returned no matter the distance
+    REQUIRE(asmc::getFromPosition(geneticPositions, 0u, 1e-6f) == 0u);
+    REQUIRE(asmc::getFromPosition(geneticPositions, 0u, 1.f) == 0u);
+    REQUIRE(asmc::getFromPosition(geneticPositions, 0u, 10.f) == 0u);
+  }
+
+  SECTION("test getToPosition")
+  {
+    std::vector<float> geneticPositions = {0.12f, 0.23f, 0.34f, 0.45f, 0.56f, 0.67f};
+    const unsigned to = 1u;  // the 0.23f element
+
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 1.f) == 3u);  // 23 + 1 = 24, so 0.34f will be picked (+1)
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 10.f) == 3u);  // 23 + 10 = 33, so 0.34f will be picked (+1)
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 12.f) == 4u);  // 23 + 12 = 35, so 0.45f will be picked (+1)
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 30.f) == 5u);  // 23 + 30 = 53, so 0.56f will be picked (+1)
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 40.f) == 6u);  // 23 + 40 = 63, so 0.67f will be picked (+1)
+    REQUIRE(asmc::getToPosition(geneticPositions, to, 60.f) == 6u);  // anything bigger should return the vector size
+
+    // For regular ASMC, `to` will always be the sequence length, and that should be returned no matter the distance
+    REQUIRE(asmc::getToPosition(geneticPositions, 6u, 1e-6f) == 6u);
+    REQUIRE(asmc::getToPosition(geneticPositions, 6u, 1.f) == 6u);
+    REQUIRE(asmc::getToPosition(geneticPositions, 6u, 10.f) == 6u);
+  }
 }

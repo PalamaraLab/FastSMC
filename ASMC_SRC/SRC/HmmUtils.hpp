@@ -286,6 +286,34 @@ void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSi
  */
 void applyScalingBatch(float* vec, float* scalings, int batchSize, int numStates);
 
+/**
+ * Calculate the index of a site at least cmDist centimorgans before that with index `from`, defaulting to 0.5 cM.
+ *
+ * The calculated index will be the first index, walking leftward from `from`, that is more than cmDist centimorgans
+ * away in genetic distance, or 0, whichever condition is reached first.
+ *
+ * @param geneticPositions a vector of genetic positions in units of Morgans
+ * @param from the index to start at before moving leftward
+ * @param cmDist the target distance in centimorgans before `from` that we want to travel before stopping the iteration
+ * @return the index of a position just more than cmDist centimorgans before `from`
+ */
+unsigned getFromPosition(const std::vector<float>& geneticPositions, unsigned from, float cmDist = 0.5f);
+
+/**
+ * Calculate the index of a site at least cmDist centimorgans after that with index `to`, defaulting to 0.5 cM. Note
+ * that because this is used as an upper limit (for (unsigned i = from; i < to...)), the returned `to` must be one
+ * greater than calculated, with a maximum of the size of the data vector.
+ *
+ * The calculated index will be the SECOND index, walking rightward from `to`, that is more than cmDist centimorgans
+ * away in genetic distance, or the size of the vector, whichever condition is reached first.
+ *
+ * @param geneticPositions a vector of genetic positions in units of Morgans
+ * @param to the index to start at before moving rightward
+ * @param cmDist the target distance in centimorgans after `to` that we want to travel before stopping the iteration
+ * @return the index of a position just more than cmDist centimorgans after `to`
+ */
+unsigned getToPosition(const std::vector<float>& geneticPositions, unsigned to, float cmDist = 0.5f);
+
 } // namespace asmc
 
 #endif // HMMUTILS_HPP

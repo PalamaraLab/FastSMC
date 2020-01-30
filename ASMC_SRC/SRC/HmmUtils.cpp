@@ -145,4 +145,30 @@ void applyScalingBatch(float* vec, float* scalings, const int batchSize, const i
 #endif
 }
 
+unsigned getFromPosition(const std::vector<float>& geneticPositions, unsigned from, const float cmDist)
+{
+  assert(cmDist > 0.f);
+  assert(geneticPositions.size() > from);
+
+  float cumGenDist = 0.f;
+  while (cumGenDist < cmDist && from > 0u) {
+    from--;
+    cumGenDist += (geneticPositions[from + 1u] - geneticPositions[from]) * 100.f;
+  }
+  return from;
+}
+
+unsigned getToPosition(const std::vector<float>& geneticPositions, unsigned to, const float cmDist)
+{
+  assert(cmDist > 0.f);
+  assert(geneticPositions.size() >= to);
+
+  float cumGenDist = 0.f;
+  while (cumGenDist < cmDist && to + 1u < geneticPositions.size()) {
+    to++;
+    cumGenDist += (geneticPositions[to] - geneticPositions[to - 1u]) * 100.f;
+  }
+  return std::min<unsigned>(to + 1u, static_cast<unsigned>(geneticPositions.size()));
+}
+
 } // namespace asmc

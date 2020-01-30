@@ -232,12 +232,6 @@ private:
   // decode a batch
   void decodeBatch(const vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
-  // return the position of a site cmDist centimorgans before, defaulting to 0.5 cM
-  unsigned getFromPosition(unsigned from, double cmDist = 0.5);
-
-  // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
-  unsigned getToPosition(unsigned from, double cmDist = 0.5);
-
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 

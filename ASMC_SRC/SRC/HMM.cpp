@@ -422,30 +422,6 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-unsigned HMM::getFromPosition(unsigned from, const double cmDist)
-{
-  assert(cmDist > 0.0);
-
-  double cumGenDist = 0.0;
-  while (cumGenDist < cmDist && from > 0) {
-    from--;
-    cumGenDist += (data.geneticPositions[from + 1] - data.geneticPositions[from]) * 100.0;
-  }
-  return from;
-}
-
-unsigned HMM::getToPosition(unsigned to, const double cmDist)
-{
-  assert(cmDist > 0.0);
-
-  double cumGenDist = 0.0;
-  while (cumGenDist < cmDist && to < sequenceLength) {
-    cumGenDist += (data.geneticPositions[to] - data.geneticPositions[to - 1]) * 100.0;
-    to++;
-  }
-  return to;
-}
-
 void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
 {
   const vector<Individual>& individuals = data.individuals;
@@ -511,8 +487,8 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
     endBatch = *std::max_element(toBatch.begin(), toBatch.end());
 
-    unsigned int from = getFromPosition(startBatch);
-    unsigned int to = getToPosition(endBatch);
+    unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
+    unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
     if (decodingParams.GERMLINE) {
       for (auto& obs : obsBatch) {
@@ -548,8 +524,8 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
   endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
 
-  unsigned int from = getFromPosition(startBatch);
-  unsigned int to = getToPosition(endBatch);
+  unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
+  unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
   if (decodingParams.GERMLINE) {
     for (auto& obs : obsBatch) {
