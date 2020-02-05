@@ -210,7 +210,7 @@ std::vector<std::vector<RealType>> elementWiseMultMatrixMatrix(const std::vector
  *
  * @tparam RealType the value type of the matrix
  * @param matrix the matrix
- * @return a matrix with normalised rows (that sum to 1)
+ * @return a matrix with normalized rows (that sum to 1)
  */
 template <typename RealType>
 std::vector<std::vector<RealType>> normalizeMatrixColumns(const std::vector<std::vector<RealType>>& matrix)
@@ -238,7 +238,7 @@ std::vector<std::vector<RealType>> normalizeMatrixColumns(const std::vector<std:
  *
  * @tparam RealType the value type of the matrix and vector
  * @param matrix the matrix to modify a column of
- * @param vec the vector fill a column of the matrix
+ * @param vec the vector to fill a column of the matrix
  * @param colIdx the index of the column to fill
  */
 template <typename RealType>
@@ -256,9 +256,9 @@ void fillMatrixColumn(std::vector<std::vector<RealType>>& matrix, const std::vec
 
 /**
  * Calculate scaling factors for a contiguous array of curBatchSize * numStates floats. The computed scaling factors
- * are normalised across all states for each item in the batch.
+ * are normalized across all states for each item in the batch.
  *
- * This method takes three buffers; one with data, one for storing calculated scaling factors, and one for temporarily
+ * This method takes three buffers: one with data, one for storing calculated scaling factors, and one for temporarily
  * storing intermediate sums. It is assumed that all three buffers are appropriately allocated and deallocated outside
  * this function.
  *
@@ -268,7 +268,7 @@ void fillMatrixColumn(std::vector<std::vector<RealType>>& matrix, const std::vec
  * @param scalings a buffer of length curBatchSize to write calculated scaling factors into
  * @param sums a buffer of length curBatchSize for storing intermediate sums
  * @param batchSize the number of items in the batch
- * @param numStates the number of states over which to normalise
+ * @param numStates the number of states over which to normalize
  */
 void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSize, int numStates);
 
@@ -282,7 +282,7 @@ void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSi
  * @param vec the buffer of length curBatchSize * numStates containing the data
  * @param scalings a buffer of length curBatchSize containing the prescribed scale factors
  * @param batchSize the number of items in the batch
- * @param numStates the number of states over which to normalise
+ * @param numStates the number of states over which to normalize
  */
 void applyScalingBatch(float* vec, float* scalings, int batchSize, int numStates);
 
