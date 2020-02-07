@@ -15,24 +15,23 @@
 
 #include <chrono>
 
-
 #ifndef TIMER_HPP
 #define TIMER_HPP
 
-class Timer {
+class Timer
+{
 private:
-	using timer_t = std::chrono::system_clock;
-	using sys_time = std::chrono::time_point<timer_t>;
-	
-	sys_time prevtime, curtime;
+  using timer_t = std::chrono::system_clock;
+  using sys_time = std::chrono::time_point<timer_t>;
+
+  sys_time prevtime, curtime;
 
 public:
+  /// constructs a timer, recording the initial time
+  Timer();
 
-	/// constructs a timer, recording the initial time
-	Timer(void);
-
-	/// updates the current time and returns the time since the last update in seconds
-	double update_time(void);
+  /// updates the current time and returns the time since the last update in seconds
+  double update_time();
 };
 
 #endif

@@ -22,7 +22,10 @@
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
+
 #include <Eigen/Dense>
+
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -124,6 +127,15 @@ class HMM
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
+  // timing
+  std::chrono::duration<double> t1sum = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> t2sum = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksForward = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksBackward = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksCombine = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksSumOverPairs = std::chrono::high_resolution_clock::duration::zero();
+  std::chrono::duration<double> ticksOutputPerPair = std::chrono::high_resolution_clock::duration::zero();
+
 public:
   // constructor
   HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
@@ -220,17 +232,6 @@ private:
   // decode a batch
   void decodeBatch(const vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
-  // return the position of a site cmDist centimorgans before, defaulting to 0.5 cM
-  unsigned getFromPosition(unsigned from, double cmDist = 0.5);
-
-  // return the position of a site cmDist centimorgans after, defaulting to 0.5 cM
-  unsigned getToPosition(unsigned from, double cmDist = 0.5);
-
-  // compute scaling factor for an alpha vector
-  void scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, int pos);
-
-  void applyScaling(float* vec, float* scalings, int curBatchSize, int pos);
-
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
 
@@ -257,25 +258,6 @@ private:
   // *********************************************************************
   // non-batched computations (for debugging and pedagogical reasons only)
   // *********************************************************************
-
-  float printVector(const vector<float>& vec);
-
-  float getSumOfVector(const vector<float>& vec);
-
-  vector<float> elementWiseMultVectorScalar(const vector<float>& vec, float val);
-
-  vector<float> elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors);
-
-  vector<vector<float>> elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
-                                                    const vector<vector<float>>& matrix2);
-
-  vector<vector<float>> normalizeMatrixColumns(const vector<vector<float>>& matrix);
-
-  void fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos);
-
-  float roundMorgans(float gen);
-
-  int roundPhysical(int phys);
 
   vector<float> getEmission(int pos, int distinguished, int undistinguished, int emissionIndex);
 

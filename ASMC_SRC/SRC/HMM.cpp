@@ -16,116 +16,22 @@
 #include "HMM.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <map>
-
-#include <emmintrin.h>
-#include <math.h>
-#include <pmmintrin.h>
-#include <xmmintrin.h>
-
-#include "MemoryUtils.hpp"
-#include "Timer.hpp"
-//#include <sys/types.h>
-
-#include "StringUtils.hpp"
+#include <utility>
 
 #include <Eigen/Dense>
-#include <chrono>
-#include <sstream>
-#include <utility>
+
+#include "AvxDefinitions.hpp"
+#include "HmmUtils.hpp"
+#include "MemoryUtils.hpp"
+#include "StringUtils.hpp"
+#include "Timer.hpp"
 
 using namespace std;
 
-#ifdef NO_SSE
-#define MODE "NO_SSE"
-#define VECX 4
-#endif
-
-// SSE vectorization (block size = 4)
-#ifdef SSE
-#define MODE "SSE"
-#define VECX 4
-#define FLOAT __m128
-#define LOAD _mm_load_ps
-#define STORE _mm_store_ps
-#define MULT _mm_mul_ps
-#define ADD _mm_add_ps
-#define RECIPROCAL _mm_rcp_ps
-#define LOAD1 _mm_load1_ps
-#endif
-
-// AVX vectorization (block size = 8)
-#ifdef AVX
-#define MODE "AVX"
-#include <immintrin.h>
-#define VECX 8
-#define FLOAT __m256
-#define LOAD _mm256_load_ps
-#define STORE _mm256_store_ps
-#define MULT _mm256_mul_ps
-#define ADD _mm256_add_ps
-#define RECIPROCAL _mm256_rcp_ps
-#define LOAD1 _mm256_broadcast_ss
-#endif
-
-// AVX512 vectorization (block size = 16)
-#ifdef AVX512
-#define MODE "AVX512"
-#include <immintrin.h>
-#define VECX 16
-#define FLOAT __m512
-#define LOAD _mm512_load_ps
-#define STORE _mm512_store_ps
-#define MULT _mm512_mul_ps
-#define ADD _mm512_add_ps
-#define RECIPROCAL _mm512_rcp14_ps
-#define LOAD1 _mm512_set1_ps
-#endif
-
-// to keep track of time
-std::chrono::high_resolution_clock::duration t1sum(0), t2sum(0), t1sumBack(0);
-std::chrono::high_resolution_clock::duration ticksForward(0), ticksBackward(0), ticksCombine(0), ticksSumOverPairs(0),
-    ticksOutputPerPair(0);
-
-// gets genotypes for decoding  (xor --> 1 if het)
-vector<bool> xorVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
-                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
-{
-  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
-
-  assert(x.size() == y.size());
-  assert(from < min_to);
-
-  vector<bool> ret(min_to - from);
-
-  for (unsigned i = from; i < min_to; i++) {
-    ret[i - from] = x[i] ^ y[i];
-  }
-
-  return ret;
-}
-
-// computes and of genotype, used to distinguish homozygous minor/derived from
-// homozygous major/ancestral
-vector<bool> andVec(const vector<bool>& x, const vector<bool>& y, const unsigned from = 0,
-                    const unsigned to = numeric_limits<unsigned>::max()) noexcept
-{
-  const unsigned min_to = std::min(static_cast<unsigned>(x.size()), to);
-
-  assert(x.size() == y.size());
-  assert(from < min_to);
-
-  vector<bool> ret(min_to - from);
-
-  for (unsigned i = from; i < min_to; i++) {
-    ret[i - from] = x[i] & y[i];
-  }
-
-  return ret;
-}
 
 // read expected times from a file
 vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
@@ -150,12 +56,6 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
     expCoalTimes.push_back(StringUtils::stof(splitString[1]));
   }
   return expCoalTimes;
-}
-
-// to print time
-void printPctTime(const char* str, double fracTime)
-{
-  printf("Time in %-15s: %4.1f%%\n", str, 100 * fracTime);
 }
 
 // constructor
@@ -262,11 +162,12 @@ void HMM::makeBits(PairObservations& obs, unsigned from, unsigned to)
 {
   unsigned iInd = obs.iInd;
   unsigned jInd = obs.jInd;
-  obs.obsBits = xorVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
-                       obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
+  obs.obsBits =
+      asmc::subsetXorVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+                         obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
   obs.homMinorBits =
-      andVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
-             obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
+      asmc::subsetAndVec(obs.iHap == 1 ? data.individuals[iInd].genotype1 : data.individuals[iInd].genotype2,
+                         obs.jHap == 1 ? data.individuals[jInd].genotype1 : data.individuals[jInd].genotype2, from, to);
 }
 
 void HMM::prepareEmissions()
@@ -394,7 +295,7 @@ void HMM::resetDecoding()
 void HMM::decodeAll(int jobs, int jobInd)
 {
 
-  // auto t0 = std::chrono::high_resolution_clock().now();
+   auto t0 = std::chrono::high_resolution_clock::now();
   Timer timer;
 
   resetDecoding();
@@ -465,18 +366,19 @@ void HMM::decodeAll(int jobs, int jobInd)
     lastPercentage = percentage;
   }
 
-  // auto t1 = std::chrono::high_resolution_clock().now();
-  // double ticksDecodeAll = t1 - t0;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto ticksDecodeAll = t1 - t0;
   printf("\nDecoded %" PRIu64 " pairs in %.9f seconds.\n", pairsJob, timer.update_time());
-  // print some stats (will remove)
-  //    printPctTime("forward", ticksForward / ticksDecodeAll);
-  //    printPctTime("backward", ticksBackward / ticksDecodeAll);
-  //    printPctTime("combine", ticksCombine / ticksDecodeAll);
-  //    printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
-  //    printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
-  //    printPctTime("other", 1 - (ticksForward + ticksBackward + ticksCombine +
-  //    ticksSumOverPairs + ticksOutputPerPair) / ticksDecodeAll);
-  cout << flush;
+
+  // print some stats
+  asmc::printPctTime("forward", ticksForward / ticksDecodeAll);
+  asmc::printPctTime("backward", ticksBackward / ticksDecodeAll);
+  asmc::printPctTime("combine", ticksCombine / ticksDecodeAll);
+  asmc::printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
+  asmc::printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
+  asmc::printPctTime("other",
+                     1 - (ticksForward + ticksBackward + ticksCombine + ticksSumOverPairs + ticksOutputPerPair) /
+                             ticksDecodeAll);
 
   finishDecoding();
 }
@@ -518,30 +420,6 @@ void HMM::decodePair(const uint i, const uint j)
       addToBatch(m_observationsBatch, observations);
     }
   }
-}
-
-unsigned HMM::getFromPosition(unsigned from, const double cmDist)
-{
-  assert(cmDist > 0.0);
-
-  double cumGenDist = 0.0;
-  while (cumGenDist < cmDist && from > 0) {
-    from--;
-    cumGenDist += (data.geneticPositions[from + 1] - data.geneticPositions[from]) * 100.0;
-  }
-  return from;
-}
-
-unsigned HMM::getToPosition(unsigned to, const double cmDist)
-{
-  assert(cmDist > 0.0);
-
-  double cumGenDist = 0.0;
-  while (cumGenDist < cmDist && to < sequenceLength) {
-    cumGenDist += (data.geneticPositions[to] - data.geneticPositions[to - 1]) * 100.0;
-    to++;
-  }
-  return to;
 }
 
 void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
@@ -609,8 +487,8 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     startBatch = *std::min_element(fromBatch.begin(), fromBatch.end());
     endBatch = *std::max_element(toBatch.begin(), toBatch.end());
 
-    unsigned int from = getFromPosition(startBatch);
-    unsigned int to = getToPosition(endBatch);
+    unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
+    unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
     if (decodingParams.GERMLINE) {
       for (auto& obs : obsBatch) {
@@ -646,8 +524,8 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   startBatch = *std::min_element(fromBatch.begin(), fromBatch.begin() + actualBatchSize);
   endBatch = *std::max_element(toBatch.begin(), toBatch.begin() + actualBatchSize);
 
-  unsigned int from = getFromPosition(startBatch);
-  unsigned int to = getToPosition(endBatch);
+  unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
+  unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
   if (decodingParams.GERMLINE) {
     for (auto& obs : obsBatch) {
@@ -689,18 +567,18 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
     }
   }
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   // run forward
   forwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksForward += t1 - t0;
 
   // run backward
   backwardBatch(obsIsZeroBatch, obsIsTwoBatch, curBatchSize, from, to);
 
-  auto t2 = std::chrono::high_resolution_clock().now();
+  auto t2 = std::chrono::high_resolution_clock::now();
   ticksBackward += t2 - t1;
 
   // combine (alpha * beta), normalize and store
@@ -755,58 +633,13 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   }
 #endif
 
-  auto t3 = std::chrono::high_resolution_clock().now();
+  auto t3 = std::chrono::high_resolution_clock::now();
   ticksCombine += t3 - t2;
   ALIGNED_FREE(obsIsZeroBatch);
   ALIGNED_FREE(obsIsTwoBatch);
 }
 
-// compute scaling factor for an alpha vector
-void HMM::scaleBatch(float* alpha, float* scalings, float* sums, int curBatchSize, const int pos)
-{
-#ifdef NO_SSE
-  // compute scaling (sum of current alpha vector)
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      sums[v] += alpha[(0 * states + k) * curBatchSize + v];
-    }
-  }
-  for (int v = 0; v < curBatchSize; v++) {
-    scalings[v] = 1.0f / sums[v];
-  }
-#else
-  // compute scaling (sum of current alpha vector)
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v += VECX) {
-      STORE(&sums[v], ADD(LOAD(&sums[v]), LOAD(&alpha[(0 * states + k) * curBatchSize + v])));
-    }
-  }
-  for (int v = 0; v < curBatchSize; v++) {
-    scalings[v] = 1.0f / sums[v];
-  }
-#endif
-}
 
-// apply scaling factor to alpha/beta vector
-void HMM::applyScaling(float* vec, float* scalings, int curBatchSize, const int pos)
-{
-#ifdef NO_SSE
-  // normalize current alpha vector to 1
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v++) {
-      vec[(0 * states + k) * curBatchSize + v] *= scalings[v];
-    }
-  }
-#else
-  // normalize current alpha vector to 1
-  for (int k = 0; k < states; k++) {
-    for (int v = 0; v < curBatchSize; v += VECX) {
-      STORE(&vec[(0 * states + k) * curBatchSize + v],
-            MULT(LOAD(&vec[(0 * states + k) * curBatchSize + v]), LOAD(&scalings[v])));
-    }
-  }
-#endif
-}
 
 // forward step
 void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, const unsigned from,
@@ -829,10 +662,9 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
   }
 
   float* sums = AU; // reuse buffer but rename to be less confusing
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
   float* currentAlpha = &m_alphaBuffer[states * from * curBatchSize];
-  scaleBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, from);
-  applyScaling(currentAlpha, m_scalingBuffer, curBatchSize, from);
+  asmc::calculateScalingBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, states);
+  asmc::applyScalingBatch(currentAlpha, m_scalingBuffer, curBatchSize, states);
 
   // Induction Step:
   float lastGeneticPos = data.geneticPositions[from];
@@ -840,14 +672,16 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
 
   for (long int pos = from + 1; pos < to; pos++) {
     // get distances and rates
-    float recDistFromPrevious = roundMorgans(std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
-    float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
+    float recDistFromPrevious = asmc::roundMorgans(data.geneticPositions[pos] - lastGeneticPos, precision, minGenetic);
+    float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
     float* previousAlpha = &m_alphaBuffer[(pos - 1) * states * curBatchSize];
     float* nextAlpha = &m_alphaBuffer[pos * states * curBatchSize];
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
-      float recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1, precision);
+      float recDistFromPreviousMinusOne =
+          asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getNextAlphaBatched(recDistFromPreviousMinusOne, alphaC, curBatchSize, previousAlpha, pos, m_allZeros, m_allZeros,
                           AU, nextAlpha, homozEmission, homozEmission, homozEmission);
@@ -859,11 +693,10 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
                           AU, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
     }
     float* sums = AU; // reuse buffer but rename to be less confusing
-    memset(sums, 0, curBatchSize * sizeof(sums[0]));
 
     if (pos % scalingSkip == 0) {
-      scaleBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, pos);
-      applyScaling(nextAlpha, m_scalingBuffer, curBatchSize, pos);
+      asmc::calculateScalingBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, states);
+      asmc::applyScalingBatch(nextAlpha, m_scalingBuffer, curBatchSize, states);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
@@ -979,11 +812,10 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     }
   }
   float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
-  memset(sums, 0, curBatchSize * sizeof(sums[0]));
 
   float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
-  scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, to - 1);
-  applyScaling(currentBeta, m_scalingBuffer, curBatchSize, to - 1);
+  asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
+  asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
 
   // Induction Step:
   float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
@@ -995,14 +827,15 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
 
   for (long int pos = to - 2; pos >= from; pos--) {
     // get distances and rates
-    float recDistFromPrevious = roundMorgans(std::max(minGenetic, lastGeneticPos - data.geneticPositions[pos]));
-    float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
+    float recDistFromPrevious = asmc::roundMorgans(lastGeneticPos - data.geneticPositions[pos], precision, minGenetic);
+    float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
     float* currentBeta = &m_betaBuffer[pos * states * curBatchSize];
     float* lastComputedBeta = &m_betaBuffer[(pos + 1) * states * curBatchSize];
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1);
-      float recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1, precision);
+      float recDistFromPreviousMinusOne = asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize, lastComputedBeta, pos, m_allZeros, m_allZeros,
                              vec, BU, BL, currentBeta, homozEmission, homozEmission, homozEmission);
@@ -1017,9 +850,8 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     }
     if (pos % scalingSkip == 0) {
       // normalize betas using alpha scaling
-      memset(sums, 0, curBatchSize * sizeof(sums[0]));
-      scaleBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, pos);
-      applyScaling(currentBeta, m_scalingBuffer, curBatchSize, pos);
+      asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
+      asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
@@ -1134,7 +966,7 @@ void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, co
 void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   if (!decodingParams.doPosteriorSums && !decodingParams.doMajorMinorPosteriorSums)
     return;
@@ -1170,7 +1002,7 @@ void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatc
     }
   }
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksSumOverPairs += t1 - t0;
 }
 
@@ -1178,7 +1010,7 @@ void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatc
 void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
 
   if (decodingParams.doPerPairMAP) {
     memset(MAP, 0, sequenceLength * actualBatchSize * sizeof(MAP[0]));
@@ -1227,84 +1059,13 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
     }
   }
 
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksOutputPerPair += t1 - t0;
 }
 
 // *********************************************************************
 // non-batched computations (for debugging and pedagogical reasons only)
 // *********************************************************************
-
-float HMM::printVector(const vector<float>& vec)
-{
-  float sum = 0.f;
-  for (uint i = 0; i < vec.size(); i++) {
-    cout << vec[i] << "\t";
-  }
-  cout << endl;
-  return sum;
-}
-
-float HMM::getSumOfVector(const vector<float>& vec)
-{
-  float sum = 0.f;
-  for (uint i = 0; i < vec.size(); i++) {
-    sum += vec[i];
-  }
-  return sum;
-}
-
-vector<float> HMM::elementWiseMultVectorScalar(const vector<float>& vec, float val)
-{
-  vector<float> ret(vec.size());
-  for (uint i = 0; i < vec.size(); i++) {
-    ret[i] = vec[i] * val;
-  }
-  return ret;
-}
-
-vector<float> HMM::elementWiseMultVectorVector(const vector<float>& vec, const vector<float>& factors)
-{
-  vector<float> ret(vec.size());
-  for (uint i = 0; i < vec.size(); i++) {
-    ret[i] = vec[i] * factors[i];
-  }
-  return ret;
-}
-
-vector<vector<float>> HMM::elementWiseMultMatrixMatrix(const vector<vector<float>>& matrix1,
-                                                       const vector<vector<float>>& matrix2)
-{
-  vector<vector<float>> ret(matrix1.size(), vector<float>(matrix1[0].size()));
-  for (uint i = 0; i < matrix1.size(); i++) {
-    for (uint j = 0; j < matrix1[0].size(); j++) {
-      ret[i][j] = matrix1[i][j] * matrix2[i][j];
-    }
-  }
-  return ret;
-}
-
-vector<vector<float>> HMM::normalizeMatrixColumns(const vector<vector<float>>& matrix)
-{
-  vector<vector<float>> ret(matrix.size(), vector<float>(matrix[0].size()));
-  for (uint j = 0; j < matrix[0].size(); j++) {
-    float sum = 0.f;
-    for (uint i = 0; i < matrix.size(); i++) {
-      sum += matrix[i][j];
-    }
-    for (uint i = 0; i < matrix.size(); i++) {
-      ret[i][j] = matrix[i][j] / sum;
-    }
-  }
-  return ret;
-}
-
-void HMM::fillMatrixColumn(vector<vector<float>>& matrix, const vector<float>& vec, long int pos)
-{
-  for (uint i = 0; i < vec.size(); i++) {
-    matrix[i][pos] = vec[i];
-  }
-}
 
 vector<vector<float>> HMM::decode(const PairObservations& observations) {
   return decode(observations, 0, sequenceLength);
@@ -1313,19 +1074,19 @@ vector<vector<float>> HMM::decode(const PairObservations& observations) {
 vector<vector<float>> HMM::decode(const PairObservations& observations, const unsigned from, const unsigned to)
 {
 
-  auto t0 = std::chrono::high_resolution_clock().now();
+  auto t0 = std::chrono::high_resolution_clock::now();
   vector<vector<float>> forwardOut = forward(observations, from, to);
-  auto t1 = std::chrono::high_resolution_clock().now();
+  auto t1 = std::chrono::high_resolution_clock::now();
   ticksForward += t1 - t0;
 
   vector<vector<float>> backwardOut = backward(observations, from, to);
-  auto t2 = std::chrono::high_resolution_clock().now();
+  auto t2 = std::chrono::high_resolution_clock::now();
   ticksBackward += t2 - t1;
 
-  vector<vector<float>> posterior = elementWiseMultMatrixMatrix(forwardOut, backwardOut);
-  posterior = normalizeMatrixColumns(posterior);
+  vector<vector<float>> posterior = asmc::elementWiseMultMatrixMatrix(forwardOut, backwardOut);
+  posterior = asmc::normalizeMatrixColumns(posterior);
 
-  auto t3 = std::chrono::high_resolution_clock().now();
+  auto t3 = std::chrono::high_resolution_clock::now();
   ticksCombine += t3 - t2;
 
   if (decodingParams.doPosteriorSums) {
@@ -1358,32 +1119,6 @@ pair<vector<float>, vector<float>> HMM::decodeSummarize(const PairObservations& 
     }
   }
   return std::make_pair(posterior_map, posterior_mean);
-}
-
-float HMM::roundMorgans(float gen)
-{
-  const float correction = 10.f - static_cast<float>(precision);
-  const float L10 = std::max<float>(0.f, floorf(log10f(gen)) + correction);
-
-  const float factor = powf(10.f, 10.f - L10);
-  const float rounded = roundf(gen * factor) / factor;
-
-  return std::max(minGenetic, rounded);
-}
-
-int HMM::roundPhysical(int phys)
-{
-  // Since HMM for sequence uses distance-1, it can be -1.
-  if (phys < -1) {
-    cerr << "ERROR. Int overflow " << phys << endl;
-    exit(1);
-  }
-  // map 0 or -1 to 1. Since HMM for sequence uses distance-1, it can be -1.
-  phys = std::max(1, phys);
-  int L10 = std::max(0, (int)floor(log10(phys)) - precision);
-  int factor = (int)pow(10, L10);
-  int rounded = static_cast<int>(round(phys / (float)factor)) * factor;
-  return rounded;
 }
 
 vector<float> HMM::getEmission(int pos, int distinguished, int undistinguished, int emissionIndex)
@@ -1420,14 +1155,14 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   uint undistinguished = useCSFSatThisPosition[from] ? data.undistinguishedCounts[from][distinguished] : -1;
   vector<float> emission = getEmission(from, distinguished, undistinguished, emissionIndex);
 
-  vector<float> firstAlpha = elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
+  vector<float> firstAlpha = asmc::elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
 
   // cumpute scaling (sum of current alpha vector)
-  float m_scalingBuffer = 1.f / getSumOfVector(firstAlpha);
+  float m_scalingBuffer = 1.f / asmc::getSumOfVector(firstAlpha);
   // normalize current alpha vector to 1
-  firstAlpha = elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
+  firstAlpha = asmc::elementWiseMultVectorScalar(firstAlpha, m_scalingBuffer);
 
-  fillMatrixColumn(alpha, firstAlpha, from);
+  asmc::fillMatrixColumn(alpha, firstAlpha, from);
   // Induction Step:
   vector<float> nextAlpha(states);
   vector<float> alphaC(states + 1);
@@ -1436,18 +1171,19 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   int lastPhysicalPos = data.physicalPositions[from];
 
   for (long int pos = from + 1; pos < to; pos++) {
-    auto t0 = std::chrono::high_resolution_clock().now();
+    auto t0 = std::chrono::high_resolution_clock::now();
     // get distances and rates
-    float recDistFromPrevious = roundMorgans(std::max(minGenetic, data.geneticPositions[pos] - lastGeneticPos));
-    float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
+    float recDistFromPrevious = asmc::roundMorgans(data.geneticPositions[pos] - lastGeneticPos, precision, minGenetic);
+    float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
     // if both samples are carriers, there are two distinguished, otherwise, it's the
     // or (use previous xor). This affects the number of undistinguished for the site
     float obsIsZero = !observations.obsBits[pos] ? 1.0f : 0.0f;
     float obsIsHomMinor = observations.homMinorBits[pos] ? 1.0f : 0.0f;
 
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1);
-      float recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+      int physDistFromPreviousMinusOne = asmc::roundPhysical(data.physicalPositions[pos] - lastPhysicalPos - 1, precision);
+      float recDistFromPreviousMinusOne =
+          asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getNextAlpha(recDistFromPreviousMinusOne, alphaC, previousAlpha, nextAlpha, homozEmission, homozEmission,
                    homozEmission, 0.0f, 0.0f);
@@ -1458,16 +1194,16 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
       getNextAlpha(recDistFromPrevious, alphaC, previousAlpha, nextAlpha, emission1AtSite[pos],
                    emission0minus1AtSite[pos], emission2minus0AtSite[pos], obsIsZero, obsIsHomMinor);
     }
-    auto t1 = std::chrono::high_resolution_clock().now();
+    auto t1 = std::chrono::high_resolution_clock::now();
     if (pos % scalingSkip == 0) {
       // compute scaling (sum of current alpha vector)
-      m_scalingBuffer = 1.f / getSumOfVector(nextAlpha);
+      m_scalingBuffer = 1.f / asmc::getSumOfVector(nextAlpha);
       // normalize current alpha vector to 1
-      nextAlpha = elementWiseMultVectorScalar(nextAlpha, m_scalingBuffer);
+      nextAlpha = asmc::elementWiseMultVectorScalar(nextAlpha, m_scalingBuffer);
     }
-    fillMatrixColumn(alpha, nextAlpha, pos);
+    asmc::fillMatrixColumn(alpha, nextAlpha, pos);
     previousAlpha = nextAlpha;
-    auto t2 = std::chrono::high_resolution_clock().now();
+    auto t2 = std::chrono::high_resolution_clock::now();
     t1sum += t1 - t0;
     t2sum += t2 - t1;
     // update distances
@@ -1511,9 +1247,9 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
     lastBeta[i] = 1.f;
   }
   // normalize current alpha vector to 1
-  float m_scalingBuffer = 1.f / getSumOfVector(lastBeta);
-  lastBeta = elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
-  fillMatrixColumn(beta, lastBeta, to - 1);
+  float m_scalingBuffer = 1.f / asmc::getSumOfVector(lastBeta);
+  lastBeta = asmc::elementWiseMultVectorScalar(lastBeta, m_scalingBuffer);
+  asmc::fillMatrixColumn(beta, lastBeta, to - 1);
   // Induction Step:
   vector<float> currentBeta(states);
   vector<float> BL(states);
@@ -1524,15 +1260,17 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
 
   for (long int pos = to - 2; pos >= from; pos--) {
     // get distances and rates
-    float recDistFromPrevious = roundMorgans(std::max(minGenetic, lastGeneticPos - data.geneticPositions[pos]));
-    float currentRecRate = roundMorgans(data.recRateAtMarker[pos]);
+    float recDistFromPrevious = asmc::roundMorgans(lastGeneticPos - data.geneticPositions[pos], precision, minGenetic);
+    float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
     // if both samples are carriers, there are two distinguished, otherwise, it's the
     // or (use previous xor). This affects the number of undistinguished for the site
     float obsIsZero = !observations.obsBits[pos + 1] ? 1.0f : 0.0f;
     float obsIsHomMinor = observations.homMinorBits[pos + 1] ? 1.0f : 0.0f;
     if (decodingParams.decodingSequence) {
-      int physDistFromPreviousMinusOne = roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1);
-      float recDistFromPreviousMinusOne = roundMorgans(std::max(minGenetic, recDistFromPrevious - currentRecRate));
+      int physDistFromPreviousMinusOne =
+          asmc::roundPhysical(lastPhysicalPos - data.physicalPositions[pos] - 1, precision);
+      float recDistFromPreviousMinusOne =
+          asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBeta(recDistFromPreviousMinusOne, lastComputedBeta, BL, BU, currentBeta, homozEmission, homozEmission,
                       homozEmission, 0.0f, 0.0f);
@@ -1544,10 +1282,10 @@ vector<vector<float>> HMM::backward(const PairObservations& observations, const 
                       emission0minus1AtSite[pos + 1], emission2minus0AtSite[pos + 1], obsIsZero, obsIsHomMinor);
     }
     if (pos % scalingSkip == 0) {
-      m_scalingBuffer = 1.f / getSumOfVector(currentBeta);
-      currentBeta = elementWiseMultVectorScalar(currentBeta, m_scalingBuffer);
+      m_scalingBuffer = 1.f / asmc::getSumOfVector(currentBeta);
+      currentBeta = asmc::elementWiseMultVectorScalar(currentBeta, m_scalingBuffer);
     }
-    fillMatrixColumn(beta, currentBeta, pos);
+    asmc::fillMatrixColumn(beta, currentBeta, pos);
     lastComputedBeta = currentBeta;
     // update distances
     lastGeneticPos = data.geneticPositions[pos];

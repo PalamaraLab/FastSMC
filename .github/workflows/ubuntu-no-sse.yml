@@ -1,4 +1,4 @@
-name: Regression test
+name: Ubuntu no sse/avx
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 jobs:
 
   build-and-test:
-    name: Regression test on Ubuntu 18.04
+    name: Unit tests with out sse/avx on Ubuntu 18.04
     runs-on: ubuntu-latest
 
     steps:
@@ -29,13 +29,13 @@ jobs:
         run: mkdir asmc_build_dir
 
       - name: cmake configure
-        run: cmake .. -DCMAKE_BUILD_TYPE=Release
+        run: cmake .. -DASMC_FORCE_PURE:BOOL=TRUE
         working-directory: asmc_build_dir
 
       - name: cmake build
-        run: cmake --build . --parallel 2 --target ASMC_regression
+        run: cmake --build . --parallel 2 --target ASMC_unit_tests
         working-directory: asmc_build_dir
 
       - name: cmake test
-        run: ctest -R regression --output-on-failure
+        run: ctest -j2 -R Asmc_unit_tests --output-on-failure
         working-directory: asmc_build_dir
