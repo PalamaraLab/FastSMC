@@ -74,6 +74,10 @@ set(ASMC_main
   ${ASMC_source_dir}/main.cpp
   )
 
+set(FastSMC_main
+  ${ASMC_source_dir}/main_fastsmc.cpp
+  )
+
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_HMM.cpp
@@ -83,6 +87,7 @@ set(ASMC_unit_tests
 
 set(ASMC_regression
   ${ASMC_test_dir}/test_regression.cpp
+  ${ASMC_test_dir}/test_fastsmc_regression.cpp
   )
 
 option(ASMC_PYTHON_BINDINGS "Whether to build the ASMC python bindings" OFF)
@@ -99,6 +104,10 @@ target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 # The main ASMC executable
 add_executable(ASMC_exe ${ASMC_main})
 target_link_libraries(ASMC_exe PRIVATE ASMC)
+
+# The main FastSMC executable
+add_executable(FastSMC_exe ${FastSMC_main})
+target_link_libraries(FastSMC_exe PRIVATE ASMC)
 
 enable_testing()
 
