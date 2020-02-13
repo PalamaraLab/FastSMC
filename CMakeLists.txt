@@ -53,6 +53,7 @@ set(ASMC_source
   ${ASMC_source_dir}/StringUtils.cpp
   ${ASMC_source_dir}/Timer.cpp
   ${ASMC_source_dir}/ASMC.cpp
+  ${ASMC_source_dir}/HASHING/Utils.cpp
   )
 
 set(ASMC_headers
@@ -69,6 +70,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/Timer.hpp
   ${ASMC_source_dir}/ASMC.hpp
   ${ASMC_source_dir}/HASHING/Individuals.hpp
+  ${ASMC_source_dir}/HASHING/Utils.hpp
   )
 
 set(ASMC_main

@@ -16,8 +16,9 @@
 #include "catch.hpp"
 
 #include "HASHING/Individuals.hpp"
+#include "HASHING/Utils.hpp"
 
-TEST_CASE("test individuals", "[HASHING]")
+TEST_CASE("individuals", "[HASHING]")
 {
   Individuals<8, 3> ind(5u);
 
@@ -53,4 +54,38 @@ TEST_CASE("test individuals", "[HASHING]")
   ind.clear(4);
   REQUIRE(ind.getWordHash(1) == 0ul);
   REQUIRE(ind.getWordString(1) == "00000000");
+}
+
+TEST_CASE("utils", "[HASHING]")
+{
+  SECTION("cmBetween")
+  {
+    std::vector<float> genPos = {0.00402186f, 0.0388124f, 0.0567817f, 0.0668489f, 0.0915063f, 0.12783f,  0.198618f,
+                                 0.199045f,   0.250093f,  0.259338f,  0.293267f,  0.294899f,  0.316173f, 0.353332f,
+                                 0.354553f,   0.357123f,  0.359118f,  0.395468f,  0.41749f,   0.421739f, 0.453347f,
+                                 0.471302f,   0.535031f,  0.548733f,  0.574022f,  0.604538f,  0.620419f};
+
+    SECTION("both words are inside vector")
+    {
+      const int wordSize = 4;
+      const int w1 = 0;
+      const int w2 = 3;
+      const int w3 = 5;
+
+      REQUIRE(asmc::cmBetween(w1, w2, genPos, wordSize) == 100.0 * (genPos.at(15) - genPos.at(0)));
+      REQUIRE(asmc::cmBetween(w1, w3, genPos, wordSize) == 100.0 * (genPos.at(23) - genPos.at(0)));
+      REQUIRE(asmc::cmBetween(w2, w3, genPos, wordSize) == 100.0 * (genPos.at(23) - genPos.at(12)));
+    }
+
+    SECTION("second word overflows vector")
+    {
+      const int wordSize = 4;
+      const int w1 = 0;
+      const int w2 = 1;
+      const int w3 = 10;
+
+      REQUIRE(asmc::cmBetween(w1, w3, genPos, wordSize) == 100.0 * (genPos.back() - genPos.at(0)));
+      REQUIRE(asmc::cmBetween(w2, w3, genPos, wordSize) == 100.0 * (genPos.back() - genPos.at(4)));
+    }
+  }
 }
