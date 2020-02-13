@@ -18,6 +18,7 @@
 #include "HASHING/ExtendHash.hpp"
 #include "HASHING/Individuals.hpp"
 #include "HASHING/Match.hpp"
+#include "HASHING/SeedHash.hpp"
 #include "HASHING/Utils.hpp"
 
 TEST_CASE("ExtendHash", "[HASHING]")
@@ -101,6 +102,14 @@ TEST_CASE("match", "[HASHING]")
   {
     //TODO: this method is harder to test because it requires access to an HMM instance
   }
+}
+
+TEST_CASE("SeedHash", "[HASHING]")
+{
+  SeedHash<4, 10> s;
+  REQUIRE(s.size() == 0ul);
+
+  //todo: test SeedHash
 }
 
 TEST_CASE("utils", "[HASHING]")

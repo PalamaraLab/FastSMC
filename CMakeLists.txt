@@ -72,6 +72,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/HASHING/ExtendHash.hpp
   ${ASMC_source_dir}/HASHING/Individuals.hpp
   ${ASMC_source_dir}/HASHING/Match.hpp
+  ${ASMC_source_dir}/HASHING/SeedHash.hpp
   ${ASMC_source_dir}/HASHING/Utils.hpp
   )
 

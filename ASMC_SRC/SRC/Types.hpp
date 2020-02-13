@@ -25,6 +25,7 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef uint64_t uint64;
 typedef int64_t int64;
+typedef uint64_t hash_size;
 
 struct uint64_masks {
 	uint64 is0, is2, is9;
