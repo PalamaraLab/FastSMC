@@ -16,6 +16,7 @@
 #include "catch.hpp"
 
 #include "HASHING/Individuals.hpp"
+#include "HASHING/Match.hpp"
 #include "HASHING/Utils.hpp"
 
 TEST_CASE("individuals", "[HASHING]")
@@ -54,6 +55,43 @@ TEST_CASE("individuals", "[HASHING]")
   ind.clear(4);
   REQUIRE(ind.getWordHash(1) == 0ul);
   REQUIRE(ind.getWordString(1) == "00000000");
+}
+
+TEST_CASE("match", "[HASHING]")
+{
+  SECTION("default construction")
+  {
+    Match<4> m;
+    REQUIRE(m.getGaps() == 0u);
+    REQUIRE(m.getInterval()[0] == 0);
+    REQUIRE(m.getInterval()[1] == 0);
+
+    m.addGap();
+    m.addGap();
+    REQUIRE(m.getGaps() == 2u);
+
+    m.extend(5);
+    REQUIRE(m.getInterval()[1] == 5);
+  }
+
+  SECTION("explicit constructor")
+  {
+    Match<4> m(7);
+    REQUIRE(m.getGaps() == 0u);
+    REQUIRE(m.getInterval()[0] == 7);
+    REQUIRE(m.getInterval()[1] == 7);
+
+    m.extend(5);
+    REQUIRE(m.getInterval()[1] == 7);
+
+    m.extend(8);
+    REQUIRE(m.getInterval()[1] == 8);
+  }
+
+  SECTION("print method")
+  {
+    //TODO: this method is harder to test because it requires access to an HMM instance
+  }
 }
 
 TEST_CASE("utils", "[HASHING]")
