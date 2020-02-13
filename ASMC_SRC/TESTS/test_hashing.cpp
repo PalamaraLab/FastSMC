@@ -15,9 +15,18 @@
 
 #include "catch.hpp"
 
+#include "HASHING/ExtendHash.hpp"
 #include "HASHING/Individuals.hpp"
 #include "HASHING/Match.hpp"
 #include "HASHING/Utils.hpp"
+
+TEST_CASE("ExtendHash", "[HASHING]")
+{
+  ExtendHash<4> e(2ul, true);
+  REQUIRE(e.size() == 0ul);
+
+  //todo: test ExtendHash
+}
 
 TEST_CASE("individuals", "[HASHING]")
 {

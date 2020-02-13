@@ -69,6 +69,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/StringUtils.hpp
   ${ASMC_source_dir}/Timer.hpp
   ${ASMC_source_dir}/ASMC.hpp
+  ${ASMC_source_dir}/HASHING/ExtendHash.hpp
   ${ASMC_source_dir}/HASHING/Individuals.hpp
   ${ASMC_source_dir}/HASHING/Match.hpp
   ${ASMC_source_dir}/HASHING/Utils.hpp
