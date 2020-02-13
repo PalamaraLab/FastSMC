@@ -68,6 +68,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/StringUtils.hpp
   ${ASMC_source_dir}/Timer.hpp
   ${ASMC_source_dir}/ASMC.hpp
+  ${ASMC_source_dir}/HASHING/Individuals.hpp
   )
 
 set(ASMC_main
@@ -80,6 +81,7 @@ set(FastSMC_main
 
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_hashing.cpp
   ${ASMC_test_dir}/test_HMM.cpp
   ${ASMC_test_dir}/test_hmm_utils.cpp
   ${ASMC_test_dir}/test_decoding_params.cpp
