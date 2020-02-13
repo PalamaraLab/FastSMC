@@ -27,6 +27,10 @@
 #include "Timer.hpp"
 #include "HMM.cpp"
 
+#include "HASHING/ExtendHash.hpp"
+#include "HASHING/Individuals.hpp"
+#include "HASHING/SeedHash.hpp"
+
 using namespace std;
 
 vector< int > hist_ctr;
@@ -42,8 +46,8 @@ int GLOBAL_READ_WORDS = 0;
 int GLOBAL_CURRENT_WORD = 0;
 int GLOBAL_SKIPPED_WORDS = 0;
 int GEN_THRESHOLD = 100;
-bool PAR_BIN_OUT = 0;
-bool PAR_HAPLOID = 1;
+bool PAR_BIN_OUT = false;
+bool PAR_HAPLOID = true;
 
 bool is_j_above_diag;
 unsigned int windowSize;
@@ -71,39 +75,10 @@ struct Marker {
   }
 };
 
-class Individuals {
-  unsigned int idnum;
-public:
-  bitset<WORD_SIZE> hap[ CONST_READ_AHEAD ];
 
-  void clear( int w ) {
-    hap[ w % CONST_READ_AHEAD ].reset();
-  }
-  void setMarker( int w , int bit ) {
-    hap[ w % CONST_READ_AHEAD ].set( bit );
-  }
-  hash_size getWordHash( int w ) {
-    return hap[ w % CONST_READ_AHEAD ].to_ulong();
-  }
-  string getWordString( int w ) {
-    return hap[ w % CONST_READ_AHEAD ].to_string();
-  }
-  unsigned int getNum() { return idnum; }
-  Individuals(unsigned int);
-};
-Individuals::Individuals( unsigned int iid ) {
-  idnum = iid;
-  for ( int w = 0; w < CONST_READ_AHEAD ; w++ ) clear( w );
-}
 
-vector< Individuals > all_ind;
+vector< Individuals<WORD_SIZE, CONST_READ_AHEAD>> all_ind;
 
-// Convenience function to compute genetic distance between two words (start of w1 and end of w2)
-double cmBetween( int w1 , int w2 ) {
-  int end = WORD_SIZE * w2 + WORD_SIZE - 1;
-  if ( end >= all_markers->size() ) end = all_markers->size() - 1;
-  return 100*( (*all_markers)[end] - (*all_markers)[WORD_SIZE * w1]);
-}
 
 bool isHapInJob( unsigned int i ) {
   return ( (i >= (w_i-1)*windowSize && i < w_i*windowSize) || (i >= (w_j-1)*windowSize && i < w_j*windowSize) || ( jobs == jobID && i >= (w_j-1)*windowSize ) );
@@ -113,195 +88,15 @@ bool isSampleInJob( unsigned int i ) {
   return ( ( i >= (uint)((w_i-1)*windowSize)/2 && i < (uint)(w_i*windowSize)/2 ) || ( i >= (uint)((w_j-1)*windowSize)/2 && i < (uint)(w_j*windowSize)/2 ) || ( jobs == jobID && i >= (uint)((w_j-1)*windowSize)/2 ) );
 }
 
-struct Match {
-  int interval[2] = {0,0};
-  unsigned int gaps = 0;
-  // pair : identifiers for the corresponding Individualss in all_ind
-  void print( pair<unsigned int,unsigned int> p ) {
-    double mlen = cmBetween(interval[0],interval[1]);
-    if ( mlen >= PAR_MIN_MATCH ) {
-      hmm.decodeFromGERMLINE(p.first, p.second, interval[0] * WORD_SIZE, interval[1] * WORD_SIZE + WORD_SIZE - 1);
-    }
-  }
 
-  void extend( int w ) {
-    if ( interval[1] < w ) interval[1] = w;
-  }
-  void addGap() {
-    gaps++;
-  }
-  Match(int);
-  Match(void);
-};
-Match::Match( int i ) { interval[0] = interval[1] = i; }
-Match::Match() { interval[0] = interval[1] = 0; }
 
-/* Object for storing extension between pairs of Individualss */
-class ExtendHash {
-  boost::unordered_map<unsigned long int, Match > extend_hash;
-  unsigned long int num = 0;
-  // Empty Match to insert into hash
-  Match m;
-  // Iterator for testing insertion
-  std::pair<boost::unordered::iterator_detail::iterator<boost::unordered::detail::ptr_node<std::pair<const unsigned long int, Match > > >, bool> extend_ret;
-public:
-  ExtendHash(unsigned long int);
-  // Compute pair of Individualss from location indicator
-  pair<unsigned int,unsigned int> locationToPair( unsigned long int loc ) {
-    pair<unsigned int,unsigned int> p;
-    // round everyone down to the nearest haplotype
-    if ( !PAR_HAPLOID ) {
-      p.second = 2 * (loc % num);
-      p.first = 2 * ((loc - p.second/2) / num);
-    } else {
-      p.second = loc % num;
-      p.first = (loc - p.second) / num;
-    }
-    return p;
-  }
-  // Compute location from pair of Individualss
-  unsigned long int pairToLocation( unsigned int i , unsigned int j ) {
 
-    if ( !PAR_HAPLOID ) {
-      // round everyone down to the nearest haplotype
-      i = (i - (i % 2)) / 2;
-      j = (j - (j % 2)) / 2;
-    }
-    unsigned long int loc = (i > j) ? j * num + i : i * num + j;
-    return loc;
-  }
-  // Extend or add a given pair in the current hash
-  // unsigned int i,j : identifiers for the two Individualss
-  // int w : current word # to extend or add
-  void extendPair( unsigned int i , unsigned int j , int w ) {
-    m.interval[0] = GLOBAL_CURRENT_WORD;
-    // Find/extend this location in the hash
-    extend_ret = extend_hash.insert( pair< unsigned long int , Match >( pairToLocation(i,j) , m) );
-    (extend_ret.first->second).extend(w);
-  }
 
-  // Remove all pairs that were not extended beyond w
-  // int w : word # to remove prior to
-  void clearPairsPriorTo(int w) {
-    for ( auto it = extend_hash.begin() ; it != extend_hash.end() ; ) {
-      if ( it->second.interval[1] < w ) {
-        it->second.print( locationToPair(it->first) );
-        it = extend_hash.erase( it );
-      } else {
-        if ( it->second.interval[1] < GLOBAL_CURRENT_WORD ) it->second.addGap();
-        it++;
-      }
-    }
-  }
-
-  // Remove all pairs that were not extended beyond w
-  // int w : word # to remove prior to
-  void extendAllPairsTo(int w) {
-    for ( auto it = extend_hash.begin() ; it != extend_hash.end() ; it++ ) it->second.interval[1] = w;
-  }
-
-  // Remove all pairs
-  // int w : word # to remove prior to
-  void clearAllPairs() {
-    for ( auto it = extend_hash.begin() ; it != extend_hash.end() ; ) {
-      it->second.print( locationToPair(it->first) );
-      it = extend_hash.erase( it );
-    }
-  }
-  int size() {
-    return extend_hash.size();
-  }
-};
-ExtendHash::ExtendHash(unsigned long int n) { num = n; }
-
-/* Object for storing initial word seeds */
-class SeedHash {
-  boost::unordered_map<hash_size, vector<unsigned int> > seed_hash;
-  // Empty vector to insert into the seed hash
-  vector<unsigned int> vec;
-  // Iterator for testing insertion of elements
-  // std::pair<boost::unordered::iterator_detail::iterator<boost::unordered::detail::ptr_node<std::pair<const unsigned int, vector<unsigned int> > > >, bool> seed_ret;
-public:
-  void insertIndividuals( unsigned int i , hash_size word ) {
-    auto seed_ret = seed_hash.insert( pair<hash_size, vector<unsigned int>> ( word , vec ) );
-    (seed_ret.first->second).push_back( i );
-  }
-  void clear() {
-    seed_hash.clear();
-  }
-  int size() {
-    return seed_hash.size();
-  }
-
-  // Generate a new hash for this vector of Individualss
-  unsigned long subHash( ExtendHash * e , vector<unsigned int> vec , int w ) {
-    SeedHash cur_sh;
-    // seed the next word from this subset of Individualss
-    for ( int i = 0 ; i < vec.size() ; i++ ) cur_sh.insertIndividuals( vec[i] , all_ind[ vec[i] ].getWordHash( w ) );
-    // recursion:
-    // cerr << "\tsubhash seeds: " << w << " " << cur_sh.size() << endl;
-    return cur_sh.extendAllPairs( e , w );
-  }
-  // Extend/save all pairs in the current hash
-  // ExtendHash * e : Pointer to ExtendHash which will be called for each pair
-  // returns : number of pairs evaluated
-  unsigned long extendAllPairs( ExtendHash * e , int w ) {
-    unsigned long tot_pairs = 0;
-    for ( auto it = seed_hash.begin() ; it != seed_hash.end() ; ++it ) {
-
-      // *** As long as the # of pairs is high, generate a sub-hash for the next word
-      // *** Only store pairs of Individualss that have collision in a small hash
-      // *** Extend only to the haplotypes that seeded here
-      if ( MAX_seeds != 0 && it->second.size() > MAX_seeds && w + 1 < GLOBAL_READ_WORDS ) {
-        // recursively generate a sub-hash
-        // IMPORTANT: if we run out of buffered words then this seed does not get analyzed
-        if ( w + 1 < GLOBAL_READ_WORDS ) tot_pairs += subHash( e , it->second , w + 1 );
-        else GLOBAL_SKIPPED_WORDS++;
-      } else {
-        //tot_pairs += it->second.size() * (it->second.size() - 1) / 2;
-        for ( int i = 0 ; i < it->second.size() ; i++ ) {
-          for ( int ii = i+1 ; ii < it->second.size() ; ii++ ) {
-
-            unsigned int ind_i = std::max(it->second[i], it->second[ii]);
-            unsigned int ind_j = std::min(it->second[i], it->second[ii]);
-
-            // for the last job only
-            if ( jobID == jobs ) {
-              if ( all_ind[ind_i].getNum() >= (w_i-1)*windowSize && all_ind[ind_j].getNum() >= (w_j-1)*windowSize ) {
-                if ( all_ind[ind_j].getNum() <  (w_j-1)*windowSize + (all_ind[ind_i].getNum() - (w_i-1)*windowSize) ) {
-                  e->extendPair( ind_j , ind_i , w );
-                  tot_pairs++;
-                }
-              }
-            }
-
-              // for all other jobs
-            else if ( (all_ind[ind_i].getNum() >= (w_i-1)*windowSize && all_ind[ind_i].getNum() < w_i*windowSize) && (all_ind[ind_j].getNum() >= (w_j-1)*windowSize && all_ind[ind_j].getNum() < w_j*windowSize) ) {
-              if ( is_j_above_diag && all_ind[ind_j].getNum() <  (w_j-1)*windowSize + (all_ind[ind_i].getNum() - (w_i-1)*windowSize) ) {
-                e->extendPair( ind_j , ind_i , w );
-                tot_pairs++;
-              } else if ( !is_j_above_diag && all_ind[ind_j].getNum() >= (w_j-1)*windowSize + (all_ind[ind_i].getNum() - (w_i-1)*windowSize) ) {
-                e->extendPair( ind_j , ind_i , w );
-                tot_pairs++;
-              }
-            }
-
-          }
-        }
-      }
-    }
-    return tot_pairs;
-  }
-};
 
 double get_cpu_time(){
   return (double)clock() / CLOCKS_PER_SEC;
 }
 
-inline bool fileExists(const std::string& name) {
-  ifstream f(name.c_str());
-  return f.good();
-}
 
 int main (int argc, char* argv[])
 {
@@ -345,13 +140,13 @@ int main (int argc, char* argv[])
 
   //ifstream file_haps(params.inFileRoot + ".hap");
   FileUtils::AutoGzIfstream file_haps;
-  if (fileExists(params.inFileRoot + ".hap.gz")) {
+  if (FileUtils::fileExists(params.inFileRoot + ".hap.gz")) {
     file_haps.openOrExit(params.inFileRoot + ".hap.gz");
-  } else if (fileExists(params.inFileRoot + ".hap")) {
+  } else if (FileUtils::fileExists(params.inFileRoot + ".hap")) {
     file_haps.openOrExit(params.inFileRoot + ".hap");
-  } else if (fileExists(params.inFileRoot + ".haps.gz")) {
+  } else if (FileUtils::fileExists(params.inFileRoot + ".haps.gz")) {
     file_haps.openOrExit(params.inFileRoot + ".haps.gz");
-  } else if (fileExists(params.inFileRoot + ".haps")) {
+  } else if (FileUtils::fileExists(params.inFileRoot + ".haps")) {
     file_haps.openOrExit(params.inFileRoot + ".haps");
   } else {
     cerr << "ERROR. Could not find hap file in " + params.inFileRoot + ".hap.gz, " + params.inFileRoot + ".hap, " + params.inFileRoot + ".haps.gz, or " + params.inFileRoot + ".haps" << endl;
@@ -360,9 +155,9 @@ int main (int argc, char* argv[])
 
   //ifstream file_samp(params.inFileRoot + ".samples");
   FileUtils::AutoGzIfstream file_samp;
-  if (fileExists(params.inFileRoot + ".samples")) {
+  if (FileUtils::fileExists(params.inFileRoot + ".samples")) {
     file_samp.openOrExit(params.inFileRoot + ".samples");
-  } else if (fileExists(params.inFileRoot + ".sample")) {
+  } else if (FileUtils::fileExists(params.inFileRoot + ".sample")) {
     file_samp.openOrExit(params.inFileRoot + ".sample");
   } else {
     cerr << "ERROR. Could not find sample file in " + params.inFileRoot + ".sample or " + params.inFileRoot + ".samples" << endl;
@@ -437,11 +232,11 @@ int main (int argc, char* argv[])
     ss >> map_field[0] >> map_field[1];
     if ( isSampleInJob( linectr ) ) {
       if ( PAR_HAPLOID ) {
-        all_ind.push_back( Individuals(2*linectr) );
-        all_ind.push_back( Individuals(2*linectr+1) );
+        all_ind.emplace_back(2*linectr );
+        all_ind.emplace_back(2*linectr+1 );
       } else {
-        all_ind.push_back( Individuals(2*linectr) );
-        all_ind.push_back( Individuals(2*linectr) );
+        all_ind.emplace_back(2*linectr );
+        all_ind.emplace_back(2*linectr );
       }
     }
     linectr++;
@@ -452,6 +247,7 @@ int main (int argc, char* argv[])
 
   cerr << num_ind / 2 << " sample identifiers read" << endl;
 
+
   Marker cur_marker;
   // track position through genetic map
   cur_g = 0;
@@ -460,12 +256,12 @@ int main (int argc, char* argv[])
   string cur_al;
 
   // Storage for seeds
-  SeedHash seeds;
+  SeedHash<WORD_SIZE, CONST_READ_AHEAD> seeds;
 
   hash_size word[2];
 
   // Storage for extensions
-  ExtendHash extend( PAR_HAPLOID ? num_ind : num_ind / 2 );
+  ExtendHash<WORD_SIZE> extend( PAR_HAPLOID ? num_ind : num_ind / 2, PAR_HAPLOID );
 
   // Hash individual words
   GLOBAL_READ_WORDS = 0;
@@ -532,8 +328,8 @@ int main (int argc, char* argv[])
 
     // skip low-complexity words
     if ( (float) cur_seeds / num_ind > PAR_skip ) {
-      cur_pairs = seeds.extendAllPairs( &extend , GLOBAL_CURRENT_WORD );
-      extend.clearPairsPriorTo( GLOBAL_CURRENT_WORD - PAR_GAP );
+      cur_pairs = seeds.extendAllPairs( &extend , GLOBAL_CURRENT_WORD, all_ind, MAX_seeds, jobID, jobs, w_i, w_j, windowSize, GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, is_j_above_diag);
+      extend.clearPairsPriorTo( GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD );
     } else {
       cerr << "low complexity word - " << cur_seeds << " - skipping" << endl;
       extend.extendAllPairsTo( GLOBAL_CURRENT_WORD );
