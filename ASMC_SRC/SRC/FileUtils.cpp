@@ -35,6 +35,12 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
+bool fileExists(const std::string& name)
+{
+  std::ifstream f(name.c_str());
+  return f.good();
+}
+
 void openOrExit(std::ifstream &stream, const string &file,
                 std::ios_base::openmode mode) {
   stream.open(file.c_str(), mode);

@@ -27,6 +27,8 @@
 
 namespace FileUtils {
 
+bool fileExists(const std::string& name);
+
 void openOrExit(std::ifstream &stream, const std::string &file,
                 std::ios_base::openmode mode = std::ios::in);
 
