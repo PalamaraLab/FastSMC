@@ -13,50 +13,46 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifndef ASMC_DATA_HPP
+#define ASMC_DATA_HPP
 
-#ifndef DATA_HPP
-#define DATA_HPP
-
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "Individual.hpp"
 
-using namespace std;
-
-class Data {
+class Data
+{
 
 public:
-
-  vector <string> FamIDList;
-  vector <string> IIDList;
-  vector <string> famAndIndNameList;
-  vector <Individual> individuals;
+  std::vector<std::string> FamIDList;
+  std::vector<std::string> IIDList;
+  std::vector<std::string> famAndIndNameList;
+  std::vector<Individual> individuals;
 
   int sampleSize;
   int haploidSampleSize;
   int sites;
   int totalSamplesBound;
   bool decodingUsesCSFS = false;
-  vector<float> geneticPositions;
-  vector<int> physicalPositions;
-  vector<bool> siteWasFlippedDuringFolding;
-  vector<float> recRateAtMarker;
-  vector< vector<int> > undistinguishedCounts;
+  std::vector<float> geneticPositions;
+  std::vector<int> physicalPositions;
+  std::vector<bool> siteWasFlippedDuringFolding;
+  std::vector<float> recRateAtMarker;
+  std::vector<std::vector<int>> undistinguishedCounts;
 
-  Data(string hapsFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
-  static int countHapLines(string hapsFileRoot);
+  Data(std::string hapsFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
+  static int countHapLines(std::string hapsFileRoot);
 
 private:
-  void readSamplesList(string hapsFileRoot);
-  void readHaps(string hapsFileRoot, bool foldToMinorAlleles);
-  int readMap(string hapsFileRoot);
+  void readSamplesList(std::string hapsFileRoot);
+  void readHaps(std::string hapsFileRoot, bool foldToMinorAlleles);
+  int readMap(std::string hapsFileRoot);
   void makeUndistinguished(bool foldToMinorAlleles);
-  vector<int> totalSamplesCount;
-  vector<int> derivedAlleleCounts;
-  vector<string> SNP_IDs;
+  std::vector<int> totalSamplesCount;
+  std::vector<int> derivedAlleleCounts;
+  std::vector<std::string> SNP_IDs;
   int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
-
 };
 
-#endif
+#endif // ASMC_DATA_HPP

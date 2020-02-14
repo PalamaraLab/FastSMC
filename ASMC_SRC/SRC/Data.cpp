@@ -29,11 +29,8 @@
 
 using namespace std;
 
-Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound,
-    bool foldToMinorAlleles, bool _decodingUsesCSFS)
-    : sites(_sites)
-    , totalSamplesBound(_totalSamplesBound)
-    , decodingUsesCSFS(_decodingUsesCSFS)
+Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToMinorAlleles, bool _decodingUsesCSFS)
+    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
 {
   readSamplesList(hapsFileRoot);
   // now we have the sample sizes
@@ -54,8 +51,7 @@ Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound,
 }
 
 // unoptimized sampling of hypergeometric
-int Data::sampleHypergeometric(
-    int populationSize, int numberOfSuccesses, int sampleSize)
+int Data::sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize)
 {
   if (numberOfSuccesses < 0 || numberOfSuccesses > populationSize) {
     return -1;
@@ -83,8 +79,7 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
     int totalSamples = totalSamplesCount[i];
     if (decodingUsesCSFS && totalSamplesBound > totalSamples) {
       cerr << "ERROR. SNP " << SNP_IDs[i] << " has " << totalSamples
-           << " non-missing individuals, but the CSFS requires " << totalSamplesBound
-           << endl;
+           << " non-missing individuals, but the CSFS requires " << totalSamplesBound << endl;
       exit(1);
     }
     int ancestralAlleles = totalSamples - derivedAlleles;
@@ -94,8 +89,7 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
     for (int distinguished = 0; distinguished < 3; distinguished++) {
       // hypergeometric with (derivedAlleles - distinguished) derived alleles, (samples
       // - 2) samples
-      int undist = sampleHypergeometric(
-          totalSamples - 2, derivedAlleles - distinguished, totalSamplesBound - 2);
+      int undist = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, totalSamplesBound - 2);
       if (foldToMinorAlleles && (undist + distinguished > totalSamplesBound / 2)) {
         undist = (totalSamplesBound - 2 - undist);
       }
@@ -113,9 +107,7 @@ int Data::readMap(string hapsFileRoot)
   } else if (FileUtils::fileExists(hapsFileRoot + ".map")) {
     hapsBr.openOrExit(hapsFileRoot + ".map");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".map.gz or "
-            + hapsFileRoot + ".map"
-         << endl;
+    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".map.gz or " + hapsFileRoot + ".map" << endl;
     exit(1);
   }
   string line;
@@ -167,9 +159,7 @@ void Data::readSamplesList(string hapsFileRoot)
   } else if (FileUtils::fileExists(hapsFileRoot + ".sample")) {
     bufferedReader.openOrExit(hapsFileRoot + ".sample");
   } else {
-    cerr << "ERROR. Could not find sample file in " + hapsFileRoot + ".sample or "
-            + hapsFileRoot + ".samples"
-         << endl;
+    cerr << "ERROR. Could not find sample file in " + hapsFileRoot + ".sample or " + hapsFileRoot + ".samples" << endl;
     exit(1);
   }
 
@@ -180,8 +170,8 @@ void Data::readSamplesList(string hapsFileRoot)
     while (iss >> buf)
       splitStr.push_back(buf);
     // Skip first two lines (header) if present
-    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing")
-        || (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
+    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing") ||
+        (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
       continue;
     }
     string famId = splitStr[0];
@@ -207,8 +197,8 @@ int Data::countHapLines(string hapsFileRoot)
   } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
     hapsBr.openOrExit(hapsFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, "
-            + hapsFileRoot + ".hap, " + ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
+                ".haps.gz, or " + hapsFileRoot + ".haps"
          << endl;
     exit(1);
   }
@@ -232,8 +222,8 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
   } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
     hapsBr.openOrExit(hapsFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, "
-            + hapsFileRoot + ".hap, " + ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
+                ".haps.gz, or " + hapsFileRoot + ".haps"
          << endl;
     exit(1);
   }
@@ -247,11 +237,9 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
   while (hapsBr >> chr >> snpID >> bp >> alleleA >> alleleB) {
     getline(hapsBr, line);
     int DAcount = 0;
-    if (!(line.length() == 4 * famAndIndNameList.size()
-            || line.length() == 4 * famAndIndNameList.size() + 1)) {
-      cerr << "ERROR: haps line has wrong length. Length is " << line.length()
-           << ", should be 4*" << famAndIndNameList.size() << " = "
-           << 4 * famAndIndNameList.size() << "." << endl;
+    if (!(line.length() == 4 * famAndIndNameList.size() || line.length() == 4 * famAndIndNameList.size() + 1)) {
+      cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
+           << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
       cerr << "\thaps line is: " << line << endl;
 
       exit(1);
@@ -263,8 +251,7 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
         DAcount++;
       }
     }
-    bool minorAlleleValue
-        = foldToMinorAlleles ? (DAcount <= totalSamples - DAcount) : true;
+    bool minorAlleleValue = foldToMinorAlleles ? (DAcount <= totalSamples - DAcount) : true;
     siteWasFlippedDuringFolding[pos] = !minorAlleleValue;
     for (uint i = 0; i < 2 * famAndIndNameList.size(); i++) {
       int indIndex = i / 2;
@@ -289,6 +276,6 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
     pos++;
   }
   hapsBr.close();
-  cout << "Read data for " << famAndIndNameList.size() * 2 << " haploid samples and "
-       << pos << " markers, " << monomorphic << " of which are monomorphic." << endl;
+  cout << "Read data for " << famAndIndNameList.size() * 2 << " haploid samples and " << pos << " markers, "
+       << monomorphic << " of which are monomorphic." << endl;
 }
