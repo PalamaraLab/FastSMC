@@ -477,6 +477,29 @@ void HMM::finishDecoding()
   }
 }
 
+void HMM::finishFromGERMLINE(){
+//  timerASMC.update_time();
+
+  if (!noBatches) {
+    runLastBatch(batchObservations);
+  }
+
+  // close output file
+//  gzclose(gzoutIBD);
+
+  // print some stats (will remove)
+//  timeASMC += timerASMC.update_time();
+//  double ticksDecodeAll = ticksForward + ticksBackward + ticksCombine + ticksOutputPerPair;
+//  //printf("\n\n*** ASMC decoded %Ld pairs in %.3f seconds. ***\n\n", cpt, timeASMC);
+//  printf("\n");
+//  printPctTime("forward", ticksForward / ticksDecodeAll);
+//  printPctTime("backward", ticksBackward / ticksDecodeAll);
+//  printPctTime("combine", ticksCombine / ticksDecodeAll);
+//  //printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
+//  printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
+//  cout << flush;
+}
+
 // add pair to batch and run if we have enough
 void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations& observations)
 {

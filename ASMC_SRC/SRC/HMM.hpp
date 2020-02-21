@@ -214,6 +214,8 @@ public:
   /// observationsBatch buffer and close output files
   void finishDecoding();
 
+  void finishFromGERMLINE();
+
 private:
 
   void makeBits(PairObservations &obs, unsigned from, unsigned to);
