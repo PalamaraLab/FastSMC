@@ -72,7 +72,7 @@ public:
   // int w : current word # to extend or add
   void extendPair(unsigned int i, unsigned int j, int w, const int GLOBAL_CURRENT_WORD)
   {
-    m.interval[0] = GLOBAL_CURRENT_WORD;
+    m.getModifiableInterval()[0] = GLOBAL_CURRENT_WORD;
     // Find/extend this location in the hash
     extend_ret = extend_hash.insert(pair<unsigned long int, Match<WORD_SIZE>>(pairToLocation(i, j), m));
     (extend_ret.first->second).extend(w);
@@ -80,14 +80,15 @@ public:
 
   // Remove all pairs that were not extended beyond w
   // int w : word # to remove prior to
-  void clearPairsPriorTo(int w, const int GLOBAL_CURRENT_WORD)
+  void clearPairsPriorTo(int w, const int GLOBAL_CURRENT_WORD, const double PAR_MIN_MATCH,
+                         const std::vector<float>& geneticPositions, HMM& hmm)
   {
     for (auto it = extend_hash.begin(); it != extend_hash.end();) {
-      if (it->second.interval[1] < w) {
-        it->second.print(locationToPair(it->first));
+      if (it->second.getInterval()[1] < w) {
+        it->second.print(locationToPair(it->first), PAR_MIN_MATCH, geneticPositions, hmm);
         it = extend_hash.erase(it);
       } else {
-        if (it->second.interval[1] < GLOBAL_CURRENT_WORD)
+        if (it->second.getInterval()[1] < GLOBAL_CURRENT_WORD)
           it->second.addGap();
         it++;
       }
@@ -99,15 +100,15 @@ public:
   void extendAllPairsTo(int w)
   {
     for (auto it = extend_hash.begin(); it != extend_hash.end(); it++)
-      it->second.interval[1] = w;
+      it->second.getModifiableInterval()[1] = w;
   }
 
   // Remove all pairs
   // int w : word # to remove prior to
-  void clearAllPairs()
+  void clearAllPairs(const double PAR_MIN_MATCH, const std::vector<float>& geneticPositions, HMM& hmm)
   {
     for (auto it = extend_hash.begin(); it != extend_hash.end();) {
-      it->second.print(locationToPair(it->first));
+      it->second.print(locationToPair(it->first), PAR_MIN_MATCH, geneticPositions, hmm);
       it = extend_hash.erase(it);
     }
   }

@@ -19,11 +19,11 @@
 // Includes for seeding
 #include <boost/unordered_map.hpp>
 
-#include "DataFastSMC.hpp"
+#include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
 #include "FileUtils.hpp"
-#include "HMM.cpp"
+#include "HMM.hpp"
 #include "StringUtils.hpp"
 #include "Timer.hpp"
 
@@ -54,7 +54,7 @@ unsigned int w_i;
 unsigned int w_j;
 int jobID, jobs;
 
-vector<double>* all_markers;
+vector<float>* all_markers;
 unsigned long int num_ind;
 unsigned long int num_ind_tot;
 
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
   cerr << genetic_map.size() << " genetic map entries read" << endl;
   printf("\n*** Read genetic map in %.3f seconds. ***\n\n", timer.update_time());
 
-  DataFastSMC data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
+  Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
                    params.jobInd, params.jobs, genetic_map);
   printf("\n*** Read haps in %.3f seconds. ***\n\n", timer.update_time());
 
@@ -348,8 +348,9 @@ int main(int argc, char* argv[])
     // skip low-complexity words
     if ((float)cur_seeds / num_ind > PAR_skip) {
       cur_pairs = seeds.extendAllPairs(&extend, GLOBAL_CURRENT_WORD, all_ind, MAX_seeds, jobID, jobs, w_i, w_j,
-                                       windowSize, GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, is_j_above_diag);
-      extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD);
+                                       windowSize, GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD,
+                                       is_j_above_diag);
+      extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD, PAR_MIN_MATCH, *all_markers, hmm);
     } else {
       cerr << "low complexity word - " << cur_seeds << " - skipping" << endl;
       extend.extendAllPairsTo(GLOBAL_CURRENT_WORD);
@@ -363,7 +364,7 @@ int main(int argc, char* argv[])
     GLOBAL_CURRENT_WORD++;
   }
 
-  extend.clearAllPairs();
+  extend.clearAllPairs(PAR_MIN_MATCH, *all_markers, hmm);
   file_haps.close();
 
   hmm.finishFromGERMLINE();

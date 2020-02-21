@@ -66,6 +66,11 @@ public:
     return mInterval;
   }
 
+  array<int, 2>& getModifiableInterval()
+  {
+    return mInterval;
+  }
+
   unsigned int getGaps() const
   {
     return mGaps;

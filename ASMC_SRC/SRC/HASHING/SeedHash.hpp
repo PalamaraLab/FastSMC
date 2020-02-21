@@ -53,7 +53,10 @@ public:
   }
 
   // Generate a new hash for this vector of Individualss
-  unsigned long subHash(ExtendHash<WORD_SIZE>* e, std::vector<unsigned> v, int w, ind_vec all_ind)
+  unsigned long subHash(ExtendHash<WORD_SIZE>* e, std::vector<unsigned> v, int w, ind_vec all_ind, const int MAX_seeds,
+                        const int jobID, const int jobs, const unsigned w_i, const unsigned w_j,
+                        const unsigned windowSize, const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS,
+                        const int GLOBAL_CURRENT_WORD, const bool is_j_above_diag)
   {
     SeedHash cur_sh;
     // seed the next word from this subset of Individualss
@@ -61,7 +64,8 @@ public:
       cur_sh.insertIndividuals(i, all_ind[i].getWordHash(w));
     }
     // recursion:
-    return cur_sh.extendAllPairs(e, w);
+    return cur_sh.extendAllPairs(e, w, all_ind, MAX_seeds, jobID, jobs, w_i, w_j, windowSize, GLOBAL_READ_WORDS,
+                                 GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD, is_j_above_diag);
   }
 
   // Extend/save all pairs in the current hash
@@ -69,7 +73,8 @@ public:
   // returns : number of pairs evaluated
   unsigned long extendAllPairs(ExtendHash<WORD_SIZE>* e, int w, ind_vec all_ind, const int MAX_seeds, const int jobID,
                                const int jobs, const unsigned w_i, const unsigned w_j, const unsigned windowSize,
-                               const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS, const bool is_j_above_diag)
+                               const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS, const int GLOBAL_CURRENT_WORD,
+                               const bool is_j_above_diag)
   {
     unsigned long tot_pairs = 0;
     for (auto it = seed_hash.begin(); it != seed_hash.end(); ++it) {
@@ -81,7 +86,8 @@ public:
         // recursively generate a sub-hash
         // IMPORTANT: if we run out of buffered words then this seed does not get analyzed
         if (w + 1 < GLOBAL_READ_WORDS) {
-          tot_pairs += subHash(e, it->second, w + 1);
+          tot_pairs += subHash(e, it->second, w + 1, all_ind, MAX_seeds, jobID, jobs, w_i, w_j, windowSize,
+                               GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD, is_j_above_diag);
         } else {
           GLOBAL_SKIPPED_WORDS++;
         }
@@ -95,29 +101,29 @@ public:
 
             // for the last job only
             if (jobID == jobs) {
-              if (all_ind[ind_i].getNum() >= (w_i - 1) * windowSize &&
-                  all_ind[ind_j].getNum() >= (w_j - 1) * windowSize) {
-                if (all_ind[ind_j].getNum() <
-                    (w_j - 1) * windowSize + (all_ind[ind_i].getNum() - (w_i - 1) * windowSize)) {
-                  e->extendPair(ind_j, ind_i, w);
+              if (all_ind[ind_i].getIdNum() >= (w_i - 1) * windowSize &&
+                  all_ind[ind_j].getIdNum() >= (w_j - 1) * windowSize) {
+                if (all_ind[ind_j].getIdNum() <
+                    (w_j - 1) * windowSize + (all_ind[ind_i].getIdNum() - (w_i - 1) * windowSize)) {
+                  e->extendPair(ind_j, ind_i, w, GLOBAL_CURRENT_WORD);
                   tot_pairs++;
                 }
               }
             }
 
             // for all other jobs
-            else if ((all_ind[ind_i].getNum() >= (w_i - 1) * windowSize &&
-                      all_ind[ind_i].getNum() < w_i * windowSize) &&
-                     (all_ind[ind_j].getNum() >= (w_j - 1) * windowSize &&
-                      all_ind[ind_j].getNum() < w_j * windowSize)) {
-              if (is_j_above_diag && all_ind[ind_j].getNum() <
-                                         (w_j - 1) * windowSize + (all_ind[ind_i].getNum() - (w_i - 1) * windowSize)) {
-                e->extendPair(ind_j, ind_i, w);
+            else if ((all_ind[ind_i].getIdNum() >= (w_i - 1) * windowSize &&
+                      all_ind[ind_i].getIdNum() < w_i * windowSize) &&
+                     (all_ind[ind_j].getIdNum() >= (w_j - 1) * windowSize &&
+                      all_ind[ind_j].getIdNum() < w_j * windowSize)) {
+              if (is_j_above_diag && all_ind[ind_j].getIdNum() < (w_j - 1) * windowSize + (all_ind[ind_i].getIdNum() -
+                                                                                           (w_i - 1) * windowSize)) {
+                e->extendPair(ind_j, ind_i, w, GLOBAL_CURRENT_WORD);
                 tot_pairs++;
               } else if (!is_j_above_diag &&
-                         all_ind[ind_j].getNum() >=
-                             (w_j - 1) * windowSize + (all_ind[ind_i].getNum() - (w_i - 1) * windowSize)) {
-                e->extendPair(ind_j, ind_i, w);
+                         all_ind[ind_j].getIdNum() >=
+                             (w_j - 1) * windowSize + (all_ind[ind_i].getIdNum() - (w_i - 1) * windowSize)) {
+                e->extendPair(ind_j, ind_i, w, GLOBAL_CURRENT_WORD);
                 tot_pairs++;
               }
             }
