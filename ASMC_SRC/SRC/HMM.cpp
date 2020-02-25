@@ -99,7 +99,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   startBatch = sequenceLength;
   endBatch = 0;
 
-  if (decodingParams.doPerPairPosteriorMean) {
+  if (decodingParams.doPerPairPosteriorMean && !decodingParams.GERMLINE) {
     expectedCoalTimes = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
   }
 
@@ -269,13 +269,13 @@ void HMM::prepareEmissions()
 
 void HMM::resetDecoding()
 {
-  if (decodingParams.doPerPairPosteriorMean) {
+  if (decodingParams.doPerPairPosteriorMean && !decodingParams.GERMLINE) {
     if (foutPosteriorMeanPerPair) {
       foutPosteriorMeanPerPair.close();
     }
     foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
   }
-  if (decodingParams.doPerPairMAP) {
+  if (decodingParams.doPerPairMAP && !decodingParams.GERMLINE) {
     if (foutMAPPerPair) {
       foutMAPPerPair.close();
     }
@@ -523,7 +523,7 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     decodeBatch(obsBatch, from, to);
 
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
-    if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
+    if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
       writePerPairOutput(m_batchSize, m_batchSize, obsBatch);
     }
 
@@ -567,7 +567,7 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   decodeBatch(obsBatch, from, to);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
 
-  if (decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) {
+  if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
     writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
   }
 
