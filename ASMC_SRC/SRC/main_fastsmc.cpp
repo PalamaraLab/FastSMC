@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
   int c;
 
   // parse input arguments
-  if (!params.processCommandLineArgs(argc, argv)) {
+  if (!params.processCommandLineArgsFastSMC(argc, argv)) {
     cerr << "Error processing command line; exiting." << endl;
     exit(1);
   }

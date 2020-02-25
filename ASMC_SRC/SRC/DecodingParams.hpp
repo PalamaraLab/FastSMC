@@ -76,6 +76,7 @@ public:
 
   bool processOptions();
   bool processCommandLineArgs(int argc, char* argv[]);
+  bool processCommandLineArgsFastSMC(int argc, char* argv[]);
 
 
 
