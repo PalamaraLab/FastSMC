@@ -306,7 +306,13 @@ void HMM::decodeAll(int jobs, int jobInd)
   uint64 pairs = 0, pairsJob = 0;
 
   if (decodingParams.GERMLINE) {
-    // logic in FastSMC was to create IBD output file
+    //create IBD output file
+    if (!decodingParams.BIN_OUT) {
+      gzoutIBD = gzopen( (decodingParams.outFileRoot + "." + std::to_string(jobInd) + "." + std::to_string(jobs) + ".FastSMC.ibd.gz").c_str(), "w" );
+    } else {
+      gzoutIBD = gzopen( (decodingParams.outFileRoot + "." + std::to_string(jobInd) + "." + std::to_string(jobs) + ".FastSMC.bibd.gz").c_str(), "wb" );
+      writeBinaryInfoIntoFile();
+    }
     return;
   }
 
@@ -381,6 +387,36 @@ void HMM::decodeAll(int jobs, int jobInd)
                              ticksDecodeAll);
 
   finishDecoding();
+}
+
+void HMM::writeBinaryInfoIntoFile()
+{
+  int mode;
+  if (!decodingParams.doPerPairMAP && !decodingParams.doPerPairPosteriorMean) {
+    mode = 0;
+  } else {
+    if (decodingParams.doPerPairPosteriorMean && decodingParams.doPerPairMAP) {
+      mode = 1;
+    } else if (decodingParams.doPerPairPosteriorMean) {
+      mode = 2;
+    } else if (decodingParams.doPerPairMAP) {
+      mode = 3;
+    }
+  }
+  gzwrite(gzoutIBD, (char*)&mode, sizeof(int));
+  gzwrite(gzoutIBD, (char*)&data.chrNumber, sizeof(int));
+  unsigned int nbInd = data.individuals.size();
+  unsigned int lengthFamid;
+  unsigned int lengthIid;
+  gzwrite(gzoutIBD, (char*)&nbInd, sizeof(unsigned int));
+  for (unsigned int i = 0; i < nbInd; i++) {
+    lengthFamid = data.FamIDList[i].size();
+    gzwrite(gzoutIBD, (char*)&lengthFamid, sizeof(unsigned int));
+    gzwrite(gzoutIBD, data.FamIDList[i].c_str(), lengthFamid);
+    lengthIid = data.IIDList[i].size();
+    gzwrite(gzoutIBD, (char*)&lengthIid, sizeof(unsigned int));
+    gzwrite(gzoutIBD, data.IIDList[i].c_str(), lengthIid);
+  }
 }
 
 void HMM::decodePairs(const vector<uint>& individualsA, const vector<uint>& individualsB)
@@ -484,8 +520,7 @@ void HMM::finishFromGERMLINE(){
     runLastBatch(batchObservations);
   }
 
-  // close output file
-//  gzclose(gzoutIBD);
+  gzclose(gzoutIBD);
 
   // print some stats (will remove)
 //  timeASMC += timerASMC.update_time();
@@ -520,7 +555,7 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     }
 
     // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x m_batchSize]
-    decodeBatch(obsBatch, from, to);
+    decodeBatch(obsBatch, m_batchSize, m_batchSize, from, to);
 
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
     if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
@@ -564,7 +599,7 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   auto paddedBatchSize = obsBatch.size();
 
   // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x paddedBatchSize]
-  decodeBatch(obsBatch, from, to);
+  decodeBatch(obsBatch, actualBatchSize, paddedBatchSize, from, to);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
 
   if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
@@ -575,7 +610,8 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
 }
 
 // decode a batch
-void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned from, const unsigned to)
+void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const std::size_t actualBatchSize,
+                      const std::size_t paddedBatchSize, const unsigned from, const unsigned to)
 {
 
   int curBatchSize = static_cast<int>(obsBatch.size());
@@ -660,6 +696,10 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   ticksCombine += t3 - t2;
   ALIGNED_FREE(obsIsZeroBatch);
   ALIGNED_FREE(obsIsTwoBatch);
+
+  if (decodingParams.GERMLINE) {
+    writePerPairOutputFastSMC(actualBatchSize, paddedBatchSize, obsBatch);
+  }
 }
 
 
@@ -1027,6 +1067,262 @@ void HMM::augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatc
 
   auto t1 = std::chrono::high_resolution_clock::now();
   ticksSumOverPairs += t1 - t0;
+}
+
+float HMM::getPosteriorMean(const vector<float>& posterior)
+{
+
+  float normalization = 1.f / std::accumulate(posterior.begin(), posterior.end(), 0.f);
+
+  float posteriorMean = 0.f;
+  for (auto k = 0ul; k < posterior.size(); k++) {
+    posteriorMean += normalization * posterior[k] * m_decodingQuant.expectedTimes[k];
+  }
+  return posteriorMean;
+}
+
+float HMM::getMAP(vector<float> posterior)
+{
+  vector<float> ratioPriorPosterior(posterior.size());
+  std::transform(posterior.begin(), posterior.end(), m_decodingQuant.initialStateProb.begin(),
+                 ratioPriorPosterior.begin(), std::divides<>());
+  const auto MAP_location = std::distance(ratioPriorPosterior.begin(),
+                                          std::max_element(ratioPriorPosterior.begin(), ratioPriorPosterior.end()));
+  return m_decodingQuant.expectedTimes[MAP_location];
+}
+
+// write an IBD segment into output file
+void HMM::writePairIBD(const PairObservations& obs, unsigned int posStart, unsigned int posEnd, float prob,
+                       vector<float>& posterior, int v, int paddedBatchSize)
+{
+  nbSegmentsDetected++;
+  if (!decodingParams.BIN_OUT) {
+    string ind1 = data.FamIDList[obs.iInd] + "\t" + data.IIDList[obs.iInd] + "\t" + to_string(obs.iHap) + "\t";
+    string ind2 = data.FamIDList[obs.jInd] + "\t" + data.IIDList[obs.jInd] + "\t" + to_string(obs.jHap) + "\t";
+    string segment = std::to_string(data.chrNumber) + "\t" + std::to_string(data.physicalPositions[posStart]) + "\t" +
+                     std::to_string(data.physicalPositions[posEnd]) + "\t" +
+                     std::to_string(prob / (posEnd - posStart + 1));
+    gzwrite(gzoutIBD, (ind1 + ind2 + segment).c_str(), (ind1 + ind2 + segment).size());
+    if (decodingParams.doPerPairPosteriorMean) {
+      float postMean = getPosteriorMean(posterior);
+      string post = "\t" + std::to_string(postMean);
+      gzwrite(gzoutIBD, post.c_str(), post.size());
+    }
+    if (decodingParams.doPerPairMAP) {
+      float map = getMAP(posterior);
+      string map_string = "\t" + std::to_string(map);
+      gzwrite(gzoutIBD, map_string.c_str(), map_string.size());
+    }
+    string end_string = "\n";
+    gzwrite(gzoutIBD, end_string.c_str(), end_string.size());
+
+  } else {
+    int ind[2];
+    ind[0] = obs.iInd;
+    ind[1] = obs.jInd;
+    char hap[2];
+    hap[0] = obs.iHap;
+    hap[1] = obs.jHap;
+    unsigned int pos[2];
+    pos[0] = data.physicalPositions[posStart];
+    pos[1] = data.physicalPositions[posEnd];
+    float score = prob / (posEnd - posStart + 1);
+    gzwrite(gzoutIBD, (char*)&ind[0], sizeof(int));
+    gzwrite(gzoutIBD, &hap[0], sizeof(char));
+    gzwrite(gzoutIBD, (char*)&ind[1], sizeof(int));
+    gzwrite(gzoutIBD, &hap[1], sizeof(char));
+    gzwrite(gzoutIBD, (char*)&pos[0], sizeof(unsigned int));
+    gzwrite(gzoutIBD, (char*)&pos[1], sizeof(unsigned int));
+    gzwrite(gzoutIBD, (char*)&score, sizeof(float));
+    if (decodingParams.doPerPairPosteriorMean) {
+      float postMean = getPosteriorMean(posterior);
+      gzwrite(gzoutIBD, (char*)&postMean, sizeof(float));
+    }
+    if (decodingParams.doPerPairMAP) {
+      float map = getMAP(posterior);
+      gzwrite(gzoutIBD, (char*)&map, sizeof(float));
+    }
+  }
+}
+
+void HMM::writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch)
+{
+  for (int v = 0; v < actualBatchSize; v++) {
+    bool isIBD = false, isIBD1 = false, isIBD2 = false,
+         isIBD3 = false; // true if previous position is IBD, false otherwise
+    unsigned int startIBD = 0, startIBD1 = 0, startIBD2 = 0, startIBD3 = 0;
+    unsigned int endIBD = 0, endIBD1 = 0, endIBD2 = 0, endIBD3 = 0;
+    float posteriorIBD = 0;  // cumulative posterior on an IBD segment
+    vector<float> posterior;
+    vector<float> sum_posterior_per_state;
+    vector<float> prev_sum_posterior_per_state;
+
+    if (decodingParams.doPerPairPosteriorMean || decodingParams.doPerPairMAP) {
+      for (uint k = 0; k < ageThreshold; k++) {
+        posterior.push_back(0);
+        sum_posterior_per_state.push_back(0);
+        prev_sum_posterior_per_state.push_back(0);
+      }
+    }
+
+    if (decodingParams.GERMLINE) {
+      // remove these 2 lines if you want the preprocessing step to be less permissive
+      // TODO : add a flag for this option
+      fromBatch[v] = startBatch;
+      toBatch[v] = endBatch;
+    }
+
+    for (unsigned int pos = fromBatch[v]; pos < toBatch[v]; pos++) {
+      float sum = 0;
+
+      if (decodingParams.doPerPairPosteriorMean || decodingParams.doPerPairMAP) {
+        for (uint k = 0; k < ageThreshold; k++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
+          posterior[k] = posterior_pos_state_pair;
+          prev_sum_posterior_per_state[k] = sum_posterior_per_state[k];
+          sum_posterior_per_state[k] += posterior_pos_state_pair;
+          if (k < stateThreshold) {
+            sum += posterior_pos_state_pair;
+          }
+        }
+      } else {
+        for (uint k = 0; k < stateThreshold; k++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
+          sum += posterior_pos_state_pair;
+        }
+      }
+
+      if (sum >= 1000 * probabilityThreshold) {
+        if (!isIBD) {
+          startIBD = pos;
+          sum_posterior_per_state = posterior;
+          if (pos > fromBatch[v] && isIBD1) {
+            endIBD1 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD1, endIBD1, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD2) {
+            endIBD2 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD2, endIBD2, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD3) {
+            endIBD3 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD3, endIBD3, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          }
+          posteriorIBD = sum;
+        } else {
+          posteriorIBD += sum;
+        }
+        if (pos == toBatch[v] - 1) {
+          endIBD = toBatch[v] - 1;
+          writePairIBD(obsBatch[v], startIBD, endIBD, posteriorIBD, sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        }
+        isIBD = true;
+        isIBD1 = false, isIBD2 = false, isIBD3 = false;
+      } else if (sum >= 100 * probabilityThreshold) {
+        if (!isIBD1) {
+          startIBD1 = pos;
+          sum_posterior_per_state = posterior;
+          if (pos > fromBatch[v] && isIBD) {
+            endIBD = pos - 1;
+            writePairIBD(obsBatch[v], startIBD, endIBD, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD2) {
+            endIBD2 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD2, endIBD2, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD3) {
+            endIBD3 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD3, endIBD3, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          }
+          posteriorIBD = sum;
+        } else {
+          posteriorIBD += sum;
+        }
+        if (pos == toBatch[v] - 1) {
+          endIBD1 = toBatch[v] - 1;
+          writePairIBD(obsBatch[v], startIBD1, endIBD1, posteriorIBD, sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        }
+        isIBD = false, isIBD2 = false, isIBD3 = false;
+        isIBD1 = true;
+      } else if (sum >= 10 * probabilityThreshold) {
+        if (!isIBD2) {
+          startIBD2 = pos;
+          sum_posterior_per_state = posterior;
+          if (pos > fromBatch[v] && isIBD1) {
+            endIBD1 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD1, endIBD1, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD) {
+            endIBD = pos - 1;
+            writePairIBD(obsBatch[v], startIBD, endIBD, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD3) {
+            endIBD3 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD3, endIBD3, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          }
+          posteriorIBD = sum;
+        } else {
+          posteriorIBD += sum;
+        }
+        if (pos == toBatch[v] - 1) {
+          endIBD2 = toBatch[v] - 1;
+          writePairIBD(obsBatch[v], startIBD2, endIBD2, posteriorIBD, sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        }
+        isIBD = false, isIBD1 = false, isIBD3 = false;
+        isIBD2 = true;
+      } else if (sum >= probabilityThreshold) {
+        if (!isIBD3) {
+          startIBD3 = pos;
+          sum_posterior_per_state = posterior;
+          if (pos > fromBatch[v] && isIBD1) {
+            endIBD1 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD1, endIBD1, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD) {
+            endIBD = pos - 1;
+            writePairIBD(obsBatch[v], startIBD, endIBD, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          } else if (pos > fromBatch[v] && isIBD2) {
+            endIBD2 = pos - 1;
+            writePairIBD(obsBatch[v], startIBD2, endIBD2, posteriorIBD, prev_sum_posterior_per_state, v,
+                         paddedBatchSize);
+          }
+          posteriorIBD = sum;
+        } else {
+          posteriorIBD += sum;
+        }
+        if (pos == toBatch[v] - 1) {
+          endIBD3 = toBatch[v] - 1;
+          writePairIBD(obsBatch[v], startIBD3, endIBD3, posteriorIBD, sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        }
+        isIBD = false, isIBD1 = false, isIBD2 = false;
+        isIBD3 = true;
+      } else {
+        if (isIBD) {
+          endIBD = pos - 1;
+          writePairIBD(obsBatch[v], startIBD, endIBD, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        } else if (isIBD1) {
+          endIBD1 = pos - 1;
+          writePairIBD(obsBatch[v], startIBD1, endIBD1, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        } else if (isIBD2) {
+          endIBD2 = pos - 1;
+          writePairIBD(obsBatch[v], startIBD2, endIBD2, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        } else if (isIBD3) {
+          endIBD3 = pos - 1;
+          writePairIBD(obsBatch[v], startIBD3, endIBD3, posteriorIBD, prev_sum_posterior_per_state, v, paddedBatchSize);
+          posteriorIBD = 0;
+        }
+        isIBD = false, isIBD1 = false, isIBD2 = false, isIBD3 = false;
+      }
+    }
+  }
 }
 
 // will eventually write binary output instead of gzipped

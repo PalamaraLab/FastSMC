@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <zlib.h>
+
 using namespace std;
 
 // individual ids and XOR/AND of genotypes
@@ -127,6 +129,8 @@ class HMM
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
+  gzFile gzoutIBD;
+
   // timing
   std::chrono::duration<double> t1sum = std::chrono::high_resolution_clock::duration::zero();
   std::chrono::duration<double> t2sum = std::chrono::high_resolution_clock::duration::zero();
@@ -218,6 +222,8 @@ public:
 
 private:
 
+  void writeBinaryInfoIntoFile();
+
   void makeBits(PairObservations &obs, unsigned from, unsigned to);
 
   /// resets the internal state of HMM to a clean state
@@ -232,7 +238,8 @@ private:
   void runLastBatch(vector<PairObservations>& obsBatch);
 
   // decode a batch
-  void decodeBatch(const vector<PairObservations>& obsBatch, unsigned from, unsigned to);
+  void decodeBatch(const vector<PairObservations>& obsBatch, std::size_t actualBatchSize, std::size_t paddedBatchSize,
+                   unsigned from, unsigned to);
 
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from, unsigned to);
@@ -254,8 +261,17 @@ private:
   // --posteriorSums
   void augmentSumOverPairs(vector<PairObservations>& obsBatch, int actualBatchSize, int paddedBatchSize);
 
+
+  float getMAP(vector <float> posterior);
+
+  float getPosteriorMean(const vector <float>& posterior);
+
+  void writePairIBD(const PairObservations& obs, unsigned int posStart, unsigned int posEnd, float prob,
+                    vector<float>& posterior, int v, int paddedBatchSize);
+
   // will eventually write binary output instead of gzipped
   void writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch);
+  void writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch);
 
   // *********************************************************************
   // non-batched computations (for debugging and pedagogical reasons only)
