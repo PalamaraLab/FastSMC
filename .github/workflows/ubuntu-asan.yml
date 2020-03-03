@@ -24,7 +24,6 @@ jobs:
         run: |
           sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
           sudo apt install libeigen3-dev
-          sudo apt install clang-8 llvm-8-tools
 
       - name: make build directory
         run: mkdir asmc_build_dir
@@ -33,7 +32,7 @@ jobs:
         run: cmake .. -DASMC_MEMCHECK:BOOL=TRUE
         working-directory: asmc_build_dir
         env:
-          CXX: clang++-8
+          CXX: clang++-9
 
       - name: cmake build
         run: cmake --build . --parallel 2 --target ASMC_unit_tests
