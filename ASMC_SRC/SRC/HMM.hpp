@@ -70,7 +70,7 @@ struct DecodingReturnValues {
 class HMM
 {
 
-  int m_batchSize;
+  int m_batchSize = 64;
 
   float* m_alphaBuffer;
   float* m_betaBuffer;

@@ -61,8 +61,8 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 // constructor
 HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
          int _scalingSkip)
-    : m_batchSize(64), data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams),
-      scalingSkip(_scalingSkip), noBatches(!useBatches)
+    : data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams), scalingSkip(_scalingSkip),
+      noBatches(!useBatches)
 {
 
   cout << "Will decode using " << MODE << " instruction set.\n\n";
@@ -75,6 +75,12 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   emission0minus1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   emission2minus0AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   prepareEmissions();
+
+  // FastSMC currently specifies batch size as an input
+  // todo: enable this option for ASMC as well?
+  if (decodingParams.GERMLINE) {
+    m_batchSize = decodingParams.batchSize;
+  }
 
   for (int i = 0; i < m_batchSize; i++) {
     fromBatch.push_back(0);
