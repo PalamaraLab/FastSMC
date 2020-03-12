@@ -212,7 +212,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
         // read haplotype
         unsigned int hap_ctr = 0;
-        for (unsigned int i = 0; i < num_ind_tot; i++) {
+        for (int i = 0; i < num_ind_tot; i++) {
           ss >> inp;
           if (isSampleInJob(i / 2)) {
             if (inp == '1') {

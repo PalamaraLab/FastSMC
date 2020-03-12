@@ -82,7 +82,7 @@ public:
       // *** As long as the # of pairs is high, generate a sub-hash for the next word
       // *** Only store pairs of Individuals that have collision in a small hash
       // *** Extend only to the haplotypes that seeded here
-      if (MAX_seeds != 0 && it->second.size() > MAX_seeds && w + 1 < GLOBAL_READ_WORDS) {
+      if (MAX_seeds != 0 && it->second.size() > static_cast<unsigned long>(MAX_seeds) && w + 1 < GLOBAL_READ_WORDS) {
         // recursively generate a sub-hash
         // IMPORTANT: if we run out of buffered words then this seed does not get analyzed
         if (w + 1 < GLOBAL_READ_WORDS) {
@@ -93,8 +93,8 @@ public:
         }
       } else {
         // tot_pairs += it->second.size() * (it->second.size() - 1) / 2;
-        for (int i = 0; i < it->second.size(); i++) {
-          for (int ii = i + 1; ii < it->second.size(); ii++) {
+        for (auto i = 0ul; i < it->second.size(); i++) {
+          for (auto ii = i + 1ul; ii < it->second.size(); ii++) {
 
             unsigned int ind_i = std::max(it->second[i], it->second[ii]);
             unsigned int ind_j = std::min(it->second[i], it->second[ii]);
