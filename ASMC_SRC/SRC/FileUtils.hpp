@@ -66,7 +66,7 @@ public:
     return *this;
   }
 
-  operator bool() const;
+  explicit operator bool() const;
   AutoGzIfstream& read(char *s, std::streamsize n);
   int get();
   double readDoubleNanInf();
@@ -91,7 +91,7 @@ public:
   }
   AutoGzOfstream& operator << (std::ostream & (*manip)(std::ostream&));
   void unsetf(std::ios_base::fmtflags);
-  operator bool() const;
+  explicit operator bool() const;
 };
 
 }

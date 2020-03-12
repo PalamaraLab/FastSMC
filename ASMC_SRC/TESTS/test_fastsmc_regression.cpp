@@ -43,9 +43,7 @@ int GLOBAL_SKIPPED_WORDS = 0;
 bool PAR_HAPLOID = true;
 
 bool is_j_above_diag;
-unsigned int windowSize;
-unsigned int w_i;
-unsigned int w_j;
+
 int jobID, jobs;
 
 vector<float>* all_markers;
@@ -56,13 +54,6 @@ const int CONST_READ_AHEAD = 10;
 const int WORD_SIZE = 64;
 
 vector<Individuals<WORD_SIZE, CONST_READ_AHEAD>> all_ind;
-
-bool isSampleInJob(unsigned int i)
-{
-  return ((i >= (uint)((w_i - 1) * windowSize) / 2 && i < (uint)(w_i * windowSize) / 2) ||
-          (i >= (uint)((w_j - 1) * windowSize) / 2 && i < (uint)(w_j * windowSize) / 2) ||
-          (jobs == jobID && i >= (uint)((w_j - 1) * windowSize) / 2));
-}
 
 
 TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
@@ -145,10 +136,16 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
   jobs = params.jobs;
   jobID = params.jobInd;
-  windowSize = data.windowSize;
-  w_i = data.w_i;
-  w_j = data.w_j;
+  const auto windowSize = data.windowSize;
+  const auto w_i = data.w_i;
+  const auto w_j = data.w_j;
   is_j_above_diag = data.is_j_above_diag;
+
+  auto isSampleInJob = [windowSize, w_i, w_j](unsigned i) {
+    return ((i >= (uint)((w_i - 1) * windowSize) / 2 && i < (uint)(w_i * windowSize) / 2) ||
+            (i >= (uint)((w_j - 1) * windowSize) / 2 && i < (uint)(w_j * windowSize) / 2) ||
+            (jobs == jobID && i >= (uint)((w_j - 1) * windowSize) / 2));
+  };
 
   // *** read Individuals information
   unsigned int linectr = 0;

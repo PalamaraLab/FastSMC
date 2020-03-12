@@ -61,12 +61,12 @@ public:
     mGaps++;
   }
 
-  const array<int, 2>& getInterval() const
+  const std::array<int, 2>& getInterval() const
   {
     return mInterval;
   }
 
-  array<int, 2>& getModifiableInterval()
+  std::array<int, 2>& getModifiableInterval()
   {
     return mInterval;
   }

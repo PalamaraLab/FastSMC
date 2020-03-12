@@ -74,7 +74,7 @@ public:
   {
     m.getModifiableInterval()[0] = GLOBAL_CURRENT_WORD;
     // Find/extend this location in the hash
-    extend_ret = extend_hash.insert(pair<unsigned long int, Match<WORD_SIZE>>(pairToLocation(i, j), m));
+    extend_ret = extend_hash.insert(std::pair<unsigned long int, Match<WORD_SIZE>>(pairToLocation(i, j), m));
     (extend_ret.first->second).extend(w);
   }
 
