@@ -2,6 +2,7 @@
 .vscode/
 .vs/
 CMakeSettings.json
+cmake-build-*
 
 # Compiled python files
 *.pyc
