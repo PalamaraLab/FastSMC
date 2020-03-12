@@ -15,39 +15,17 @@
 
 #include "catch.hpp"
 
-#include "HMM.hpp"
-#include "FileUtils.hpp"
-#include <sstream>
-
-
-
-#include <bitset>
-#include <cmath>
 #include <cstdint>
-#include <fstream>
-#include <inttypes.h>
 #include <iostream>
 #include <list>
-#include <math.h>
-#include <sstream>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <string>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
 #include <vector>
-
-// Includes for seeding
-#include <boost/unordered_map.hpp>
 
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
 #include "FileUtils.hpp"
 #include "HMM.hpp"
-#include "StringUtils.hpp"
 #include "Timer.hpp"
 
 #include "HASHING/ExtendHash.hpp"
@@ -56,19 +34,12 @@
 
 using namespace std;
 
-vector<int> hist_ctr;
-vector<float> hist_win;
-
-// Set the word/hash sizes here at compile time, must be able to cast from a ulong
-float PAR_MIN_MATCH = 1;
-bool PAR_DIAGNOSTICS = false;
+float PAR_MIN_MATCH = 1.f;
 int PAR_GAP = 1;
 int MAX_seeds = 0;
 int GLOBAL_READ_WORDS = 0;
 int GLOBAL_CURRENT_WORD = 0;
 int GLOBAL_SKIPPED_WORDS = 0;
-int GEN_THRESHOLD = 100;
-bool PAR_BIN_OUT = false;
 bool PAR_HAPLOID = true;
 
 bool is_j_above_diag;
@@ -83,28 +54,8 @@ unsigned long int num_ind_tot;
 
 const int CONST_READ_AHEAD = 10;
 const int WORD_SIZE = 64;
-typedef uint64_t hash_size;
-
-struct Marker {
-  string id;
-  unsigned long int pos;
-  double cm;
-
-  string print()
-  {
-    stringstream ss;
-    ss << id << '\t' << pos << '\t' << cm << endl;
-    return ss.str();
-  }
-};
 
 vector<Individuals<WORD_SIZE, CONST_READ_AHEAD>> all_ind;
-
-bool isHapInJob(unsigned int i)
-{
-  return ((i >= (w_i - 1) * windowSize && i < w_i * windowSize) ||
-          (i >= (w_j - 1) * windowSize && i < w_j * windowSize) || (jobs == jobID && i >= (w_j - 1) * windowSize));
-}
 
 bool isSampleInJob(unsigned int i)
 {
@@ -112,13 +63,6 @@ bool isSampleInJob(unsigned int i)
           (i >= (uint)((w_j - 1) * windowSize) / 2 && i < (uint)(w_j * windowSize) / 2) ||
           (jobs == jobID && i >= (uint)((w_j - 1) * windowSize) / 2));
 }
-
-double get_cpu_time()
-{
-  return (double)clock() / CLOCKS_PER_SEC;
-}
-
-
 
 
 TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
@@ -145,14 +89,10 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   params.doPerPairMAP = true;
   params.doPerPairPosteriorMean = true;
 
-  double TIME_start = get_cpu_time();
-  double TIME_prev = TIME_start;
   float PAR_MIN_MAF = 0;
   float PAR_skip = 0;
 
   string line, discard;
-  bool opt_error = 0;
-  int c;
 
   PAR_MIN_MATCH = params.min_m;
   PAR_MIN_MAF = params.min_maf;
@@ -161,10 +101,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   MAX_seeds = params.max_seeds;
 
   // read decoding quantities from file
-  std::string str(params.decodingQuantFile.c_str());
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-
-  unsigned int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
+  const auto sequenceLength = Data::countHapLines(params.inFileRoot);
 
   FileUtils::AutoGzIfstream file_haps;
   file_haps.openOrExit(params.inFileRoot + ".hap.gz");
@@ -184,9 +122,9 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
     ss.clear();
     ss.str(line);
     ss >> map_field[0] >> map_field[1] >> map_field[2];
-    if (map_field[0] == "position" || map_field[0] == "")
+    if (map_field[0] == "position" || map_field[0].empty())
       continue;
-    genetic_map.push_back(pair<unsigned long int, double>(stol(map_field[0]), stod(map_field[2])));
+    genetic_map.emplace_back(stol(map_field[0]), stod(map_field[2]));
     cur_g++;
   }
   file_genm.close();
@@ -245,17 +183,13 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   num_ind_tot = data.sampleSize * 2;
   num_ind = all_ind.size();
 
-  Marker cur_marker;
   // track position through genetic map
-  cur_g = 0;
   unsigned int snp_ctr;
   char al[2], inp;
   string cur_al;
 
   // Storage for seeds
   SeedHash<WORD_SIZE, CONST_READ_AHEAD> seeds;
-
-  hash_size word[2];
 
   // Storage for extensions
   ExtendHash<WORD_SIZE> extend(PAR_HAPLOID ? num_ind : num_ind / 2, PAR_HAPLOID);
@@ -267,14 +201,14 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   string marker_id;
   unsigned long int marker_pos;
   all_markers = &data.geneticPositions;
-  while (1) {
+  while (true) {
     snp_ctr = 0;
     while (getline(file_haps, line)) {
       // read the meta data
       ss.clear();
       ss.str(line);
       ss >> map_field[0] >> marker_id >> marker_pos >> al[0] >> al[1];
-      if (map_field[0] == "")
+      if (map_field[0].empty())
         continue;
 
       // restrict on MAF
@@ -285,7 +219,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
           if (inp == '1')
             maf_ctr++;
         }
-        float maf = (float)maf_ctr / num_ind_tot;
+        auto maf = static_cast<float>(maf_ctr / static_cast<double>(num_ind_tot));
         if (maf < PAR_MIN_MAF || maf > 1 - PAR_MIN_MAF)
           continue;
 
@@ -327,13 +261,11 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
     GLOBAL_SKIPPED_WORDS = 0;
     int cur_seeds = seeds.size();
-    unsigned long cur_pairs = 0;
 
     // skip low-complexity words
-    if ((float)cur_seeds / num_ind > PAR_skip) {
-      cur_pairs = seeds.extendAllPairs(&extend, GLOBAL_CURRENT_WORD, all_ind, MAX_seeds, jobID, jobs, w_i, w_j,
-                                       windowSize, GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD,
-                                       is_j_above_diag);
+    if (static_cast<float>(cur_seeds) / static_cast<float>(num_ind) > PAR_skip) {
+      seeds.extendAllPairs(&extend, GLOBAL_CURRENT_WORD, all_ind, MAX_seeds, jobID, jobs, w_i, w_j, windowSize,
+                           GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD, is_j_above_diag);
       extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD, PAR_MIN_MATCH, *all_markers, hmm);
     } else {
       cerr << "low complexity word - " << cur_seeds << " - skipping" << endl;
@@ -355,9 +287,11 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
   SECTION("regression test")
   {
+    const auto expectedNumLines = 1512ul;
+
     // Read lines from existing regression test output into a vector of strings
     std::vector<std::string> regressionLines;
-    regressionLines.reserve(1535);
+    regressionLines.reserve(expectedNumLines);
     {
       FileUtils::AutoGzIfstream fin_regression;
       fin_regression.openOrExit(ASMC_FILE_DIR "/FASTSMC_EXAMPLE/regression_output.ibd.gz");
@@ -369,7 +303,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
     // Read lines from generated test output into a vector of strings
     std::vector<std::string> generatedLines;
-    generatedLines.reserve(1535);
+    generatedLines.reserve(expectedNumLines);
     {
       FileUtils::AutoGzIfstream fin_generated;
       fin_generated.openOrExit(params.outFileRoot + ".1.1.FastSMC.ibd.gz");
@@ -379,6 +313,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
       fin_generated.close();
     }
 
+    REQUIRE(regressionLines.size() == expectedNumLines);
     REQUIRE(regressionLines.size() == generatedLines.size());
 
     for (auto lineNum = 0ul; lineNum < regressionLines.size(); ++lineNum) {
