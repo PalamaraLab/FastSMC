@@ -53,6 +53,7 @@ set(ASMC_source
   ${ASMC_source_dir}/StringUtils.cpp
   ${ASMC_source_dir}/Timer.cpp
   ${ASMC_source_dir}/ASMC.cpp
+  ${ASMC_source_dir}/HASHING/Utils.cpp
   )
 
 set(ASMC_headers
@@ -68,14 +69,24 @@ set(ASMC_headers
   ${ASMC_source_dir}/StringUtils.hpp
   ${ASMC_source_dir}/Timer.hpp
   ${ASMC_source_dir}/ASMC.hpp
+  ${ASMC_source_dir}/HASHING/ExtendHash.hpp
+  ${ASMC_source_dir}/HASHING/Individuals.hpp
+  ${ASMC_source_dir}/HASHING/Match.hpp
+  ${ASMC_source_dir}/HASHING/SeedHash.hpp
+  ${ASMC_source_dir}/HASHING/Utils.hpp
   )
 
 set(ASMC_main
   ${ASMC_source_dir}/main.cpp
   )
 
+set(FastSMC_main
+  ${ASMC_source_dir}/main_fastsmc.cpp
+  )
+
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_hashing.cpp
   ${ASMC_test_dir}/test_HMM.cpp
   ${ASMC_test_dir}/test_hmm_utils.cpp
   ${ASMC_test_dir}/test_decoding_params.cpp
@@ -83,6 +94,7 @@ set(ASMC_unit_tests
 
 set(ASMC_regression
   ${ASMC_test_dir}/test_regression.cpp
+  ${ASMC_test_dir}/test_fastsmc_regression.cpp
   )
 
 option(ASMC_PYTHON_BINDINGS "Whether to build the ASMC python bindings" OFF)
@@ -99,6 +111,10 @@ target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 # The main ASMC executable
 add_executable(ASMC_exe ${ASMC_main})
 target_link_libraries(ASMC_exe PRIVATE ASMC)
+
+# The main FastSMC executable
+add_executable(FastSMC_exe ${FastSMC_main})
+target_link_libraries(FastSMC_exe PRIVATE ASMC)
 
 enable_testing()
 

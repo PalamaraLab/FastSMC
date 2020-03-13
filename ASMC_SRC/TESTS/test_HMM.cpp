@@ -15,6 +15,9 @@
 
 #include "catch.hpp"
 
+#include <utility>
+#include <vector>
+
 #include "HMM.hpp"
 
 TEST_CASE("test hmm functions", "[HMM]")
@@ -33,8 +36,8 @@ TEST_CASE("test hmm functions", "[HMM]")
   SECTION("test decode pair summarize")
   {
     PairObservations pairObs = hmm.makePairObs(1, 0, 2, 0);
-    vector<vector<float>> decodeResult = hmm.decode(pairObs);
-    pair<vector<float>, vector<float>> decodeSummary = hmm.decodeSummarize(pairObs);
+    std::vector<std::vector<float>> decodeResult = hmm.decode(pairObs);
+    std::pair<std::vector<float>, std::vector<float>> decodeSummary = hmm.decodeSummarize(pairObs);
     // check that the MAP and posterior mean are the same length
     REQUIRE(decodeSummary.first.size() == decodeSummary.second.size());
     REQUIRE(decodeSummary.first.size() == decodeResult[0].size());

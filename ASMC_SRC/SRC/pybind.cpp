@@ -100,11 +100,11 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("foldedAscertainedCSFSmap", &DecodingQuantities::foldedAscertainedCSFSmap)
         ;
     py::class_<DecodingParams>(m, "DecodingParams")
-        .def(py::init<string, string, string,
-                int, int, string,
+        .def(py::init<std::string, std::string, std::string,
+                int, int, std::string,
                 bool, bool, bool, bool,
                 float, bool, bool, bool,
-                string, bool, bool>(),
+                std::string, bool, bool>(),
                 "hapsFileRoot"_a, "decodingQuantFile"_a,
                 "outFileRoot"_a = "",
                 "jobs"_a = 1, "jobInd"_a = 1,

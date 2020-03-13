@@ -17,9 +17,6 @@
 #define DECODINGPARAMS_HPP
 
 #include <string>
-#include <vector>
-
-using namespace std;
 
 enum class DecodingMode { sequenceFolded, arrayFolded, sequence, array };
 
@@ -29,12 +26,12 @@ class DecodingParams
 {
 
 public:
-  string hapsFileRoot;
-  string decodingQuantFile;
-  string outFileRoot;
+  std::string hapsFileRoot;
+  std::string decodingQuantFile;
+  std::string outFileRoot;
   int jobs;
   int jobInd;
-  string decodingModeString;
+  std::string decodingModeString;
   DecodingModeOverall decodingModeOverall;
   DecodingMode decodingMode;
   bool decodingSequence = false;
@@ -48,8 +45,8 @@ public:
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New params from FastSMC that were not originally in ASMC
 
-  string inFileRoot;
-  string map;
+  std::string inFileRoot;
+  std::string map;
   int batchSize = 16;
   int recallThreshold = 3;
 
@@ -64,28 +61,27 @@ public:
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
   // main tasks
   bool noConditionalAgeEstimates = false;
   bool doPosteriorSums = false;
-  bool doPerPairMAP = false;            // output MAP for each pair
-  bool doPerPairPosteriorMean = false;  // output posterior mean for each pair
-  string expectedCoalTimesFile; // expected coalescence times within each interval
-  bool withinOnly = false;              // only compute decoding within individuals
+  bool doPerPairMAP = false;           // output MAP for each pair
+  bool doPerPairPosteriorMean = false; // output posterior mean for each pair
+  std::string expectedCoalTimesFile;   // expected coalescence times within each interval
+  bool withinOnly = false;             // only compute decoding within individuals
   bool doMajorMinorPosteriorSums = false;
 
   bool processOptions();
   bool processCommandLineArgs(int argc, char* argv[]);
-
-
+  bool processCommandLineArgsFastSMC(int argc, char* argv[]);
 
   /// constructor with default parameters set
   DecodingParams();
-  DecodingParams(string _hapsFileRoot, string _decodingQuantFile, string _outFileRoot = "", int _jobs = 1,
-                 int _jobInd = 1, string _decodingModeString = "array", bool _decodingSequence = false,
-                 bool _usingCSFS = true, bool _compress = false, bool _useAncestral = false,
-                 float _skipCSFSdistance = 0.f, bool _noBatches = false, bool _doPosteriorSums = false,
-                 bool _doPerPairPosteriorMean = false, string _expectedCoalTimesFile = "", bool _withinOnly = false,
+  DecodingParams(std::string _hapsFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
+                 int _jobs = 1, int _jobInd = 1, std::string _decodingModeString = "array",
+                 bool _decodingSequence = false, bool _usingCSFS = true, bool _compress = false,
+                 bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,
+                 bool _doPosteriorSums = false, bool _doPerPairPosteriorMean = false,
+                 std::string _expectedCoalTimesFile = "", bool _withinOnly = false,
                  bool _doMajorMinorPosteriorSums = false);
 };
 

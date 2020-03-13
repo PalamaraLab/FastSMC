@@ -13,50 +13,81 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifndef ASMC_DATA_HPP
+#define ASMC_DATA_HPP
 
-#ifndef DATA_HPP
-#define DATA_HPP
-
-#include <vector>
 #include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "Individual.hpp"
 
-using namespace std;
-
-class Data {
+class Data
+{
 
 public:
-
-  vector <string> FamIDList;
-  vector <string> IIDList;
-  vector <string> famAndIndNameList;
-  vector <Individual> individuals;
+  std::vector<std::string> FamIDList;
+  std::vector<std::string> IIDList;
+  std::vector<std::string> famAndIndNameList;
+  std::vector<Individual> individuals;
 
   int sampleSize;
   int haploidSampleSize;
   int sites;
   int totalSamplesBound;
   bool decodingUsesCSFS = false;
-  vector<float> geneticPositions;
-  vector<int> physicalPositions;
-  vector<bool> siteWasFlippedDuringFolding;
-  vector<float> recRateAtMarker;
-  vector< vector<int> > undistinguishedCounts;
+  std::vector<float> geneticPositions;
+  std::vector<int> physicalPositions;
+  std::vector<bool> siteWasFlippedDuringFolding;
+  std::vector<float> recRateAtMarker;
+  std::vector<std::vector<int>> undistinguishedCounts;
 
-  Data(string hapsFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
-  static int countHapLines(string hapsFileRoot);
+
+  // Variables relating to FastSMC
+  int chrNumber;
+  unsigned int windowSize; // window size in triangles for each job
+  unsigned int w_i;        // window id for ind_i for jobs
+  unsigned int w_j;        // window id for ind_j for jobs
+  bool is_j_above_diag;
+  std::unordered_map<int, unsigned int> physicalPositionsMap; // map where key=physicalPosition, value=indexPosition
+
+
+  Data(std::string hapsFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
+  Data(std::string inFileRoot, unsigned int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
+       bool decodingUsesCSFS, int jobID, int jobs, std::vector<std::pair<unsigned long int, double>>& genetic_map);
+
+  static int countHapLines(std::string hapsFileRoot);
+  static int countSamplesLines(std::string inFileRoot);
+
+
 
 private:
-  void readSamplesList(string hapsFileRoot);
-  void readHaps(string hapsFileRoot, bool foldToMinorAlleles);
-  int readMap(string hapsFileRoot);
+
+  void readSamplesList(std::string hapsFileRoot);
+  void readSamplesList(std::string inFileRoot, int jobID, int jobs);
+
+
+  void readHaps(std::string hapsFileRoot, bool foldToMinorAlleles);
+  void readHaps(std::string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,
+                std::vector<std::pair<unsigned long int, double>>& genetic_map);
+
+  int readMap(std::string hapsFileRoot);
   void makeUndistinguished(bool foldToMinorAlleles);
-  vector<int> totalSamplesCount;
-  vector<int> derivedAlleleCounts;
-  vector<string> SNP_IDs;
+  std::vector<int> totalSamplesCount;
+  std::vector<int> derivedAlleleCounts;
+  std::vector<std::string> SNP_IDs;
   int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
+
+
+  void readGeneticMap(unsigned long int bp, std::vector<std::pair<unsigned long int, double>>& genetic_map,
+                      unsigned int& cur_g, unsigned int pos);
+
+  void addMarker(unsigned long int physicalPosition, double geneticPosition, unsigned int pos);
+
+
+
 
 };
 
-#endif
+#endif // ASMC_DATA_HPP

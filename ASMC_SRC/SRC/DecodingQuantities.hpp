@@ -13,49 +13,66 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #ifndef DECODINGQUANTITIES_HPP
 #define DECODINGQUANTITIES_HPP
 
 #include <string>
-#include <vector>
 #include <unordered_map>
-
-using namespace std;
+#include <vector>
 
 enum class DataType {
-    TransitionType, States, CSFSSamples, TimeVector, SizeVector, Discretization, ExpectedTimes, CSFS, FoldedCSFS, ClassicEmission, AscertainedCSFS, FoldedAscertainedCSFS, CompressedAscertainedEmission, initialStateProb, ColumnRatios, RowRatios, Uvectors, Bvectors, Dvectors, HomozygousEmissions, None
+  TransitionType,
+  States,
+  CSFSSamples,
+  TimeVector,
+  SizeVector,
+  Discretization,
+  ExpectedTimes,
+  CSFS,
+  FoldedCSFS,
+  ClassicEmission,
+  AscertainedCSFS,
+  FoldedAscertainedCSFS,
+  CompressedAscertainedEmission,
+  initialStateProb,
+  ColumnRatios,
+  RowRatios,
+  Uvectors,
+  Bvectors,
+  Dvectors,
+  HomozygousEmissions,
+  None
 };
 
-class DecodingQuantities {
+class DecodingQuantities
+{
 
 public:
-
   unsigned int states;
   int CSFSSamples;
-  vector <float> initialStateProb;
-  vector <float> expectedTimes;
-  vector <float> discretization;
-  vector <float> timeVector;
-  vector <float> columnRatios;
-  vector < vector <float> > classicEmissionTable;
-  vector < vector <float> > compressedEmissionTable;
-  unordered_map<float, vector<float> > Dvectors;
-  unordered_map<float, vector<float> > Bvectors;
-  unordered_map<float, vector<float> > Uvectors;
-  unordered_map<float, vector<float> > rowRatioVectors;
-  unordered_map<int, vector<float> > homozygousEmissionMap;
-  vector < vector < vector <float> > > CSFSmap;
-  vector < vector < vector <float> > > foldedCSFSmap;
-  vector < vector < vector <float> > > ascertainedCSFSmap;
-  vector < vector < vector <float> > > foldedAscertainedCSFSmap;
+  std::vector<float> initialStateProb;
+  std::vector<float> expectedTimes;
+  std::vector<float> discretization;
+  std::vector<float> timeVector;
+  std::vector<float> columnRatios;
+  std::vector<std::vector<float>> classicEmissionTable;
+  std::vector<std::vector<float>> compressedEmissionTable;
+  std::unordered_map<float, std::vector<float>> Dvectors;
+  std::unordered_map<float, std::vector<float>> Bvectors;
+  std::unordered_map<float, std::vector<float>> Uvectors;
+  std::unordered_map<float, std::vector<float>> rowRatioVectors;
+  std::unordered_map<int, std::vector<float>> homozygousEmissionMap;
+  std::vector<std::vector<std::vector<float>>> CSFSmap;
+  std::vector<std::vector<std::vector<float>>> foldedCSFSmap;
+  std::vector<std::vector<std::vector<float>>> ascertainedCSFSmap;
+  std::vector<std::vector<std::vector<float>>> foldedAscertainedCSFSmap;
 
-  DecodingQuantities(const char *fileName);
+  explicit DecodingQuantities(const char* fileName);
 
 private:
   // implemented, but need to update other code
   // void createFromBinary(const char *fileName);
-  void createFromGzippedText(const char *fileName);
+  void createFromGzippedText(const char* fileName);
 };
 
 #endif

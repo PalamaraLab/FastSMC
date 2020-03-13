@@ -15,12 +15,14 @@
 
 #include "catch.hpp"
 
+#include <string>
+
 #include "DecodingParams.hpp"
 
 TEST_CASE("test DecodingParams", "[DecodingParams]")
 {
-  string hapsFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
-  string decodingQuantFile = ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz";
+  std::string hapsFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
+  std::string decodingQuantFile = ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz";
 
   SECTION("test array folded") {
     DecodingParams params(hapsFileRoot, decodingQuantFile);
