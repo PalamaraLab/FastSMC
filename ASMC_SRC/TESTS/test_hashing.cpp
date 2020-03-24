@@ -23,17 +23,20 @@
 
 TEST_CASE("ExtendHash", "[HASHING]")
 {
-  ExtendHash<4> e(2ul, true);
+  ExtendHash e(4ul, 2ul, true);
   REQUIRE(e.size() == 0ul);
+  REQUIRE(e.getWordSize() == 4ul);
 
   //todo: test ExtendHash
 }
 
 TEST_CASE("individuals", "[HASHING]")
 {
-  Individuals<8, 3> ind(5u);
+  Individuals ind(8ul, 3ul, 5u);
 
-  REQUIRE(ind.getIdNum() == 5ul);
+  REQUIRE(ind.getIdNum() == 5u);
+  REQUIRE(ind.getWordSize() == 8ul);
+  REQUIRE(ind.getNumReadAhead() == 3ul);
 
   // Check up to 10 - but internally we're just going 0-1-2-0-1-2-0-1-2-0
   for (auto i = 0; i < 10; ++i) {
@@ -71,7 +74,8 @@ TEST_CASE("match", "[HASHING]")
 {
   SECTION("default construction")
   {
-    Match<4> m;
+    Match m(4ul);
+    REQUIRE(m.getWordSize() == 4ul);
     REQUIRE(m.getGaps() == 0u);
     REQUIRE(m.getInterval()[0] == 0);
     REQUIRE(m.getInterval()[1] == 0);
@@ -86,7 +90,8 @@ TEST_CASE("match", "[HASHING]")
 
   SECTION("explicit constructor")
   {
-    Match<4> m(7);
+    Match m(4, 7);
+    REQUIRE(m.getWordSize() == 4ul);
     REQUIRE(m.getGaps() == 0u);
     REQUIRE(m.getInterval()[0] == 7);
     REQUIRE(m.getInterval()[1] == 7);
@@ -106,7 +111,7 @@ TEST_CASE("match", "[HASHING]")
 
 TEST_CASE("SeedHash", "[HASHING]")
 {
-  SeedHash<4, 10> s;
+  SeedHash s;
   REQUIRE(s.size() == 0ul);
 
   //todo: test SeedHash

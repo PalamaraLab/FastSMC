@@ -38,7 +38,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   constexpr int WORD_SIZE = 64;
   constexpr bool PAR_HAPLOID = true;
 
-  std::vector<Individuals<WORD_SIZE, CONST_READ_AHEAD>> all_ind;
+  std::vector<Individuals> all_ind;
 
   srand(1234);
 
@@ -148,8 +148,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
       ss.str(line);
       ss >> map_field[0] >> map_field[1];
       if (isSampleInJob(linectr)) {
-        all_ind.emplace_back(2 * linectr);
-        all_ind.emplace_back(2 * linectr + 1);
+        all_ind.emplace_back(64, 10, 2 * linectr);
+        all_ind.emplace_back(64, 10, 2 * linectr + 1);
       }
       linectr++;
     }
@@ -161,8 +161,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
     const auto num_ind = all_ind.size();
 
     // Storage for seeds & extensions
-    SeedHash<WORD_SIZE, CONST_READ_AHEAD> seeds;
-    ExtendHash<WORD_SIZE> extend(num_ind, PAR_HAPLOID);
+    SeedHash seeds;
+    ExtendHash extend(WORD_SIZE, num_ind, PAR_HAPLOID);
 
     std::vector<float>& all_markers = data.geneticPositions;
 

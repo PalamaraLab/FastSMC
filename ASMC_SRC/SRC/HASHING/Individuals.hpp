@@ -16,52 +16,72 @@
 #ifndef ASMC_HASHING_INDIVIDUALS_HPP
 #define ASMC_HASHING_INDIVIDUALS_HPP
 
-#include <array>
-#include <bitset>
+#include <algorithm>
 #include <cassert>
 #include <string>
+#include <vector>
 
-template <int WORD_SIZE, int CONST_READ_AHEAD> class Individuals
+#include "boost/dynamic_bitset.hpp"
+
+class Individuals
 {
   unsigned mIdNum;
-  std::array<std::bitset<WORD_SIZE>, CONST_READ_AHEAD> mHap;
+  unsigned long mWordSize = 64ul;
+  unsigned long mNumReadAhead = 10ul;
+
+  std::vector<boost::dynamic_bitset<>> mHap{mNumReadAhead, boost::dynamic_bitset<>(mWordSize, 0ul)};
 
 public:
-  explicit Individuals(const unsigned idNum) : mIdNum(idNum)
+  explicit Individuals(const unsigned long wordSize, const unsigned long numReadAhead, const unsigned idNum)
+      : mIdNum{idNum}, mWordSize{wordSize}, mNumReadAhead{numReadAhead}
   {
-    for (auto w = 0; w < CONST_READ_AHEAD; w++) {
-      clear(w);
-    }
+    assert(wordSize > 0ul);
+    assert(numReadAhead > 0ul);
+
+    mHap.resize(numReadAhead);
+    std::fill(mHap.begin(), mHap.end(), boost::dynamic_bitset<>(wordSize, 0ul));
   }
 
   void clear(const int w)
   {
     assert(w >= 0);
-    mHap[w % CONST_READ_AHEAD].reset();
+    mHap.at(w % mNumReadAhead).reset();
   }
 
   void setMarker(const int w, const std::size_t bit)
   {
     assert(w >= 0);
-    assert(bit < WORD_SIZE);
-    mHap[w % CONST_READ_AHEAD].set(bit);
+    assert(bit < mWordSize);
+    mHap.at(w % mNumReadAhead).set(bit);
   }
 
   unsigned long getWordHash(const int w)
   {
     assert(w >= 0);
-    return mHap[w % CONST_READ_AHEAD].to_ulong();
+    return mHap[w % mNumReadAhead].to_ulong();
   }
 
   std::string getWordString(const int w)
   {
     assert(w >= 0);
-    return mHap[w % CONST_READ_AHEAD].to_string();
+    std::string buffer;
+    boost::to_string(mHap.at(w % mNumReadAhead), buffer);
+    return buffer;
   }
 
   unsigned int getIdNum() const
   {
     return mIdNum;
+  }
+
+  unsigned long getWordSize() const
+  {
+    return mHap.front().size();
+  }
+
+  unsigned long getNumReadAhead() const
+  {
+    return mHap.size();
   }
 };
 

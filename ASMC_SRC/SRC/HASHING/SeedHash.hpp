@@ -26,10 +26,10 @@
 #include "Types.hpp"
 
 /* Object for storing initial word seeds */
-template <int WORD_SIZE, int CONST_READ_AHEAD> class SeedHash
+class SeedHash
 {
 
-  using ind_vec = std::vector<Individuals<WORD_SIZE, CONST_READ_AHEAD>>;
+  using ind_vec = std::vector<Individuals>;
 
   boost::unordered_map<hash_size, std::vector<unsigned int>> seed_hash;
   // Empty vector to insert into the seed hash
@@ -53,10 +53,10 @@ public:
   }
 
   // Generate a new hash for this vector of Individualss
-  unsigned long subHash(ExtendHash<WORD_SIZE>* e, std::vector<unsigned> v, int w, ind_vec all_ind, const int MAX_seeds,
-                        const int jobID, const int jobs, const unsigned w_i, const unsigned w_j,
-                        const unsigned windowSize, const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS,
-                        const int GLOBAL_CURRENT_WORD, const bool is_j_above_diag)
+  static unsigned long subHash(ExtendHash* e, std::vector<unsigned> v, int w, ind_vec all_ind, const int MAX_seeds,
+                               const int jobID, const int jobs, const unsigned w_i, const unsigned w_j,
+                               const unsigned windowSize, const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS,
+                               const int GLOBAL_CURRENT_WORD, const bool is_j_above_diag)
   {
     SeedHash cur_sh;
     // seed the next word from this subset of Individualss
@@ -71,7 +71,7 @@ public:
   // Extend/save all pairs in the current hash
   // ExtendHash * e : Pointer to ExtendHash which will be called for each pair
   // returns : number of pairs evaluated
-  unsigned long extendAllPairs(ExtendHash<WORD_SIZE>* e, int w, ind_vec all_ind, const int MAX_seeds, const int jobID,
+  unsigned long extendAllPairs(ExtendHash* e, int w, ind_vec all_ind, const int MAX_seeds, const int jobID,
                                const int jobs, const unsigned w_i, const unsigned w_j, const unsigned windowSize,
                                const int GLOBAL_READ_WORDS, int& GLOBAL_SKIPPED_WORDS, const int GLOBAL_CURRENT_WORD,
                                const bool is_j_above_diag)
