@@ -75,7 +75,7 @@ struct Marker {
   }
 };
 
-vector<Individuals<WORD_SIZE, CONST_READ_AHEAD>> all_ind;
+vector<Individuals> all_ind;
 
 bool isHapInJob(unsigned int i)
 {
@@ -246,11 +246,11 @@ int main(int argc, char* argv[])
     ss >> map_field[0] >> map_field[1];
     if (isSampleInJob(linectr)) {
       if (PAR_HAPLOID) {
-        all_ind.emplace_back(2 * linectr);
-        all_ind.emplace_back(2 * linectr + 1);
+        all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr);
+        all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr + 1);
       } else {
-        all_ind.emplace_back(2 * linectr);
-        all_ind.emplace_back(2 * linectr);
+        all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
+        all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
       }
     }
     linectr++;
@@ -269,12 +269,12 @@ int main(int argc, char* argv[])
   string cur_al;
 
   // Storage for seeds
-  SeedHash<WORD_SIZE, CONST_READ_AHEAD> seeds;
+  SeedHash seeds;
 
   hash_size word[2];
 
   // Storage for extensions
-  ExtendHash<WORD_SIZE> extend(PAR_HAPLOID ? num_ind : num_ind / 2, PAR_HAPLOID);
+  ExtendHash extend(WORD_SIZE, PAR_HAPLOID ? num_ind : num_ind / 2, PAR_HAPLOID);
 
   // Hash individual words
   GLOBAL_READ_WORDS = 0;
