@@ -53,26 +53,26 @@ public:
   std::unordered_map<int, unsigned int> physicalPositionsMap; // map where key=physicalPosition, value=indexPosition
 
 
-  Data(std::string hapsFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
+  Data(std::string inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
   Data(std::string inFileRoot, unsigned int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID, int jobs, std::vector<std::pair<unsigned long int, double>>& genetic_map);
 
-  static int countHapLines(std::string hapsFileRoot);
+  static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
 
 
 
 private:
 
-  void readSamplesList(std::string hapsFileRoot);
+  void readSamplesList(std::string inFileRoot);
   void readSamplesList(std::string inFileRoot, int jobID, int jobs);
 
 
-  void readHaps(std::string hapsFileRoot, bool foldToMinorAlleles);
+  void readHaps(std::string inFileRoot, bool foldToMinorAlleles);
   void readHaps(std::string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,
                 std::vector<std::pair<unsigned long int, double>>& genetic_map);
 
-  int readMap(std::string hapsFileRoot);
+  int readMap(std::string inFileRoot);
   void makeUndistinguished(bool foldToMinorAlleles);
   std::vector<int> totalSamplesCount;
   std::vector<int> derivedAlleleCounts;

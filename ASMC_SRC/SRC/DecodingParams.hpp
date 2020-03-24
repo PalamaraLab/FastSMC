@@ -26,7 +26,7 @@ class DecodingParams
 {
 
 public:
-  std::string hapsFileRoot;
+  std::string inFileRoot;
   std::string decodingQuantFile;
   std::string outFileRoot;
   int jobs;
@@ -45,7 +45,6 @@ public:
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New params from FastSMC that were not originally in ASMC
 
-  std::string inFileRoot;
   std::string map;
   int batchSize = 16;
   int recallThreshold = 3;
@@ -76,7 +75,7 @@ public:
 
   /// constructor with default parameters set
   DecodingParams();
-  DecodingParams(std::string _hapsFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
+  DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
                  int _jobs = 1, int _jobInd = 1, std::string _decodingModeString = "array",
                  bool _decodingSequence = false, bool _usingCSFS = true, bool _compress = false,
                  bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,

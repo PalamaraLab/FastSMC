@@ -29,10 +29,10 @@
 
 using namespace std;
 
-Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToMinorAlleles, bool _decodingUsesCSFS)
+Data::Data(string inFileRoot, int _sites, int _totalSamplesBound, bool foldToMinorAlleles, bool _decodingUsesCSFS)
     : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
 {
-  readSamplesList(hapsFileRoot);
+  readSamplesList(inFileRoot);
   // now we have the sample sizes
   sampleSize = static_cast<int>(famAndIndNameList.size());
   haploidSampleSize = sampleSize * 2;
@@ -42,8 +42,8 @@ Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToM
     individuals.push_back(Individual(sites));
   }
   // now read all the data
-  readHaps(hapsFileRoot, foldToMinorAlleles);
-  readMap(hapsFileRoot);
+  readHaps(inFileRoot, foldToMinorAlleles);
+  readMap(inFileRoot);
   // make undistinguished counts
   if (decodingUsesCSFS) {
     makeUndistinguished(foldToMinorAlleles);
@@ -139,15 +139,15 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
   // cout << " Done." << endl;
 }
 
-int Data::readMap(string hapsFileRoot)
+int Data::readMap(string inFileRoot)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".map.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".map.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".map")) {
-    hapsBr.openOrExit(hapsFileRoot + ".map");
+  if (FileUtils::fileExists(inFileRoot + ".map.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".map.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".map")) {
+    hapsBr.openOrExit(inFileRoot + ".map");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".map.gz or " + hapsFileRoot + ".map" << endl;
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".map.gz or " + inFileRoot + ".map" << endl;
     exit(1);
   }
   string line;
@@ -189,17 +189,17 @@ int Data::readMap(string hapsFileRoot)
   return pos;
 }
 
-void Data::readSamplesList(string hapsFileRoot)
+void Data::readSamplesList(string inFileRoot)
 {
   string line;
   // Read samples file
   FileUtils::AutoGzIfstream bufferedReader;
-  if (FileUtils::fileExists(hapsFileRoot + ".samples")) {
-    bufferedReader.openOrExit(hapsFileRoot + ".samples");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".sample")) {
-    bufferedReader.openOrExit(hapsFileRoot + ".sample");
+  if (FileUtils::fileExists(inFileRoot + ".samples")) {
+    bufferedReader.openOrExit(inFileRoot + ".samples");
+  } else if (FileUtils::fileExists(inFileRoot + ".sample")) {
+    bufferedReader.openOrExit(inFileRoot + ".sample");
   } else {
-    cerr << "ERROR. Could not find sample file in " + hapsFileRoot + ".sample or " + hapsFileRoot + ".samples" << endl;
+    cerr << "ERROR. Could not find sample file in " + inFileRoot + ".sample or " + inFileRoot + ".samples" << endl;
     exit(1);
   }
 
@@ -266,20 +266,20 @@ void Data::readSamplesList(string inFileRoot, int jobID, int jobs)
   cout << "Read " << cpt << " samples." << endl;
 }
 
-int Data::countHapLines(string hapsFileRoot)
+int Data::countHapLines(string inFileRoot)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".hap.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".hap")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps");
+  if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".hap.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".hap")) {
+    hapsBr.openOrExit(inFileRoot + ".hap");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".haps.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps")) {
+    hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
-                ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " +
+                ".haps.gz, or " + inFileRoot + ".haps"
          << endl;
     exit(1);
   }
@@ -322,20 +322,20 @@ int Data::countSamplesLines(string inFileRoot)
   return cpt;
 }
 
-void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
+void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".hap.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".hap")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps");
+  if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".hap.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".hap")) {
+    hapsBr.openOrExit(inFileRoot + ".hap");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".haps.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps")) {
+    hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
-                ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " +
+                ".haps.gz, or " + inFileRoot + ".haps"
          << endl;
     exit(1);
   }

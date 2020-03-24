@@ -49,12 +49,12 @@ def flip_rows(a1, a2, flips):
     return a1, a2
 
 
-def run(haps_file_root, decoding_quant_file, out_file_root="",
+def run(in_file_root, decoding_quant_file, out_file_root="",
         mode=DecodingModeOverall.array, jobs=0,
         job_index=0, skip_csfs_distance=0,
         compress=False, use_ancestral=False,
         posterior_sums=False, major_minor_posterior_sums=False):
-    ret = asmc(haps_file_root=haps_file_root,
+    ret = asmc(in_file_root=in_file_root,
                decoding_quant_file=decoding_quant_file,
                mode=mode, jobs=jobs, job_index=job_index,
                skip_csfs_distance=skip_csfs_distance,

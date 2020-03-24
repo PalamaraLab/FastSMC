@@ -42,7 +42,7 @@ def test_regession(asmc_exe):
     subprocess.call([
         asmc_exe,
         '--decodingQuantFile', decoding_file,
-        '--hapsFileRoot', haps_file,
+        '--inFileRoot', haps_file,
         '--posteriorSums',
     ])
 

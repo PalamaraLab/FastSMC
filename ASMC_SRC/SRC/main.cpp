@@ -112,9 +112,9 @@ int main(int argc, char* argv[])
   printf("Read precomputed decoding info in %.3f seconds.\n", timer.update_time());
   // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
-  cout << "Data will be loaded from " << params.hapsFileRoot << "*\n";
-  int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
-  Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
+  cout << "Data will be loaded from " << params.inFileRoot << "*\n";
+  int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
+  Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
       params.foldData, params.usingCSFS);
   printf("Read haps in %.3f seconds.\n", timer.update_time());
 

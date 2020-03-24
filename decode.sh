@@ -14,7 +14,7 @@ fi
 
 ### run analysis. This can be parallelized, here just using a loop
 for i in $(seq 1 $N); do
-	./ASMC --hapsFileRoot $file \
+	./ASMC --inFileRoot $file \
 		--decodingQuantFile $file.decodingQuantities.gz \
 	    --mode $mode \
 		--majorMinorPosteriorSums \

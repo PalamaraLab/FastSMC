@@ -12,14 +12,14 @@ from asmc import (
 class TestASMCRegression(unittest.TestCase):
 
     def setUp(self):
-        hapsFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
+        inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
         decodingQuantFile = "FILES/DECODING_QUANTITIES" \
             "/30-100-2000.decodingQuantities.gz"
-        self.sequenceLength = Data.countHapLines(hapsFileRoot)
-        self.params = DecodingParams(hapsFileRoot, decodingQuantFile,
+        self.sequenceLength = Data.countHapLines(inFileRoot)
+        self.params = DecodingParams(inFileRoot, decodingQuantFile,
                                      doPosteriorSums=True)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(hapsFileRoot, self.sequenceLength,
+        self.data = Data(inFileRoot, self.sequenceLength,
                          self.decodingQuantities.CSFSSamples,
                          self.params.foldData, self.params.usingCSFS)
         self.hmm = HMM(self.data, self.decodingQuantities, self.params,

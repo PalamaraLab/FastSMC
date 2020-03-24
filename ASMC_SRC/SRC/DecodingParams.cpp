@@ -26,9 +26,9 @@
 using namespace std;
 
 DecodingParams::DecodingParams()
-      : hapsFileRoot("")
+      : inFileRoot("")
       , decodingQuantFile("")
-      , outFileRoot(hapsFileRoot)
+      , outFileRoot(inFileRoot)
       , jobs(1)
       , jobInd(1)
       , decodingModeString("array")
@@ -47,7 +47,7 @@ DecodingParams::DecodingParams()
   {
   }
 
-DecodingParams::DecodingParams(string _hapsFileRoot,
+DecodingParams::DecodingParams(string _inFileRoot,
         string _decodingQuantFile,
         string _outFileRoot,
         int _jobs,
@@ -65,7 +65,7 @@ DecodingParams::DecodingParams(string _hapsFileRoot,
         bool _withinOnly,
         bool _doMajorMinorPosteriorSums
         )
-      : hapsFileRoot(_hapsFileRoot)
+      : inFileRoot(_inFileRoot)
       , decodingQuantFile(_decodingQuantFile)
       , outFileRoot(_outFileRoot)
       , jobs(_jobs)
@@ -94,7 +94,7 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 
   po::options_description options;
   options.add_options()
-  ("hapsFileRoot", po::value<string>(&hapsFileRoot)->required(),
+  ("inFileRoot", po::value<string>(&inFileRoot)->required(),
    "Prefix of hap|haps|hap.gz|haps.gz and sample|samples file")
   ("decodingQuantFile", po::value<string>(&decodingQuantFile),
    "Decoding quantities file")
@@ -103,7 +103,7 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
   ("jobInd", po::value<int>(&jobInd)->default_value(0),
    "Job index (1..jobs)")
   ("outFileRoot", po::value<string>(&outFileRoot),
-   "Output file for sum of posterior distribution over pairs (default: --hapsFileRoot argument)")
+   "Output file for sum of posterior distribution over pairs (default: --inFileRoot argument)")
   ("mode", po::value<string>(&decodingModeString)->default_value("array"),
    "Decoding mode. Choose from {sequence, array}.")
   ("compress", po::bool_switch(&compress)->default_value(false),
@@ -390,7 +390,7 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
       }
     }
 
-//    hapsFileRoot = inFileRoot;
+//    inFileRoot = inFileRoot;
 
   } catch (po::error &e) {
     cerr << "ERROR: " << e.what() << endl << endl;
@@ -511,8 +511,8 @@ bool DecodingParams::processOptions() {
     }
 
     if (decodingQuantFile.empty()) {
-      cout << "Setting --decodingQuantFile to --hapsFileRoot + .decodingQuantities.bin" << endl;
-      decodingQuantFile = hapsFileRoot + ".decodingQuantities.bin";
+      cout << "Setting --decodingQuantFile to --inFileRoot + .decodingQuantities.bin" << endl;
+      decodingQuantFile = inFileRoot + ".decodingQuantities.bin";
     }
 
     if ((jobs == 0) != (jobInd == 0)) {
@@ -530,7 +530,7 @@ bool DecodingParams::processOptions() {
       return false;
     }
     if (outFileRoot.empty()) {
-      outFileRoot = hapsFileRoot;
+      outFileRoot = inFileRoot;
       if (jobs > 0) {
         outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
       }

@@ -105,7 +105,7 @@ PYBIND11_MODULE(pyASMC, m) {
                 bool, bool, bool, bool,
                 float, bool, bool, bool,
                 std::string, bool, bool>(),
-                "hapsFileRoot"_a, "decodingQuantFile"_a,
+                "inFileRoot"_a, "decodingQuantFile"_a,
                 "outFileRoot"_a = "",
                 "jobs"_a = 1, "jobInd"_a = 1,
                 "decodingModeString"_a = "array",
@@ -120,7 +120,7 @@ PYBIND11_MODULE(pyASMC, m) {
                 "expectedCoalTimesFile"_a = "",
                 "withinOnly"_a = false,
                 "doMajorMinorPosteriorSums"_a = false)
-        .def_readwrite("hapsFileRoot", &DecodingParams::hapsFileRoot)
+        .def_readwrite("inFileRoot", &DecodingParams::inFileRoot)
         .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
         .def_readwrite("outFileRoot", &DecodingParams::outFileRoot)
         .def_readwrite("jobs", &DecodingParams::jobs)
@@ -143,7 +143,7 @@ PYBIND11_MODULE(pyASMC, m) {
 
     py::class_<Data>(m, "Data")
         .def(py::init<std::string, int, int, bool, bool>(),
-             "hapsFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
+             "inFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
              "foldToMinorAlleles"_a, "decodingUsesCSFS"_a)
         .def_static("countHapLines", &Data::countHapLines)
         .def_readwrite("FamIDList", &Data::FamIDList)
@@ -174,7 +174,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("finishDecoding", &HMM::finishDecoding)
         .def("makePairObs", &HMM::makePairObs, "iHap"_a, "ind1"_a, "jHap"_a, "ind2"_a);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
-          "hapsFileRoot"_a, "decodingQuantFile"_a,
+          "inFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
           "jobs"_a = 0, "jobInd"_a = 0,
           "skipCSFSdistance"_a = 0,

@@ -22,7 +22,7 @@
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
-DecodingReturnValues run(std::string haps_file_root, std::string decoding_quant_file,
+DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file,
          std::string out_file_root, DecodingModeOverall mode,
          int jobs, int job_index,
          float skip_csfs_distance,
