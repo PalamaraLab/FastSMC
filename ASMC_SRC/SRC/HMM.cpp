@@ -468,12 +468,9 @@ void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uin
 {
   const vector<Individual>& individuals = data.individuals;
 
-  std::cout << individuals.size() << '\n';
-  std::cout << indivID1 << '\n';
-  std::cout << indivID2 << '\n';
-
-  assert(indivID1 < individuals.size());
-  assert(indivID2 < individuals.size());
+  // indivID1 & indivID2 are indices of chromosomes corresponding to individuals indivID1/2 and indivID2/2
+  assert(indivID1 / 2 < individuals.size());
+  assert(indivID2 / 2 < individuals.size());
   assert(fromPosition < sequenceLength);
   assert(toPosition < sequenceLength);
 
