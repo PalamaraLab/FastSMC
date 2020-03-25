@@ -37,6 +37,7 @@ public:
   int sites;
   int totalSamplesBound;
   bool decodingUsesCSFS = false;
+  bool mJobbing = false;
   std::vector<float> geneticPositions;
   std::vector<int> physicalPositions;
   std::vector<bool> siteWasFlippedDuringFolding;
@@ -45,7 +46,7 @@ public:
 
 
   // Variables relating to FastSMC
-  int chrNumber;
+  int chrNumber = 0;
   unsigned int windowSize; // window size in triangles for each job
   unsigned int w_i;        // window id for ind_i for jobs
   unsigned int w_j;        // window id for ind_j for jobs
@@ -66,10 +67,11 @@ public:
   Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID = -1, int jobs = -1);
 
-  Data(const std::string& inFileRoot, unsigned int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
+  Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID, int jobs, std::vector<std::pair<unsigned long int, double>>& genetic_map);
 
   static int countHapLines(std::string inFileRoot);
+  static int countSamplesLines(std::string inFileRoot);
 
 private:
 
@@ -85,15 +87,13 @@ private:
   bool readSample(unsigned linesProcessed, int jobID, int jobs);
 
   /**
-   * Read the samples file and populate members `FamIDList`, `IIDList` and `famAndIndNameList`, returning the number
-   * of lines processed in the samples file.
+   * Read the samples file and populate members `FamIDList`, `IIDList` and `famAndIndNameList`.
    *
    * @param inFileRoot location of input files
    * @param jobID the jobID which defaults to -1 indicating no jobbing
    * @param jobs the number of jobs which defaults to -1 indicating no jobbing
-   * @return number of lines processed in the samples file
    */
-  unsigned long readSamplesList(const std::string& inFileRoot, int jobID, int jobs);
+  void readSamplesList(const std::string& inFileRoot, int jobID, int jobs);
 
   void readHaps(std::string inFileRoot, bool foldToMinorAlleles);
   void readHaps(std::string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,

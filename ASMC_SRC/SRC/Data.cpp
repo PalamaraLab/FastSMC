@@ -34,8 +34,32 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
     : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
       siteWasFlippedDuringFolding(_sites, false)
 {
-  sampleSize = readSamplesList(inFileRoot, jobID, jobs);
+  // Determine if there is jobbing based on whether the jobID and jobs are at their default values
+  mJobbing = (jobID != -1) && (jobs != -1);
+  sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
+
+  if(mJobbing) {
+    // the window size is the length of a square, in terms of #ind
+    const auto floatSampleSize = static_cast<double>(sampleSize);
+    windowSize = ceil(sqrt((2. * pow(floatSampleSize, 2) - floatSampleSize) * 2. / jobs));
+    if (windowSize % 2 != 0) {
+      windowSize++;
+    }
+
+    w_i = 1; // window for individual i
+    int cpt_job = 1;
+    int cpt_tot_job = 1;
+    while (cpt_tot_job < jobID) {
+      w_i++;
+      cpt_job = cpt_job + 2;
+      cpt_tot_job = cpt_tot_job + cpt_job;
+    }
+    w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
+    is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1;
+  }
+
+  readSamplesList(inFileRoot, jobID, jobs);
 
   for (auto i = 0ul; i < famAndIndNameList.size(); i++) {
     individuals.emplace_back(sites);
@@ -51,31 +75,41 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   }
 }
 
-Data::Data(const string& inFileRoot, unsigned int _sites, int _totalSamplesBound, bool foldToMinorAlleles,
-           bool _decodingUsesCSFS, int jobID, int jobs, vector<pair<unsigned long int, double>>& genetic_map)
+Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
+           const bool _decodingUsesCSFS, const int jobID, const int jobs,
+           vector<pair<unsigned long int, double>>& genetic_map)
     : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
       siteWasFlippedDuringFolding(_sites, false)
 {
-  sampleSize = readSamplesList(inFileRoot, jobID, jobs);
+  // Determine if there is jobbing based on whether the jobID and jobs are at their default values
+  mJobbing = (jobID != -1) && (jobs != -1);
+  sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
 
-  windowSize = ceil(sqrt((2 * pow(sampleSize, 2) - sampleSize) * 2 / jobs)); // length of a square, in term of #ind
-  if (windowSize % 2 != 0) {
-    windowSize++;
+  if(mJobbing) {
+    // the window size is the length of a square, in terms of #ind
+    const auto floatSampleSize = static_cast<double>(sampleSize);
+    windowSize = ceil(sqrt((2. * pow(floatSampleSize, 2) - floatSampleSize) * 2. / jobs));
+    if (windowSize % 2 != 0) {
+      windowSize++;
+    }
+
+    w_i = 1; // window for individual i
+    int cpt_job = 1;
+    int cpt_tot_job = 1;
+    while (cpt_tot_job < jobID) {
+      w_i++;
+      cpt_job = cpt_job + 2;
+      cpt_tot_job = cpt_tot_job + cpt_job;
+    }
+    w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
+    is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1;
   }
-  w_i = 1; // window for individual i
-  int cpt_job = 1;
-  int cpt_tot_job = 1;
-  while (cpt_tot_job < jobID) {
-    w_i++;
-    cpt_job = cpt_job + 2;
-    cpt_tot_job = cpt_tot_job + cpt_job;
-  }
-  w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
-  is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1 ? true : false;
+
+  readSamplesList(inFileRoot, jobID, jobs);
 
   // and the number of sites
-  for (uint i = 0; i < FamIDList.size(); i++) {
+  for (auto i = 0ul; i < famAndIndNameList.size(); i++) {
     individuals.emplace_back(sites);
   }
 
@@ -188,7 +222,7 @@ int Data::readMap(string inFileRoot)
   return pos;
 }
 
-unsigned long Data::readSamplesList(const string& inFileRoot, int jobID, int jobs)
+void Data::readSamplesList(const string& inFileRoot, int jobID, int jobs)
 {
   string line;
   // Read samples file
@@ -225,13 +259,12 @@ unsigned long Data::readSamplesList(const string& inFileRoot, int jobID, int job
   }
   bufferedReader.close();
   cout << "Read " << linesProcessed << " samples." << endl;
-  return linesProcessed;
 }
 
 bool Data::readSample(const unsigned linesProcessed, const int jobID, const int jobs) {
 
-  // If ASMC we read all samples; jobID and jobs being set to -1 indicates this
-  if(jobID == -1 && jobs == -1) {
+  // If we are not doing jobbing we read all samples
+  if(!mJobbing) {
     return true;
   } else {
     return (linesProcessed >= (uint)((w_i - 1) * windowSize) / 2 && linesProcessed < (uint)(w_i * windowSize) / 2) ||
@@ -263,6 +296,37 @@ int Data::countHapLines(string inFileRoot)
     pos++;
   }
   return pos;
+}
+
+int Data::countSamplesLines(string inFileRoot)
+{
+  FileUtils::AutoGzIfstream sampleBr;
+  if (FileUtils::fileExists(inFileRoot + ".samples")) {
+    sampleBr.openOrExit(inFileRoot + ".samples");
+  } else if (FileUtils::fileExists(inFileRoot + ".sample")) {
+    sampleBr.openOrExit(inFileRoot + ".sample");
+  } else {
+    cerr << "ERROR. Could not find sample file in " + inFileRoot + ".sample or " + inFileRoot + ".samples" << endl;
+    exit(1);
+  }
+  string line;
+  int cpt = 0;
+  while (getline(sampleBr, line)) {
+    vector<string> splitStr;
+    istringstream iss(line);
+    string buf;
+    while (iss >> buf)
+      splitStr.push_back(buf);
+    // Skip first two lines (header) if present
+    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing") ||
+        (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
+      continue;
+    }
+
+    cpt++;
+  }
+  sampleBr.close();
+  return cpt;
 }
 
 void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
