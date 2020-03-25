@@ -346,23 +346,27 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
          << endl;
     exit(1);
   }
-  string line;
-  int pos = 0, monomorphic = 0;
+
+  unsigned long pos = 0ul;
+  unsigned long monomorphic = 0ul;
   totalSamplesCount = vector<int>(sites);
   derivedAlleleCounts = vector<int>(sites);
   string chr, snpID;
-  int bp;
-  string alleleA, alleleB;
+  unsigned long bp;
+  string line;
+  string alleleA;
+  string alleleB;
+
   while (hapsBr >> chr >> snpID >> bp >> alleleA >> alleleB) {
     getline(hapsBr, line);
     int DAcount = 0;
-    if (!(line.length() == 4 * famAndIndNameList.size() || line.length() == 4 * famAndIndNameList.size() + 1)) {
+    if (!(line.length() == 4 * sampleSize || line.length() == 4 * sampleSize + 1)) {
       cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
            << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
       cerr << "\thaps line is: " << line << endl;
-
       exit(1);
     }
+
     int totalSamples = static_cast<int>(2 * famAndIndNameList.size());
     totalSamplesCount[pos] = totalSamples;
     for (uint i = 0; i < 2 * famAndIndNameList.size(); i++) {
@@ -384,6 +388,7 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
         exit(1);
       }
     }
+
     if (foldToMinorAlleles) {
       derivedAlleleCounts[pos] = std::min(DAcount, totalSamples - DAcount);
     } else {
@@ -394,9 +399,11 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
     }
     pos++;
   }
+
   hapsBr.close();
-  cout << "Read data for " << famAndIndNameList.size() * 2 << " haploid samples and " << pos << " markers, "
-       << monomorphic << " of which are monomorphic." << endl;
+
+  cout << "Read data for " << sampleSize * 2 << " haploid samples and " << pos << " markers, " << monomorphic
+       << " of which are monomorphic. This job will focus on " << FamIDList.size() * 2 << " haploid samples." << endl;
 }
 
 void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,
@@ -417,21 +424,28 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
          << endl;
     exit(1);
   }
-  string line;
-  unsigned int pos = 0, monomorphic = 0;
+
+  unsigned long pos = 0ul;
+  unsigned long monomorphic = 0ul;
   totalSamplesCount = vector<int>(sites);
   derivedAlleleCounts = vector<int>(sites);
   string chr, snpID;
-  unsigned long int bp;
-  string alleleA, alleleB;
+  unsigned long bp;
+  string line;
+  string alleleA;
+  string alleleB;
+
   unsigned int cur_g = 0;
   while (hapsBr >> chr >> snpID >> bp >> alleleA >> alleleB) {
     getline(hapsBr, line);
     int DAcount = 0;
     if (!(line.length() == 4 * sampleSize || line.length() == 4 * sampleSize + 1)) {
-      cerr << "ERROR: haps line has wrong length." << endl;
+      cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
+           << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
+      cerr << "\thaps line is: " << line << endl;
       exit(1);
     }
+
     if (cur_g == 0) {
       // splitting inputs
       std::string delimiter = ":";
@@ -499,7 +513,9 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
     }
     pos++;
   }
+
   hapsBr.close();
+
   cout << "Read data for " << sampleSize * 2 << " haploid samples and " << pos << " markers, " << monomorphic
        << " of which are monomorphic. This job will focus on " << FamIDList.size() * 2 << " haploid samples." << endl;
 }
