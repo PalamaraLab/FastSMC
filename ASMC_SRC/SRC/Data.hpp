@@ -32,8 +32,8 @@ public:
   std::vector<std::string> famAndIndNameList;
   std::vector<Individual> individuals;
 
-  int sampleSize;
-  int haploidSampleSize;
+  unsigned long sampleSize;
+  unsigned long haploidSampleSize;
   int sites;
   int totalSamplesBound;
   bool decodingUsesCSFS = false;
@@ -52,21 +52,48 @@ public:
   bool is_j_above_diag;
   std::unordered_map<int, unsigned int> physicalPositionsMap; // map where key=physicalPosition, value=indexPosition
 
+  /**
+   * Construct the data object
+   *
+   * @param inFileRoot location of input files
+   * @param numOfSites number of sites
+   * @param totalSamplesBound
+   * @param foldToMinorAlleles
+   * @param decodingUsesCSFS whether to decode using CSFS
+   * @param jobID the jobID which defaults to -1 indicating no jobbing
+   * @param jobs the number of jobs which defaults to -1 indicating no jobbing
+   */
+  Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
+       bool decodingUsesCSFS, int jobID = -1, int jobs = -1);
 
-  Data(std::string inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles, bool decodingUsesCSFS);
-  Data(std::string inFileRoot, unsigned int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
+  Data(const std::string& inFileRoot, unsigned int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID, int jobs, std::vector<std::pair<unsigned long int, double>>& genetic_map);
 
   static int countHapLines(std::string inFileRoot);
-  static int countSamplesLines(std::string inFileRoot);
-
-
 
 private:
 
-  void readSamplesList(std::string inFileRoot);
-  void readSamplesList(std::string inFileRoot, int jobID, int jobs);
+  /**
+   * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.
+   * ASMC will always return true, but FastSMC will determine whether to read a sample.
+   *
+   * @param linesProcessed the number of lines processed so far
+   * @param jobID the jobID, which will be the default value of -1 for ASMC
+   * @param jobs the number of jobs, which will be the default value of -1 for ASMC
+   * @return whether to read the sample
+   */
+  bool readSample(unsigned linesProcessed, int jobID, int jobs);
 
+  /**
+   * Read the samples file and populate members `FamIDList`, `IIDList` and `famAndIndNameList`, returning the number
+   * of lines processed in the samples file.
+   *
+   * @param inFileRoot location of input files
+   * @param jobID the jobID which defaults to -1 indicating no jobbing
+   * @param jobs the number of jobs which defaults to -1 indicating no jobbing
+   * @return number of lines processed in the samples file
+   */
+  unsigned long readSamplesList(const std::string& inFileRoot, int jobID, int jobs);
 
   void readHaps(std::string inFileRoot, bool foldToMinorAlleles);
   void readHaps(std::string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,

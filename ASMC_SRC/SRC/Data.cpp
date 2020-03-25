@@ -29,34 +29,35 @@
 
 using namespace std;
 
-Data::Data(string inFileRoot, int _sites, int _totalSamplesBound, bool foldToMinorAlleles, bool _decodingUsesCSFS)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
+Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
+           const bool _decodingUsesCSFS, const int jobID, const int jobs)
+    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
+      siteWasFlippedDuringFolding(_sites, false)
 {
-  readSamplesList(inFileRoot);
-  // now we have the sample sizes
-  sampleSize = static_cast<int>(famAndIndNameList.size());
-  haploidSampleSize = sampleSize * 2;
-  siteWasFlippedDuringFolding = vector<bool>(sites, false);
-  // and the number of sites
-  for (uint i = 0; i < famAndIndNameList.size(); i++) {
-    individuals.push_back(Individual(sites));
+  sampleSize = readSamplesList(inFileRoot, jobID, jobs);
+  haploidSampleSize = sampleSize * 2ul;
+
+  for (auto i = 0ul; i < famAndIndNameList.size(); i++) {
+    individuals.emplace_back(sites);
   }
+
   // now read all the data
   readHaps(inFileRoot, foldToMinorAlleles);
   readMap(inFileRoot);
+
   // make undistinguished counts
   if (decodingUsesCSFS) {
     makeUndistinguished(foldToMinorAlleles);
   }
 }
 
-Data::Data(string inFileRoot, unsigned int _sites, int _totalSamplesBound, bool foldToMinorAlleles,
+Data::Data(const string& inFileRoot, unsigned int _sites, int _totalSamplesBound, bool foldToMinorAlleles,
            bool _decodingUsesCSFS, int jobID, int jobs, vector<pair<unsigned long int, double>>& genetic_map)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
+    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
+      siteWasFlippedDuringFolding(_sites, false)
 {
-  sampleSize = countSamplesLines(inFileRoot);
-
-  siteWasFlippedDuringFolding = vector<bool>(sites, false);
+  sampleSize = readSamplesList(inFileRoot, jobID, jobs);
+  haploidSampleSize = sampleSize * 2ul;
 
   windowSize = ceil(sqrt((2 * pow(sampleSize, 2) - sampleSize) * 2 / jobs)); // length of a square, in term of #ind
   if (windowSize % 2 != 0) {
@@ -73,17 +74,15 @@ Data::Data(string inFileRoot, unsigned int _sites, int _totalSamplesBound, bool 
   w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
   is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1 ? true : false;
 
-  readSamplesList(inFileRoot, jobID, jobs); // now we have the sample sizes
-
   // and the number of sites
   for (uint i = 0; i < FamIDList.size(); i++) {
-    individuals.push_back(Individual(sites));
+    individuals.emplace_back(sites);
   }
 
   // now read all the data
   readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, genetic_map);
   // readMap(inFileRoot);
-  // may read freq file here
+
   // make undistinguished counts
   if (decodingUsesCSFS) {
     makeUndistinguished(foldToMinorAlleles);
@@ -189,7 +188,7 @@ int Data::readMap(string inFileRoot)
   return pos;
 }
 
-void Data::readSamplesList(string inFileRoot)
+unsigned long Data::readSamplesList(const string& inFileRoot, int jobID, int jobs)
 {
   string line;
   // Read samples file
@@ -203,6 +202,7 @@ void Data::readSamplesList(string inFileRoot)
     exit(1);
   }
 
+  unsigned long linesProcessed = 0u; // number of current line being processed
   while (getline(bufferedReader, line)) {
     vector<string> splitStr;
     istringstream iss(line);
@@ -214,56 +214,30 @@ void Data::readSamplesList(string inFileRoot)
         (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
       continue;
     }
-    string famId = splitStr[0];
-    string IId = splitStr[1];
-    string name = famId + "\t" + IId;
-    FamIDList.push_back(famId);
-    IIDList.push_back(IId);
-    famAndIndNameList.push_back(name);
-  }
-  bufferedReader.close();
-  // cout << "\tRead " << famAndIndNameList.size() << " samples." << endl;
-}
-
-void Data::readSamplesList(string inFileRoot, int jobID, int jobs)
-{
-  string line;
-  // Read samples file
-  FileUtils::AutoGzIfstream bufferedReader;
-  if (FileUtils::fileExists(inFileRoot + ".samples")) {
-    bufferedReader.openOrExit(inFileRoot + ".samples");
-  } else if (FileUtils::fileExists(inFileRoot + ".sample")) {
-    bufferedReader.openOrExit(inFileRoot + ".sample");
-  } else {
-    cerr << "ERROR. Could not find sample file in " + inFileRoot + ".sample or " + inFileRoot + ".samples" << endl;
-    exit(1);
-  }
-
-  unsigned int cpt = 0; // number of current line being processed
-  // BufferedReader bufferedReader = Utils.openFile(inFileRoot + ".samples");
-  while (getline(bufferedReader, line)) {
-    vector<string> splitStr;
-    istringstream iss(line);
-    string buf;
-    while (iss >> buf)
-      splitStr.push_back(buf);
-    // Skip first two lines (header) if present
-    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing") ||
-        (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
-      continue;
-    }
-    if ((cpt >= (uint)((w_i - 1) * windowSize) / 2 && cpt < (uint)(w_i * windowSize) / 2) ||
-        (cpt >= (uint)((w_j - 1) * windowSize) / 2 && cpt < (uint)(w_j * windowSize) / 2) ||
-        (jobs == jobID && cpt >= (uint)((w_j - 1) * windowSize) / 2)) {
+    if (readSample(linesProcessed, jobID, jobs)) {
       string famId = splitStr[0];
       string IId = splitStr[1];
       FamIDList.push_back(famId);
       IIDList.push_back(IId);
+      famAndIndNameList.push_back(famId + "\t" + IId);
     }
-    cpt++;
+    linesProcessed++;
   }
   bufferedReader.close();
-  cout << "Read " << cpt << " samples." << endl;
+  cout << "Read " << linesProcessed << " samples." << endl;
+  return linesProcessed;
+}
+
+bool Data::readSample(const unsigned linesProcessed, const int jobID, const int jobs) {
+
+  // If ASMC we read all samples; jobID and jobs being set to -1 indicates this
+  if(jobID == -1 && jobs == -1) {
+    return true;
+  } else {
+    return (linesProcessed >= (uint)((w_i - 1) * windowSize) / 2 && linesProcessed < (uint)(w_i * windowSize) / 2) ||
+           (linesProcessed >= (uint)((w_j - 1) * windowSize) / 2 && linesProcessed < (uint)(w_j * windowSize) / 2) ||
+           (jobs == jobID && linesProcessed >= (uint)((w_j - 1) * windowSize) / 2);
+  }
 }
 
 int Data::countHapLines(string inFileRoot)
@@ -289,37 +263,6 @@ int Data::countHapLines(string inFileRoot)
     pos++;
   }
   return pos;
-}
-
-int Data::countSamplesLines(string inFileRoot)
-{
-  FileUtils::AutoGzIfstream sampleBr;
-  if (FileUtils::fileExists(inFileRoot + ".samples")) {
-    sampleBr.openOrExit(inFileRoot + ".samples");
-  } else if (FileUtils::fileExists(inFileRoot + ".sample")) {
-    sampleBr.openOrExit(inFileRoot + ".sample");
-  } else {
-    cerr << "ERROR. Could not find sample file in " + inFileRoot + ".sample or " + inFileRoot + ".samples" << endl;
-    exit(1);
-  }
-  string line;
-  int cpt = 0;
-  while (getline(sampleBr, line)) {
-    vector<string> splitStr;
-    istringstream iss(line);
-    string buf;
-    while (iss >> buf)
-      splitStr.push_back(buf);
-    // Skip first two lines (header) if present
-    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing") ||
-        (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
-      continue;
-    }
-
-    cpt++;
-  }
-  sampleBr.close();
-  return cpt;
 }
 
 void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
