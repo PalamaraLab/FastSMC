@@ -17,14 +17,13 @@
 #ifndef ASMC_FASTSMC_HPP
 #define ASMC_FASTSMC_HPP
 
-#include "DecodingQuantities.hpp"
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
 namespace ASMC {
 
-void RunFastSMC();
+void RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm);
 
 }
 
