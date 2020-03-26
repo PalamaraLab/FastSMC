@@ -24,6 +24,7 @@
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
+#include "FastSMC.hpp"
 #include "FileUtils.hpp"
 #include "HMM.hpp"
 #include "Timer.hpp"
@@ -78,6 +79,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);
+
+  ASMC::RunFastSMC();
 
   const auto jobs = params.jobs;
   const auto jobID = params.jobInd;

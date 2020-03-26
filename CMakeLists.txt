@@ -47,6 +47,7 @@ set(ASMC_source
   ${ASMC_source_dir}/Data.cpp
   ${ASMC_source_dir}/DecodingParams.cpp
   ${ASMC_source_dir}/DecodingQuantities.cpp
+  ${ASMC_source_dir}/FastSMC.cpp
   ${ASMC_source_dir}/FileUtils.cpp
   ${ASMC_source_dir}/Individual.cpp
   ${ASMC_source_dir}/MemoryUtils.cpp
@@ -63,6 +64,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/Data.hpp
   ${ASMC_source_dir}/DecodingParams.hpp
   ${ASMC_source_dir}/DecodingQuantities.hpp
+  ${ASMC_source_dir}/FastSMC.hpp
   ${ASMC_source_dir}/FileUtils.hpp
   ${ASMC_source_dir}/Individual.hpp
   ${ASMC_source_dir}/MemoryUtils.hpp
