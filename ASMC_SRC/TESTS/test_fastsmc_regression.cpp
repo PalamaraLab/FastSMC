@@ -15,9 +15,7 @@
 
 #include "catch.hpp"
 
-#include <cstdint>
 #include <iostream>
-#include <list>
 #include <string>
 #include <vector>
 
