@@ -24,8 +24,16 @@
 #include "HASHING/ExtendHash.hpp"
 #include "HASHING/Individuals.hpp"
 #include "HASHING/SeedHash.hpp"
+#include "Timer.hpp"
 
 void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) {
+
+  Timer timer;
+
+  if(!params.GERMLINE) {
+    std::cerr << "This method expects params.GERMLINE to be true. Exiting." << std::endl;
+    exit(1);
+  }
 
   constexpr int CONST_READ_AHEAD = 10;
   constexpr int WORD_SIZE = 64;
@@ -72,13 +80,23 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
       ss.clear();
       ss.str(line);
       ss >> map_field[0] >> map_field[1];
+
       if (isSampleInJob(linectr)) {
-        all_ind.emplace_back(64, 10, 2 * linectr);
-        all_ind.emplace_back(64, 10, 2 * linectr + 1);
+        if (PAR_HAPLOID) {
+          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr);
+          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr + 1);
+        } else {
+          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
+          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
+        }
       }
+
       linectr++;
     }
     file_samp.close();
+
+    std::cerr << all_ind.size() / 2 << " sample identifiers read" << std::endl;
+
   }
 
   const auto PAR_MIN_MATCH = params.min_m;
@@ -160,6 +178,8 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
         if (snp_ctr % WORD_SIZE == 0) {
           if (++GLOBAL_READ_WORDS >= CONST_READ_AHEAD) {
             break;
+          } else {
+            std::cerr << "*** loading word buffer " << GLOBAL_READ_WORDS << " / " << CONST_READ_AHEAD << std::endl;
           }
           snp_ctr = 0;
         }
@@ -183,6 +203,7 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
                              GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD, is_j_above_diag);
         extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD, PAR_MIN_MATCH, all_markers, hmm);
       } else {
+        std::cerr << "low complexity word - " << cur_seeds << " - skipping" << std::endl;
         extend.extendAllPairsTo(GLOBAL_CURRENT_WORD);
       }
 
@@ -198,7 +219,10 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
     file_haps.close();
 
     hmm.finishFromGERMLINE();
+    std::cerr << "processed " << GLOBAL_CURRENT_WORD * WORD_SIZE << " / " << all_markers.size() << " SNPs" << std::endl;
+
   }
 
+  printf("\n*** Inference done in %.3f seconds. ***\n\n", timer.update_time());
 }
 
