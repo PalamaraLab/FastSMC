@@ -76,6 +76,11 @@ public:
 private:
 
   /**
+   * TODO: harmonise functionality in this class so that this switch is not necessary
+   */
+  bool TODO_REMOVE_FASTSMC = false;
+
+  /**
    * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.
    * ASMC will always return true, but FastSMC will determine whether to read a sample.
    *
@@ -100,6 +105,16 @@ private:
                 std::vector<std::pair<unsigned long int, double>>& genetic_map);
 
   int readMap(std::string inFileRoot);
+
+  /**
+   * Subsumed functionality from FastSMC to read genetic map as a vector of pairs.
+   * TODO: can this be harmonised with the other readMap method?
+   * @param inFileRoot
+   * @return
+   */
+  std::vector<std::pair<unsigned long, double>> readMapFastSMC(const std::string& inFileRoot);
+
+
   void makeUndistinguished(bool foldToMinorAlleles);
   std::vector<int> totalSamplesCount;
   std::vector<int> derivedAlleleCounts;

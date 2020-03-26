@@ -78,32 +78,9 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 
   // *** read genetic map
   std::vector<std::pair<unsigned long, double>> genetic_map;
-  {
-    std::ifstream file_genm(params.map);
-    std::string map_field[3];
-    std::string line;
-    std::stringstream ss;
-    unsigned int cur_g = 0;
-
-    while (getline(file_genm, line)) {
-      ss.clear();
-      ss.str(line);
-      ss >> map_field[0] >> map_field[1] >> map_field[2];
-      if (map_field[0] == "position" || map_field[0].empty())
-        continue;
-      genetic_map.emplace_back(stol(map_field[0]), stod(map_field[2]));
-      cur_g++;
-    }
-
-    file_genm.close();
-  }
 
   Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
             params.jobInd, params.jobs, genetic_map);
-
-  // freeing memory
-  genetic_map.clear();
-  std::vector<std::pair<unsigned long int, double>>().swap(genetic_map);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);

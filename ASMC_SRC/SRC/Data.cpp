@@ -39,6 +39,9 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
 
+  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
+  TODO_REMOVE_FASTSMC = mJobbing;
+
   if(mJobbing) {
     // the window size is the length of a square, in terms of #ind
     const auto floatSampleSize = static_cast<double>(sampleSize);
@@ -73,6 +76,41 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   if (decodingUsesCSFS) {
     makeUndistinguished(foldToMinorAlleles);
   }
+}
+
+// *** read genetic map
+vector<pair<unsigned long, double>> Data::readMapFastSMC(const string& inFileRoot)
+{
+  FileUtils::AutoGzIfstream mapFileStream;
+  if (FileUtils::fileExists(inFileRoot + ".map.gz")) {
+    mapFileStream.openOrExit(inFileRoot + ".map.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".map")) {
+    mapFileStream.openOrExit(inFileRoot + ".map");
+  } else {
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".map.gz or " + inFileRoot + ".map" << endl;
+    exit(1);
+  }
+
+  std::vector<std::pair<unsigned long, double>> geneticMap;
+
+  string map_field[3];
+  string line;
+  stringstream ss;
+  unsigned int cur_g = 0;
+
+  while (getline(mapFileStream, line)) {
+    ss.clear();
+    ss.str(line);
+    ss >> map_field[0] >> map_field[1] >> map_field[2];
+    if (map_field[0] == "position" || map_field[0].empty())
+      continue;
+    geneticMap.emplace_back(stol(map_field[0]), stod(map_field[2]));
+    cur_g++;
+  }
+
+  mapFileStream.close();
+
+  return geneticMap;
 }
 
 Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
@@ -114,8 +152,8 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   }
 
   // now read all the data
-  readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, genetic_map);
-  // readMap(inFileRoot);
+  auto geneticMap = readMapFastSMC(inFileRoot);
+  readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
 
   // make undistinguished counts
   if (decodingUsesCSFS) {
