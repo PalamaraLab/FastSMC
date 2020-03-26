@@ -39,9 +39,6 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
 
-  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
-  TODO_REMOVE_FASTSMC = mJobbing;
-
   if(mJobbing) {
     // the window size is the length of a square, in terms of #ind
     const auto floatSampleSize = static_cast<double>(sampleSize);
@@ -68,9 +65,15 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
     individuals.emplace_back(sites);
   }
 
-  // now read all the data
-  readHaps(inFileRoot, foldToMinorAlleles);
-  readMap(inFileRoot);
+  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
+  TODO_REMOVE_FASTSMC = mJobbing;
+  if(TODO_REMOVE_FASTSMC) {
+    vector<pair<unsigned long, double>> geneticMap = readMapFastSMC(inFileRoot);
+    readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
+  } else {
+    readHaps(inFileRoot, foldToMinorAlleles);
+    readMap(inFileRoot);
+  }
 
   // make undistinguished counts
   if (decodingUsesCSFS) {
@@ -111,54 +114,6 @@ vector<pair<unsigned long, double>> Data::readMapFastSMC(const string& inFileRoo
   mapFileStream.close();
 
   return geneticMap;
-}
-
-Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
-           const bool _decodingUsesCSFS, const int jobID, const int jobs,
-           vector<pair<unsigned long int, double>>& genetic_map)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
-      siteWasFlippedDuringFolding(_sites, false)
-{
-  // Determine if there is jobbing based on whether the jobID and jobs are at their default values
-  mJobbing = (jobID != -1) && (jobs != -1);
-  sampleSize = countSamplesLines(inFileRoot);
-  haploidSampleSize = sampleSize * 2ul;
-
-  if(mJobbing) {
-    // the window size is the length of a square, in terms of #ind
-    const auto floatSampleSize = static_cast<double>(sampleSize);
-    windowSize = ceil(sqrt((2. * pow(floatSampleSize, 2) - floatSampleSize) * 2. / jobs));
-    if (windowSize % 2 != 0) {
-      windowSize++;
-    }
-
-    w_i = 1; // window for individual i
-    int cpt_job = 1;
-    int cpt_tot_job = 1;
-    while (cpt_tot_job < jobID) {
-      w_i++;
-      cpt_job = cpt_job + 2;
-      cpt_tot_job = cpt_tot_job + cpt_job;
-    }
-    w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
-    is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1;
-  }
-
-  readSamplesList(inFileRoot, jobID, jobs);
-
-  // and the number of sites
-  for (auto i = 0ul; i < famAndIndNameList.size(); i++) {
-    individuals.emplace_back(sites);
-  }
-
-  // now read all the data
-  auto geneticMap = readMapFastSMC(inFileRoot);
-  readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
-
-  // make undistinguished counts
-  if (decodingUsesCSFS) {
-    makeUndistinguished(foldToMinorAlleles);
-  }
 }
 
 // unoptimized sampling of hypergeometric

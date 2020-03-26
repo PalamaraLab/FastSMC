@@ -73,14 +73,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   const auto sequenceLength = Data::countHapLines(params.inFileRoot);
 
-  FileUtils::AutoGzIfstream file_haps;
-  file_haps.openOrExit(params.inFileRoot + ".hap.gz");
-
-  // *** read genetic map
-  std::vector<std::pair<unsigned long, double>> genetic_map;
-
   Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs, genetic_map);
+            params.jobInd, params.jobs);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);
@@ -134,6 +128,9 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   }
 
   {
+    FileUtils::AutoGzIfstream file_haps;
+    file_haps.openOrExit(params.inFileRoot + ".hap.gz");
+
     const auto num_ind_tot = data.sampleSize * 2;
     const auto num_ind = all_ind.size();
 

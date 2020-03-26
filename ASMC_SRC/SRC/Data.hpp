@@ -67,9 +67,6 @@ public:
   Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID = -1, int jobs = -1);
 
-  Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
-       bool decodingUsesCSFS, int jobID, int jobs, std::vector<std::pair<unsigned long int, double>>& genetic_map);
-
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
 
@@ -112,7 +109,7 @@ private:
    * @param inFileRoot
    * @return
    */
-  std::vector<std::pair<unsigned long, double>> readMapFastSMC(const std::string& inFileRoot);
+  static std::vector<std::pair<unsigned long, double>> readMapFastSMC(const std::string& inFileRoot);
 
 
   void makeUndistinguished(bool foldToMinorAlleles);
