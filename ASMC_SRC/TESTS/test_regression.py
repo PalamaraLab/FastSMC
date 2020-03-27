@@ -76,8 +76,8 @@ class TestFastSMCRegression(unittest.TestCase):
 
     def test_regression(self):
 
-        original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output.ibd.gz'))
-        generated_text = np.loadtxt(self.params.outFileRoot + ".1.1.FastSMC.ibd.gz")
+        original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output.ibd.gz'), usecols=(7, 8, 9, 10, 11))
+        generated_text = np.loadtxt(self.params.outFileRoot + ".1.1.FastSMC.ibd.gz", usecols=(7, 8, 9, 10, 11))
 
         self.assertEqual(original_text.shape, generated_text.shape)
         self.assertEqual(np.allclose(original_text, generated_text), True)
