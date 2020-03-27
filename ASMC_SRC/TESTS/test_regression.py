@@ -44,7 +44,7 @@ class TestFastSMCRegression(unittest.TestCase):
 
         # Create decoding params object with required options
         self.params = DecodingParams()
-        self.params.decodingQuantFile = os.path.join(self.file_dir, f'{self.name_prefix}.decodingQuantities.gz')
+        self.params.decodingQuantFile = os.path.join(self.file_dir, '{}.decodingQuantities.gz'.format(self.name_prefix))
         self.params.inFileRoot = os.path.join(self.file_dir, self.name_prefix)
         self.params.outFileRoot = os.path.join('/tmp/FastSMCresults')
         self.params.decodingModeString = 'array'
