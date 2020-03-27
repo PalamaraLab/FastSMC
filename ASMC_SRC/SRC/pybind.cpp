@@ -24,6 +24,7 @@
 #include "Data.hpp"
 #include "DecodingQuantities.hpp"
 #include "DecodingParams.hpp"
+#include "FastSMC.hpp"
 
 PYBIND11_MAKE_OPAQUE(std::vector<bool>)
 PYBIND11_MAKE_OPAQUE(std::vector<float>)
@@ -120,6 +121,7 @@ PYBIND11_MODULE(pyASMC, m) {
                 "expectedCoalTimesFile"_a = "",
                 "withinOnly"_a = false,
                 "doMajorMinorPosteriorSums"_a = false)
+        .def(py::init<>())
         .def_readwrite("inFileRoot", &DecodingParams::inFileRoot)
         .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
         .def_readwrite("outFileRoot", &DecodingParams::outFileRoot)
@@ -134,7 +136,15 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("useAncestral", &DecodingParams::useAncestral)
         .def_readwrite("skipCSFSdistance", &DecodingParams::skipCSFSdistance)
         .def_readwrite("noBatches", &DecodingParams::noBatches)
+        .def_readwrite("batchSize", &DecodingParams::batchSize)
+        .def_readwrite("recallThreshold", &DecodingParams::recallThreshold)
+        .def_readwrite("min_m", &DecodingParams::min_m)
+        .def_readwrite("GERMLINE", &DecodingParams::GERMLINE)
+        .def_readwrite("BIN_OUT", &DecodingParams::BIN_OUT)
+        .def_readwrite("time", &DecodingParams::time)
+        .def_readwrite("noConditionalAgeEstimates", &DecodingParams::noConditionalAgeEstimates)
         .def_readwrite("doPosteriorSums", &DecodingParams::doPosteriorSums)
+        .def_readwrite("doPerPairMAP", &DecodingParams::doPerPairMAP)
         .def_readwrite("doPerPairPosteriorMean", &DecodingParams::doPerPairPosteriorMean)
         .def_readwrite("expectedCoalTimesFile", &DecodingParams::expectedCoalTimesFile)
         .def_readwrite("withinOnly", &DecodingParams::withinOnly)
@@ -142,9 +152,9 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
 
     py::class_<Data>(m, "Data")
-        .def(py::init<std::string, int, int, bool, bool>(),
+        .def(py::init<const std::string&, int, int, bool, bool, int, int>(),
              "inFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
-             "foldToMinorAlleles"_a, "decodingUsesCSFS"_a)
+             "foldToMinorAlleles"_a, "decodingUsesCSFS"_a, "jobID"_a = -1, "jobs"_a = -1)
         .def_static("countHapLines", &Data::countHapLines)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)

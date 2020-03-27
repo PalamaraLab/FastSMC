@@ -43,7 +43,6 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   params.decodingMode = DecodingMode::arrayFolded;
   params.foldData = true;
   params.usingCSFS = true;
-  params.map = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/chr2.map";
   params.batchSize = 32;
   params.recallThreshold = 3;
   params.min_m = 1.5;
