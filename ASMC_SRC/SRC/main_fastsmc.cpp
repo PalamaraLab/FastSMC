@@ -12,8 +12,6 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  srand(1234);
-
   // Parse input arguments
   DecodingParams params;
   if (!params.processCommandLineArgsFastSMC(argc, argv)) {
@@ -30,7 +28,10 @@ int main(int argc, char* argv[])
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);
 
-  ASMC::FastSMC fastSMC;
+  const int WORD_SIZE = 64;
+  const int CONST_READ_AHEAD = 10;
+  const bool PAR_HAPLOID = true;
+  ASMC::FastSMC fastSMC(WORD_SIZE, CONST_READ_AHEAD, PAR_HAPLOID);
   fastSMC.run(params, data, hmm);
 
   return 0;

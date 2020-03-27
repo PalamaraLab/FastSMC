@@ -27,12 +27,12 @@ class FastSMC
 {
 
 private:
-  int CONST_READ_AHEAD = 10;
-  int WORD_SIZE = 64;
-  bool PAR_HAPLOID = true;
+  int mHashingWordSize = 64;
+  int mConstReadAhead = 10;
+  bool mHaploid = true;
 
 public:
-  FastSMC();
+  explicit FastSMC(int hashingWordSize = 64, int constReadAhead = 10, bool haploid = true);
 
   void run(const DecodingParams& params, const Data& data, HMM& hmm);
 };

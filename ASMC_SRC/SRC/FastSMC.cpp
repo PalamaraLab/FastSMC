@@ -26,8 +26,9 @@
 #include "HASHING/SeedHash.hpp"
 #include "Timer.hpp"
 
-ASMC::FastSMC::FastSMC() {
-  std::cout << "FastSMC constructor" << std::endl;
+ASMC::FastSMC::FastSMC(const int hashingWordSize, const int constReadAhead, const bool haploid)
+    : mHashingWordSize{hashingWordSize}, mConstReadAhead{constReadAhead}, mHaploid{haploid}
+{
 }
 
 void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm) {
@@ -82,12 +83,12 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
       ss >> map_field[0] >> map_field[1];
 
       if (isSampleInJob(linectr)) {
-        if (PAR_HAPLOID) {
-          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr);
-          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr + 1);
+        if (mHaploid) {
+          all_ind.emplace_back(mHashingWordSize, mConstReadAhead, 2 * linectr);
+          all_ind.emplace_back(mHashingWordSize, mConstReadAhead, 2 * linectr + 1);
         } else {
-          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
-          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
+          all_ind.emplace_back(mHashingWordSize, mConstReadAhead,2 * linectr);
+          all_ind.emplace_back(mHashingWordSize, mConstReadAhead,2 * linectr);
         }
       }
 
@@ -114,7 +115,7 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
 
     // Storage for seeds & extensions
     SeedHash seeds;
-    ExtendHash extend(WORD_SIZE, num_ind, PAR_HAPLOID);
+    ExtendHash extend(mHashingWordSize, num_ind, mHaploid);
 
     const std::vector<float>& all_markers = data.geneticPositions;
 
@@ -175,11 +176,11 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
         }
         snp_ctr++;
 
-        if (snp_ctr % WORD_SIZE == 0) {
-          if (++GLOBAL_READ_WORDS >= CONST_READ_AHEAD) {
+        if (snp_ctr % mHashingWordSize == 0) {
+          if (++GLOBAL_READ_WORDS >= mConstReadAhead) {
             break;
           } else {
-            std::cerr << "*** loading word buffer " << GLOBAL_READ_WORDS << " / " << CONST_READ_AHEAD << std::endl;
+            std::cerr << "*** loading word buffer " << GLOBAL_READ_WORDS << " / " << mConstReadAhead << std::endl;
           }
           snp_ctr = 0;
         }
@@ -219,8 +220,8 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
     file_haps.close();
 
     hmm.finishFromGERMLINE();
-    std::cerr << "processed " << GLOBAL_CURRENT_WORD * WORD_SIZE << " / " << all_markers.size() << " SNPs" << std::endl;
-
+    std::cerr << "processed " << GLOBAL_CURRENT_WORD * mHashingWordSize << " / " << all_markers.size() << " SNPs"
+              << std::endl;
   }
 
   printf("\n*** Inference done in %.3f seconds. ***\n\n", timer.update_time());
