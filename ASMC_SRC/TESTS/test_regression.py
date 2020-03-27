@@ -61,17 +61,22 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.doPerPairMAP = True
         self.params.doPerPairPosteriorMean = True
 
-        self.decodingQuantities = DecodingQuantities(self.params.decodingQuantFile)
-        self.sequenceLength = Data.countHapLines(self.params.inFileRoot)
+        decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
+        sequence_length = Data.countHapLines(self.params.inFileRoot)
 
-        self.data = Data(self.params.inFileRoot, self.sequenceLength, self.decodingQuantities.CSFSSamples,
-                         self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs)
+        data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
+                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs)
 
-        self.hmm = HMM(self.data, self.decodingQuantities, self.params, not self.params.noBatches, 1)
-        self.hmm.decodeAll(self.params.jobs, self.params.jobInd)
+        hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
+        hmm.decodeAll(self.params.jobs, self.params.jobInd)
 
-        self.FastSMC = FastSMC()
-        self.FastSMC.run(self.params, self.data, self.hmm)
+        fast_smc = FastSMC()
+        fast_smc.run(self.params, data, hmm)
 
     def test_regression(self):
-        pass
+
+        original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output.ibd.gz'))
+        generated_text = np.loadtxt(self.params.outFileRoot + ".1.1.FastSMC.ibd.gz")
+
+        self.assertEqual(original_text.shape, generated_text.shape)
+        self.assertEqual(np.allclose(original_text, generated_text), True)
