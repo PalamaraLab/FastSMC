@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -30,7 +31,7 @@
 using namespace std;
 
 Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
-           const bool _decodingUsesCSFS, const int jobID, const int jobs)
+           const bool _decodingUsesCSFS, const int jobID, const int jobs, const bool useKnownSeed)
     : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
       siteWasFlippedDuringFolding(_sites, false)
 {
@@ -38,6 +39,13 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
   mJobbing = (jobID != -1) && (jobs != -1);
   sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
+
+  if (useKnownSeed) {
+    std::srand(1234u);
+  } else {
+    std::random_device rd;
+    std::srand(rd());
+  }
 
   if(mJobbing) {
     // the window size is the length of a square, in terms of #ind

@@ -31,8 +31,6 @@
 
 TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
 {
-  srand(1234);
-
   DecodingParams params;
   params.decodingQuantFile = ASMC_FILE_DIR
       "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array.decodingQuantities.gz";
@@ -57,8 +55,9 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   const auto sequenceLength = Data::countHapLines(params.inFileRoot);
 
+  const bool useKnownSeed = true;
   Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs);
+            params.jobInd, params.jobs, useKnownSeed);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);

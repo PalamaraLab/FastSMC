@@ -63,9 +63,10 @@ public:
    * @param decodingUsesCSFS whether to decode using CSFS
    * @param jobID the jobID which defaults to -1 indicating no jobbing
    * @param jobs the number of jobs which defaults to -1 indicating no jobbing
+   * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
   Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
-       bool decodingUsesCSFS, int jobID = -1, int jobs = -1);
+       bool decodingUsesCSFS, int jobID = -1, int jobs = -1, bool useKnownSeed = false);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);

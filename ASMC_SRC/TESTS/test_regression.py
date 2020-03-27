@@ -64,8 +64,9 @@ class TestFastSMCRegression(unittest.TestCase):
         decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
         sequence_length = Data.countHapLines(self.params.inFileRoot)
 
+        use_known_seed = True
         data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
-                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs)
+                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
 
         hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
         hmm.decodeAll(self.params.jobs, self.params.jobInd)
