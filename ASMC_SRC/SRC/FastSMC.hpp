@@ -13,7 +13,6 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #ifndef ASMC_FASTSMC_HPP
 #define ASMC_FASTSMC_HPP
 
@@ -21,10 +20,23 @@
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
-namespace ASMC {
+namespace ASMC
+{
 
-void RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm);
+class FastSMC
+{
 
-}
+private:
+  int CONST_READ_AHEAD = 10;
+  int WORD_SIZE = 64;
+  bool PAR_HAPLOID = true;
+
+public:
+  FastSMC();
+
+  void run(const DecodingParams& params, const Data& data, HMM& hmm);
+};
+
+} // namespace ASMC
 
 #endif // ASMC_FASTSMC_HPP

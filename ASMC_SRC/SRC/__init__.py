@@ -25,7 +25,8 @@ from .pyASMC import (  # NOQA
     DecodingQuantities,
     DecodingParams,
     Data,
-    HMM
+    HMM,
+    FastSMC,
     )
 
 ASMCReturnValues = collections.namedtuple(

@@ -30,6 +30,8 @@ int main(int argc, char* argv[])
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);
 
-  ASMC::RunFastSMC(params, data, hmm);
+  ASMC::FastSMC fastSMC;
+  fastSMC.run(params, data, hmm);
+
   return 0;
 }

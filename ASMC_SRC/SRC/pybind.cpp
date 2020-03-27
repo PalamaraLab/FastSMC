@@ -39,6 +39,7 @@ PYBIND11_MAKE_OPAQUE(PairObservations)
 PYBIND11_MAKE_OPAQUE(Individual)
 PYBIND11_MAKE_OPAQUE(Data)
 PYBIND11_MAKE_OPAQUE(HMM)
+PYBIND11_MAKE_OPAQUE(ASMC::FastSMC)
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -183,6 +184,9 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("getBatchBuffer", &HMM::getBatchBuffer)
         .def("finishDecoding", &HMM::finishDecoding)
         .def("makePairObs", &HMM::makePairObs, "iHap"_a, "ind1"_a, "jHap"_a, "ind2"_a);
+    py::class_<ASMC::FastSMC>(m, "FastSMC")
+        .def(py::init<>())
+        .def("run", &ASMC::FastSMC::run, "params"_a, "data"_a, "hmm"_a);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "inFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,

@@ -63,7 +63,8 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
   hmm.decodeAll(params.jobs, params.jobInd);
 
-  ASMC::RunFastSMC(params, data, hmm);
+  ASMC::FastSMC fastSMC;
+  fastSMC.run(params, data, hmm);
 
   SECTION("regression test")
   {

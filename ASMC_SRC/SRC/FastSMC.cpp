@@ -26,7 +26,11 @@
 #include "HASHING/SeedHash.hpp"
 #include "Timer.hpp"
 
-void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) {
+ASMC::FastSMC::FastSMC() {
+  std::cout << "FastSMC constructor" << std::endl;
+}
+
+void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm) {
 
   Timer timer;
 
@@ -34,10 +38,6 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
     std::cerr << "This method expects params.GERMLINE to be true. Exiting." << std::endl;
     exit(1);
   }
-
-  constexpr int CONST_READ_AHEAD = 10;
-  constexpr int WORD_SIZE = 64;
-  constexpr bool PAR_HAPLOID = true;
 
   std::vector<Individuals> all_ind;
 
@@ -84,7 +84,7 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
       if (isSampleInJob(linectr)) {
         if (PAR_HAPLOID) {
           all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr);
-          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr + 1);
+          all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD, 2 * linectr + 1);
         } else {
           all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
           all_ind.emplace_back(WORD_SIZE, CONST_READ_AHEAD,2 * linectr);
@@ -225,4 +225,3 @@ void ASMC::RunFastSMC(const DecodingParams& params, const Data& data, HMM& hmm) 
 
   printf("\n*** Inference done in %.3f seconds. ***\n\n", timer.update_time());
 }
-

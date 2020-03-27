@@ -8,6 +8,7 @@ from asmc import (
     DecodingParams,
     Data,
     DecodingMode,
+    FastSMC,
 )
 
 
@@ -68,6 +69,9 @@ class TestFastSMCRegression(unittest.TestCase):
 
         self.hmm = HMM(self.data, self.decodingQuantities, self.params, not self.params.noBatches, 1)
         self.hmm.decodeAll(self.params.jobs, self.params.jobInd)
+
+        self.FastSMC = FastSMC()
+        self.FastSMC.run(self.params, self.data, self.hmm)
 
     def test_regression(self):
         pass
