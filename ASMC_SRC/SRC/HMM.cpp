@@ -64,6 +64,10 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
     : data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams), scalingSkip(_scalingSkip),
       noBatches(!useBatches)
 {
+  if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
+    cerr << "Identification only is not yet supported Cannot have GERMLINE==true and FastSMC==false.\n";
+    exit(1);
+  }
 
   cout << "Will decode using " << MODE << " instruction set.\n\n";
   outFileRoot = decodingParams.outFileRoot;
@@ -76,11 +80,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   emission2minus0AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   prepareEmissions();
 
-
-
-
   m_batchSize = decodingParams.batchSize;
-
 
   for (int i = 0; i < m_batchSize; i++) {
     fromBatch.push_back(0);
