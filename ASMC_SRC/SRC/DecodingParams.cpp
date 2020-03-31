@@ -179,6 +179,8 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
   namespace po = boost::program_options;
 
+  FastSMC = true;
+
   string decodingModeString;
 
   po::options_description options;
