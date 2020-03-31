@@ -157,7 +157,9 @@ PairObservations HMM::makePairObs(int_least8_t iHap, unsigned int ind1, int_leas
   ret.jInd = ind2;
 
   //\todo: ideally all calls to makeBits would be in one place, but GERMLINE calls are in addToBatch and runLastBatch
-  if (!decodingParams.GERMLINE || noBatches) {
+  // because this is where from and to can be calculated
+  const bool makeBitsOnWholeSequence = !(decodingParams.FastSMC && decodingParams.GERMLINE);
+  if (makeBitsOnWholeSequence || noBatches) {
     makeBits(ret, 0, sequenceLength);
   }
 
@@ -555,7 +557,8 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
     unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
-    if (decodingParams.GERMLINE) {
+    const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.GERMLINE;
+    if (makeBitsOnlyOnSubsequence) {
       for (auto& obs : obsBatch) {
         makeBits(obs, from, to);
       }
@@ -596,7 +599,8 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
   unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
-  if (decodingParams.GERMLINE) {
+  const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.GERMLINE;
+  if (makeBitsOnlyOnSubsequence) {
     for (auto& obs : obsBatch) {
       makeBits(obs, from, to);
     }
