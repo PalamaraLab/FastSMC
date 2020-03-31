@@ -562,11 +562,15 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     }
 
     // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x m_batchSize]
-    decodeBatch(obsBatch, m_batchSize, m_batchSize, from, to);
+    decodeBatch(obsBatch, from, to);
 
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
-    if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
+    if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.FastSMC) {
       writePerPairOutput(m_batchSize, m_batchSize, obsBatch);
+    }
+
+    if (decodingParams.FastSMC) {
+      writePerPairOutputFastSMC(m_batchSize, m_batchSize, obsBatch);
     }
 
     // reinitializing batch variables
@@ -606,19 +610,22 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   auto paddedBatchSize = obsBatch.size();
 
   // decodeBatch saves posteriors into m_alphaBuffer [sequenceLength x states x paddedBatchSize]
-  decodeBatch(obsBatch, actualBatchSize, paddedBatchSize, from, to);
+  decodeBatch(obsBatch, from, to);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
 
-  if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.GERMLINE) {
+  if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.FastSMC) {
     writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
+  }
+
+  if (decodingParams.FastSMC) {
+    writePerPairOutputFastSMC(actualBatchSize, paddedBatchSize, obsBatch);
   }
 
   obsBatch.clear();
 }
 
 // decode a batch
-void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const std::size_t actualBatchSize,
-                      const std::size_t paddedBatchSize, const unsigned from, const unsigned to)
+void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned from, const unsigned to)
 {
 
   int curBatchSize = static_cast<int>(obsBatch.size());
@@ -703,10 +710,6 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const std::size_
   ticksCombine += t3 - t2;
   ALIGNED_FREE(obsIsZeroBatch);
   ALIGNED_FREE(obsIsTwoBatch);
-
-  if (decodingParams.GERMLINE) {
-    writePerPairOutputFastSMC(actualBatchSize, paddedBatchSize, obsBatch);
-  }
 }
 
 

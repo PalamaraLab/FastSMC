@@ -235,8 +235,7 @@ private:
   void runLastBatch(std::vector<PairObservations>& obsBatch);
 
   // decode a batch
-  void decodeBatch(const std::vector<PairObservations>& obsBatch, std::size_t actualBatchSize,
-                   std::size_t paddedBatchSize, unsigned from, unsigned to);
+  void decodeBatch(const std::vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
   // forward step
   void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from,
