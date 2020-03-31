@@ -216,6 +216,11 @@ public:
   /// observationsBatch buffer and close output files
   void finishDecoding();
 
+  /**
+   * Close the gzipped file stream for writing IBD data
+   */
+  void closeIBDFile();
+
   void finishFromGERMLINE();
 
 private:

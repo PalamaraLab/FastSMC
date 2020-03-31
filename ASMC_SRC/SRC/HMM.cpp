@@ -525,6 +525,10 @@ void HMM::finishDecoding()
   }
 }
 
+void HMM::closeIBDFile() {
+  gzclose(gzoutIBD);
+}
+
 void HMM::finishFromGERMLINE(){
 //  timerASMC.update_time();
 
@@ -532,7 +536,7 @@ void HMM::finishFromGERMLINE(){
     runLastBatch(batchObservations);
   }
 
-  gzclose(gzoutIBD);
+  closeIBDFile();
 
   // print some stats (will remove)
 //  timeASMC += timerASMC.update_time();

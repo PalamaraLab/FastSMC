@@ -39,6 +39,7 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
 
   // If FastSMC but not GERMLINE we're done
   if(!params.GERMLINE) {
+    hmm.closeIBDFile();
     return;
   }
 
