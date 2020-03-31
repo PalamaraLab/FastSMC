@@ -58,7 +58,7 @@ public:
   unsigned long getWordHash(const int w)
   {
     assert(w >= 0);
-    return mHap[w % mNumReadAhead].to_ulong();
+    return mHap.at(w % mNumReadAhead).to_ulong();
   }
 
   std::string getWordString(const int w)
