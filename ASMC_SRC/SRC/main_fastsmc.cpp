@@ -26,7 +26,6 @@ int main(int argc, char* argv[])
             params.jobInd, params.jobs);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
-  hmm.decodeAll(params.jobs, params.jobInd);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;

@@ -35,9 +35,11 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
 
   Timer timer;
 
+  hmm.decodeAll(params.jobs, params.jobInd);
+
+  // If FastSMC but not GERMLINE we're done
   if(!params.GERMLINE) {
-    std::cerr << "This method expects params.GERMLINE to be true. Exiting." << std::endl;
-    exit(1);
+    return;
   }
 
   std::vector<Individuals> all_ind;

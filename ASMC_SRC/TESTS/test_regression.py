@@ -70,7 +70,6 @@ class TestFastSMCRegression(unittest.TestCase):
                     self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
 
         hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
-        hmm.decodeAll(self.params.jobs, self.params.jobInd)
 
         fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
         fast_smc.run(self.params, data, hmm)

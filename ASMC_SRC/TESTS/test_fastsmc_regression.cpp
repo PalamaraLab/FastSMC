@@ -61,7 +61,6 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
             params.jobInd, params.jobs, useKnownSeed);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
-  hmm.decodeAll(params.jobs, params.jobInd);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;
