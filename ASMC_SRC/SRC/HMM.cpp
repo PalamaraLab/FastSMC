@@ -105,7 +105,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   startBatch = sequenceLength;
   endBatch = 0;
 
-  if (decodingParams.doPerPairPosteriorMean && !decodingParams.GERMLINE) {
+  if (decodingParams.doPerPairPosteriorMean && !decodingParams.FastSMC) {
     expectedCoalTimes = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
   }
 
@@ -275,13 +275,13 @@ void HMM::prepareEmissions()
 
 void HMM::resetDecoding()
 {
-  if (decodingParams.doPerPairPosteriorMean && !decodingParams.GERMLINE) {
+  if (decodingParams.doPerPairPosteriorMean && !decodingParams.FastSMC) {
     if (foutPosteriorMeanPerPair) {
       foutPosteriorMeanPerPair.close();
     }
     foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
   }
-  if (decodingParams.doPerPairMAP && !decodingParams.GERMLINE) {
+  if (decodingParams.doPerPairMAP && !decodingParams.FastSMC) {
     if (foutMAPPerPair) {
       foutMAPPerPair.close();
     }
