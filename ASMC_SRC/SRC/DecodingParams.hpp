@@ -55,6 +55,7 @@ public:
   float min_maf = 0;
   float min_m = 1;
   bool GERMLINE = false;
+  bool FastSMC = false;
   bool BIN_OUT = false;
   int time = 100; // state threshold for IBD detection
 

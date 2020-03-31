@@ -45,6 +45,7 @@ TEST_CASE("test FastSMC HMM with regression test", "[FastSMC_regression]")
   params.recallThreshold = 3;
   params.min_m = 1.5;
   params.GERMLINE = true;
+  params.FastSMC = true;
   params.BIN_OUT = false;
   params.time = 50;
   params.noConditionalAgeEstimates = true;

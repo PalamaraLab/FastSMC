@@ -55,6 +55,7 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.recallThreshold = 3
         self.params.min_m = 1.5
         self.params.GERMLINE = True
+        self.params.FastSMC = True
         self.params.BIN_OUT = False
         self.params.time = 50
         self.params.noConditionalAgeEstimates = True
