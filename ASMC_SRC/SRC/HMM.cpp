@@ -313,7 +313,7 @@ void HMM::decodeAll(int jobs, int jobInd)
   uint64 N = individuals.size();
   uint64 pairs = 0, pairsJob = 0;
 
-  if (decodingParams.GERMLINE) {
+  if (decodingParams.FastSMC) {
     //create IBD output file
     if (!decodingParams.BIN_OUT) {
       gzoutIBD = gzopen( (decodingParams.outFileRoot + "." + std::to_string(jobInd) + "." + std::to_string(jobs) + ".FastSMC.ibd.gz").c_str(), "w" );
@@ -321,7 +321,10 @@ void HMM::decodeAll(int jobs, int jobInd)
       gzoutIBD = gzopen( (decodingParams.outFileRoot + "." + std::to_string(jobInd) + "." + std::to_string(jobs) + ".FastSMC.bibd.gz").c_str(), "wb" );
       writeBinaryInfoIntoFile();
     }
-    return;
+
+    if(decodingParams.GERMLINE) {
+      return;
+    }
   }
 
   // calculate total number of pairs to decode
