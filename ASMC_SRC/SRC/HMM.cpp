@@ -76,11 +76,11 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   emission2minus0AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   prepareEmissions();
 
-  // FastSMC currently specifies batch size as an input
-  // todo: enable this option for ASMC as well?
-  if (decodingParams.GERMLINE) {
-    m_batchSize = decodingParams.batchSize;
-  }
+
+
+
+  m_batchSize = decodingParams.batchSize;
+
 
   for (int i = 0; i < m_batchSize; i++) {
     fromBatch.push_back(0);
