@@ -47,7 +47,7 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
     std::srand(rd());
   }
 
-  if(mJobbing) {
+  if (mJobbing) {
     // the window size is the length of a square, in terms of #ind
     const auto floatSampleSize = static_cast<double>(sampleSize);
     windowSize = ceil(sqrt((2. * pow(floatSampleSize, 2) - floatSampleSize) * 2. / jobs));
@@ -75,7 +75,7 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
 
   // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
   TODO_REMOVE_FASTSMC = mJobbing;
-  if(TODO_REMOVE_FASTSMC) {
+  if (TODO_REMOVE_FASTSMC) {
     vector<pair<unsigned long, double>> geneticMap = readMapFastSMC(inFileRoot);
     readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
   } else {
@@ -262,10 +262,11 @@ void Data::readSamplesList(const string& inFileRoot, int jobID, int jobs)
   cout << "Read " << linesProcessed << " samples." << endl;
 }
 
-bool Data::readSample(const unsigned linesProcessed, const int jobID, const int jobs) {
+bool Data::readSample(const unsigned linesProcessed, const int jobID, const int jobs)
+{
 
   // If we are not doing jobbing we read all samples
-  if(!mJobbing) {
+  if (!mJobbing) {
     return true;
   } else {
     return (linesProcessed >= (uint)((w_i - 1) * windowSize) / 2 && linesProcessed < (uint)(w_i * windowSize) / 2) ||
@@ -408,7 +409,7 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
 }
 
 void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,
-                           vector<pair<unsigned long int, double>>& genetic_map)
+                    vector<pair<unsigned long int, double>>& genetic_map)
 {
   FileUtils::AutoGzIfstream hapsBr;
   if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
@@ -421,7 +422,7 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
     hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
     cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " + ".haps.gz, or " +
-            inFileRoot + ".haps"
+                inFileRoot + ".haps"
          << endl;
     exit(1);
   }
@@ -541,8 +542,8 @@ void Data::readGeneticMap(unsigned long int bp, vector<pair<unsigned long int, d
   } else {
     // interpolate from previous marker
     cm = genetic_map[cur_g - 1].second + (bp - genetic_map[cur_g - 1].first) *
-                                         (genetic_map[cur_g].second - genetic_map[cur_g - 1].second) /
-                                         (genetic_map[cur_g].first - genetic_map[cur_g - 1].first);
+                                             (genetic_map[cur_g].second - genetic_map[cur_g - 1].second) /
+                                             (genetic_map[cur_g].first - genetic_map[cur_g - 1].first);
     addMarker(bp, cm, pos);
   }
 }
