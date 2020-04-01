@@ -32,7 +32,6 @@
 
 using namespace std;
 
-
 // read expected times from a file
 vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 {
@@ -303,7 +302,7 @@ void HMM::resetDecoding()
 void HMM::decodeAll(int jobs, int jobInd)
 {
 
-   auto t0 = std::chrono::high_resolution_clock::now();
+  auto t0 = std::chrono::high_resolution_clock::now();
   Timer timer;
 
   resetDecoding();
@@ -314,7 +313,7 @@ void HMM::decodeAll(int jobs, int jobInd)
   uint64 pairs = 0, pairsJob = 0;
 
   if (decodingParams.FastSMC) {
-    //create IBD output file
+    // create IBD output file
     if (!decodingParams.BIN_OUT) {
       gzoutIBD = gzopen( (decodingParams.outFileRoot + "." + std::to_string(jobInd) + "." + std::to_string(jobs) + ".FastSMC.ibd.gz").c_str(), "w" );
     } else {
@@ -322,7 +321,7 @@ void HMM::decodeAll(int jobs, int jobInd)
       writeBinaryInfoIntoFile();
     }
 
-    if(decodingParams.GERMLINE) {
+    if (decodingParams.GERMLINE) {
       return;
     }
   }
@@ -506,7 +505,7 @@ void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uin
 uint HMM::getStateThreshold()
 {
   uint result = 0u;
-  const vector <float>& disc = m_decodingQuant.discretization;
+  const vector<float>& disc = m_decodingQuant.discretization;
 
   while (disc[result] < static_cast<float>(decodingParams.time) && result < m_decodingQuant.states) {
     result++;
@@ -525,12 +524,14 @@ void HMM::finishDecoding()
   }
 }
 
-void HMM::closeIBDFile() {
+void HMM::closeIBDFile()
+{
   gzclose(gzoutIBD);
 }
 
-void HMM::finishFromGERMLINE(){
-//  timerASMC.update_time();
+void HMM::finishFromGERMLINE()
+{
+  //  timerASMC.update_time();
 
   if (!noBatches) {
     runLastBatch(batchObservations);
@@ -539,16 +540,16 @@ void HMM::finishFromGERMLINE(){
   closeIBDFile();
 
   // print some stats (will remove)
-//  timeASMC += timerASMC.update_time();
-//  double ticksDecodeAll = ticksForward + ticksBackward + ticksCombine + ticksOutputPerPair;
-//  //printf("\n\n*** ASMC decoded %Ld pairs in %.3f seconds. ***\n\n", cpt, timeASMC);
-//  printf("\n");
-//  printPctTime("forward", ticksForward / ticksDecodeAll);
-//  printPctTime("backward", ticksBackward / ticksDecodeAll);
-//  printPctTime("combine", ticksCombine / ticksDecodeAll);
-//  //printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
-//  printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
-//  cout << flush;
+  //  timeASMC += timerASMC.update_time();
+  //  double ticksDecodeAll = ticksForward + ticksBackward + ticksCombine + ticksOutputPerPair;
+  //  //printf("\n\n*** ASMC decoded %Ld pairs in %.3f seconds. ***\n\n", cpt, timeASMC);
+  //  printf("\n");
+  //  printPctTime("forward", ticksForward / ticksDecodeAll);
+  //  printPctTime("backward", ticksBackward / ticksDecodeAll);
+  //  printPctTime("combine", ticksCombine / ticksDecodeAll);
+  //  //printPctTime("sumOverPairs", ticksSumOverPairs / ticksDecodeAll);
+  //  printPctTime("outputPerPair", ticksOutputPerPair / ticksDecodeAll);
+  //  cout << flush;
 }
 
 // add pair to batch and run if we have enough
@@ -722,8 +723,6 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   ALIGNED_FREE(obsIsZeroBatch);
   ALIGNED_FREE(obsIsTwoBatch);
 }
-
-
 
 // forward step
 void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, const unsigned from,
@@ -1173,7 +1172,7 @@ void HMM::writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, co
          isIBD3 = false; // true if previous position is IBD, false otherwise
     unsigned int startIBD = 0, startIBD1 = 0, startIBD2 = 0, startIBD3 = 0;
     unsigned int endIBD = 0, endIBD1 = 0, endIBD2 = 0, endIBD3 = 0;
-    float posteriorIBD = 0;  // cumulative posterior on an IBD segment
+    float posteriorIBD = 0; // cumulative posterior on an IBD segment
     vector<float> posterior;
     vector<float> sum_posterior_per_state;
     vector<float> prev_sum_posterior_per_state;
@@ -1379,8 +1378,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
   if (decodingParams.doPerPairPosteriorMean) {
     for (int v = 0; v < actualBatchSize; v++) {
-//      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-//      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
+      //      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
+      //      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutPosteriorMeanPerPair << " " << meanPost[pos * actualBatchSize + v];
       }
@@ -1390,8 +1389,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
   if (decodingParams.doPerPairMAP) {
     for (int v = 0; v < actualBatchSize; v++) {
-//      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-//      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
+      //      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
+      //      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutMAPPerPair << " " << MAP[pos * actualBatchSize + v];
       }
@@ -1407,7 +1406,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 // non-batched computations (for debugging and pedagogical reasons only)
 // *********************************************************************
 
-vector<vector<float>> HMM::decode(const PairObservations& observations) {
+vector<vector<float>> HMM::decode(const PairObservations& observations)
+{
   return decode(observations, 0, sequenceLength);
 }
 
