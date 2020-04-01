@@ -120,7 +120,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
         hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
 
-        fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
+        fast_smc = FastSMC()
         fast_smc.run(self.params, data, hmm)
 
     def test_regression(self):

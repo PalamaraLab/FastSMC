@@ -32,7 +32,9 @@ private:
   bool mHaploid = true;
 
 public:
-  explicit FastSMC(int hashingWordSize = 64, int constReadAhead = 10, bool haploid = true);
+  explicit FastSMC(int hashingWordSize, int constReadAhead, bool haploid);
+
+  FastSMC() = default;
 
   void run(const DecodingParams& params, const Data& data, HMM& hmm);
 };
