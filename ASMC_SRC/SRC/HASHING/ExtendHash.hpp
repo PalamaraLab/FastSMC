@@ -23,26 +23,28 @@
 #include "HASHING/Match.hpp"
 
 /* Object for storing extension between pairs of Individuals */
-template <int WORD_SIZE> class ExtendHash
+class ExtendHash
 {
 
-  boost::unordered_map<unsigned long int, Match<WORD_SIZE>> extend_hash;
+  boost::unordered_map<unsigned long int, Match> extend_hash;
 
-  unsigned long num = 0;
+  unsigned long mWordSize;
+  unsigned long num;
 
   bool mParHaploid;
 
   // Empty Match to insert into hash
-  Match<WORD_SIZE> m;
+  Match m;
 
   // Iterator for testing insertion
   std::pair<boost::unordered::iterator_detail::iterator<
-                boost::unordered::detail::ptr_node<std::pair<const unsigned long, Match<WORD_SIZE>>>>,
+                boost::unordered::detail::ptr_node<std::pair<const unsigned long, Match>>>,
             bool>
       extend_ret;
 
 public:
-  explicit ExtendHash(const unsigned long num, const bool PAR_HAPLOID) : num(num), mParHaploid(PAR_HAPLOID)
+  explicit ExtendHash(const unsigned long wordSize, const unsigned long num, const bool PAR_HAPLOID)
+      : mWordSize(wordSize), num(num), mParHaploid(PAR_HAPLOID), m(wordSize)
   {
   }
 
@@ -74,7 +76,7 @@ public:
   {
     m.getModifiableInterval()[0] = GLOBAL_CURRENT_WORD;
     // Find/extend this location in the hash
-    extend_ret = extend_hash.insert(std::pair<unsigned long int, Match<WORD_SIZE>>(pairToLocation(i, j), m));
+    extend_ret = extend_hash.insert(std::pair<unsigned long int, Match>(pairToLocation(i, j), m));
     (extend_ret.first->second).extend(w);
   }
 
@@ -113,10 +115,16 @@ public:
     }
   }
 
-  std::size_t size()
+  std::size_t size() const
   {
     return extend_hash.size();
   }
+
+  unsigned long getWordSize() const
+  {
+    return mWordSize;
+  }
+
 };
 
 #endif // ASMC_HASHING_EXTEND_HASH_HPP

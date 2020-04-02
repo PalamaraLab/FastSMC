@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -29,65 +30,98 @@
 
 using namespace std;
 
-Data::Data(string hapsFileRoot, int _sites, int _totalSamplesBound, bool foldToMinorAlleles, bool _decodingUsesCSFS)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
+Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
+           const bool _decodingUsesCSFS, const int jobID, const int jobs, const bool useKnownSeed)
+    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
+      siteWasFlippedDuringFolding(_sites, false)
 {
-  readSamplesList(hapsFileRoot);
-  // now we have the sample sizes
-  sampleSize = static_cast<int>(famAndIndNameList.size());
-  haploidSampleSize = sampleSize * 2;
-  siteWasFlippedDuringFolding = vector<bool>(sites, false);
-  // and the number of sites
-  for (uint i = 0; i < famAndIndNameList.size(); i++) {
-    individuals.push_back(Individual(sites));
+  // Determine if there is jobbing based on whether the jobID and jobs are at their default values
+  mJobbing = (jobID != -1) && (jobs != -1);
+  sampleSize = countSamplesLines(inFileRoot);
+  haploidSampleSize = sampleSize * 2ul;
+
+  if (useKnownSeed) {
+    std::srand(1234u);
+  } else {
+    std::random_device rd;
+    std::srand(rd());
   }
-  // now read all the data
-  readHaps(hapsFileRoot, foldToMinorAlleles);
-  readMap(hapsFileRoot);
+
+  if (mJobbing) {
+    // the window size is the length of a square, in terms of #ind
+    const auto floatSampleSize = static_cast<double>(sampleSize);
+    windowSize = ceil(sqrt((2. * pow(floatSampleSize, 2) - floatSampleSize) * 2. / jobs));
+    if (windowSize % 2 != 0) {
+      windowSize++;
+    }
+
+    w_i = 1; // window for individual i
+    int cpt_job = 1;
+    int cpt_tot_job = 1;
+    while (cpt_tot_job < jobID) {
+      w_i++;
+      cpt_job = cpt_job + 2;
+      cpt_tot_job = cpt_tot_job + cpt_job;
+    }
+    w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
+    is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1;
+  }
+
+  readSamplesList(inFileRoot, jobID, jobs);
+
+  for (auto i = 0ul; i < famAndIndNameList.size(); i++) {
+    individuals.emplace_back(sites);
+  }
+
+  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
+  TODO_REMOVE_FASTSMC = mJobbing;
+  if (TODO_REMOVE_FASTSMC) {
+    vector<pair<unsigned long, double>> geneticMap = readMapFastSMC(inFileRoot);
+    readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
+  } else {
+    readHaps(inFileRoot, foldToMinorAlleles);
+    readMap(inFileRoot);
+  }
+
   // make undistinguished counts
   if (decodingUsesCSFS) {
     makeUndistinguished(foldToMinorAlleles);
   }
 }
 
-Data::Data(string inFileRoot, unsigned int _sites, int _totalSamplesBound, bool foldToMinorAlleles,
-           bool _decodingUsesCSFS, int jobID, int jobs, vector<pair<unsigned long int, double>>& genetic_map)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
+// *** read genetic map
+vector<pair<unsigned long, double>> Data::readMapFastSMC(const string& inFileRoot)
 {
-  sampleSize = countSamplesLines(inFileRoot);
-
-  siteWasFlippedDuringFolding = vector<bool>(sites, false);
-
-  windowSize = ceil(sqrt((2 * pow(sampleSize, 2) - sampleSize) * 2 / jobs)); // length of a square, in term of #ind
-  if (windowSize % 2 != 0) {
-    windowSize++;
-  }
-  w_i = 1; // window for individual i
-  int cpt_job = 1;
-  int cpt_tot_job = 1;
-  while (cpt_tot_job < jobID) {
-    w_i++;
-    cpt_job = cpt_job + 2;
-    cpt_tot_job = cpt_tot_job + cpt_job;
-  }
-  w_j = ceil((float)(cpt_job - (cpt_tot_job - jobID)) / 2); // window for individual j
-  is_j_above_diag = (cpt_job - (cpt_tot_job - jobID)) % 2 == 1 ? true : false;
-
-  readSamplesList(inFileRoot, jobID, jobs); // now we have the sample sizes
-
-  // and the number of sites
-  for (uint i = 0; i < FamIDList.size(); i++) {
-    individuals.push_back(Individual(sites));
+  FileUtils::AutoGzIfstream mapFileStream;
+  if (FileUtils::fileExists(inFileRoot + ".map.gz")) {
+    mapFileStream.openOrExit(inFileRoot + ".map.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".map")) {
+    mapFileStream.openOrExit(inFileRoot + ".map");
+  } else {
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".map.gz or " + inFileRoot + ".map" << endl;
+    exit(1);
   }
 
-  // now read all the data
-  readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, genetic_map);
-  // readMap(inFileRoot);
-  // may read freq file here
-  // make undistinguished counts
-  if (decodingUsesCSFS) {
-    makeUndistinguished(foldToMinorAlleles);
+  std::vector<std::pair<unsigned long, double>> geneticMap;
+
+  string map_field[3];
+  string line;
+  stringstream ss;
+  unsigned int cur_g = 0;
+
+  while (getline(mapFileStream, line)) {
+    ss.clear();
+    ss.str(line);
+    ss >> map_field[0] >> map_field[1] >> map_field[2];
+    if (map_field[0] == "position" || map_field[0].empty())
+      continue;
+    geneticMap.emplace_back(stol(map_field[0]), stod(map_field[2]));
+    cur_g++;
   }
+
+  mapFileStream.close();
+
+  return geneticMap;
 }
 
 // unoptimized sampling of hypergeometric
@@ -139,15 +173,15 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
   // cout << " Done." << endl;
 }
 
-int Data::readMap(string hapsFileRoot)
+int Data::readMap(string inFileRoot)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".map.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".map.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".map")) {
-    hapsBr.openOrExit(hapsFileRoot + ".map");
+  if (FileUtils::fileExists(inFileRoot + ".map.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".map.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".map")) {
+    hapsBr.openOrExit(inFileRoot + ".map");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".map.gz or " + hapsFileRoot + ".map" << endl;
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".map.gz or " + inFileRoot + ".map" << endl;
     exit(1);
   }
   string line;
@@ -189,43 +223,7 @@ int Data::readMap(string hapsFileRoot)
   return pos;
 }
 
-void Data::readSamplesList(string hapsFileRoot)
-{
-  string line;
-  // Read samples file
-  FileUtils::AutoGzIfstream bufferedReader;
-  if (FileUtils::fileExists(hapsFileRoot + ".samples")) {
-    bufferedReader.openOrExit(hapsFileRoot + ".samples");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".sample")) {
-    bufferedReader.openOrExit(hapsFileRoot + ".sample");
-  } else {
-    cerr << "ERROR. Could not find sample file in " + hapsFileRoot + ".sample or " + hapsFileRoot + ".samples" << endl;
-    exit(1);
-  }
-
-  while (getline(bufferedReader, line)) {
-    vector<string> splitStr;
-    istringstream iss(line);
-    string buf;
-    while (iss >> buf)
-      splitStr.push_back(buf);
-    // Skip first two lines (header) if present
-    if ((splitStr[0] == "ID_1" && splitStr[1] == "ID_2" && splitStr[2] == "missing") ||
-        (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
-      continue;
-    }
-    string famId = splitStr[0];
-    string IId = splitStr[1];
-    string name = famId + "\t" + IId;
-    FamIDList.push_back(famId);
-    IIDList.push_back(IId);
-    famAndIndNameList.push_back(name);
-  }
-  bufferedReader.close();
-  // cout << "\tRead " << famAndIndNameList.size() << " samples." << endl;
-}
-
-void Data::readSamplesList(string inFileRoot, int jobID, int jobs)
+void Data::readSamplesList(const string& inFileRoot, int jobID, int jobs)
 {
   string line;
   // Read samples file
@@ -239,8 +237,7 @@ void Data::readSamplesList(string inFileRoot, int jobID, int jobs)
     exit(1);
   }
 
-  unsigned int cpt = 0; // number of current line being processed
-  // BufferedReader bufferedReader = Utils.openFile(inFileRoot + ".samples");
+  unsigned long linesProcessed = 0u; // number of current line being processed
   while (getline(bufferedReader, line)) {
     vector<string> splitStr;
     istringstream iss(line);
@@ -252,34 +249,46 @@ void Data::readSamplesList(string inFileRoot, int jobID, int jobs)
         (splitStr[0] == "0" && splitStr[1] == "0" && splitStr[2] == "0")) {
       continue;
     }
-    if ((cpt >= (uint)((w_i - 1) * windowSize) / 2 && cpt < (uint)(w_i * windowSize) / 2) ||
-        (cpt >= (uint)((w_j - 1) * windowSize) / 2 && cpt < (uint)(w_j * windowSize) / 2) ||
-        (jobs == jobID && cpt >= (uint)((w_j - 1) * windowSize) / 2)) {
+    if (readSample(linesProcessed, jobID, jobs)) {
       string famId = splitStr[0];
       string IId = splitStr[1];
       FamIDList.push_back(famId);
       IIDList.push_back(IId);
+      famAndIndNameList.push_back(famId + "\t" + IId);
     }
-    cpt++;
+    linesProcessed++;
   }
   bufferedReader.close();
-  cout << "Read " << cpt << " samples." << endl;
+  cout << "Read " << linesProcessed << " samples." << endl;
 }
 
-int Data::countHapLines(string hapsFileRoot)
+bool Data::readSample(const unsigned linesProcessed, const int jobID, const int jobs)
+{
+
+  // If we are not doing jobbing we read all samples
+  if (!mJobbing) {
+    return true;
+  } else {
+    return (linesProcessed >= (uint)((w_i - 1) * windowSize) / 2 && linesProcessed < (uint)(w_i * windowSize) / 2) ||
+           (linesProcessed >= (uint)((w_j - 1) * windowSize) / 2 && linesProcessed < (uint)(w_j * windowSize) / 2) ||
+           (jobs == jobID && linesProcessed >= (uint)((w_j - 1) * windowSize) / 2);
+  }
+}
+
+int Data::countHapLines(string inFileRoot)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".hap.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".hap")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps");
+  if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".hap.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".hap")) {
+    hapsBr.openOrExit(inFileRoot + ".hap");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".haps.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps")) {
+    hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
-                ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " +
+                ".haps.gz, or " + inFileRoot + ".haps"
          << endl;
     exit(1);
   }
@@ -322,40 +331,44 @@ int Data::countSamplesLines(string inFileRoot)
   return cpt;
 }
 
-void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
+void Data::readHaps(string inFileRoot, bool foldToMinorAlleles)
 {
   FileUtils::AutoGzIfstream hapsBr;
-  if (FileUtils::fileExists(hapsFileRoot + ".hap.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".hap")) {
-    hapsBr.openOrExit(hapsFileRoot + ".hap");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps.gz")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps.gz");
-  } else if (FileUtils::fileExists(hapsFileRoot + ".haps")) {
-    hapsBr.openOrExit(hapsFileRoot + ".haps");
+  if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".hap.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".hap")) {
+    hapsBr.openOrExit(inFileRoot + ".hap");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps.gz")) {
+    hapsBr.openOrExit(inFileRoot + ".haps.gz");
+  } else if (FileUtils::fileExists(inFileRoot + ".haps")) {
+    hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
-    cerr << "ERROR. Could not find hap file in " + hapsFileRoot + ".hap.gz, " + hapsFileRoot + ".hap, " +
-                ".haps.gz, or " + hapsFileRoot + ".haps"
+    cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " +
+                ".haps.gz, or " + inFileRoot + ".haps"
          << endl;
     exit(1);
   }
-  string line;
-  int pos = 0, monomorphic = 0;
+
+  unsigned long pos = 0ul;
+  unsigned long monomorphic = 0ul;
   totalSamplesCount = vector<int>(sites);
   derivedAlleleCounts = vector<int>(sites);
   string chr, snpID;
-  int bp;
-  string alleleA, alleleB;
+  unsigned long bp;
+  string line;
+  string alleleA;
+  string alleleB;
+
   while (hapsBr >> chr >> snpID >> bp >> alleleA >> alleleB) {
     getline(hapsBr, line);
     int DAcount = 0;
-    if (!(line.length() == 4 * famAndIndNameList.size() || line.length() == 4 * famAndIndNameList.size() + 1)) {
+    if (!(line.length() == 4 * sampleSize || line.length() == 4 * sampleSize + 1)) {
       cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
            << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
       cerr << "\thaps line is: " << line << endl;
-
       exit(1);
     }
+
     int totalSamples = static_cast<int>(2 * famAndIndNameList.size());
     totalSamplesCount[pos] = totalSamples;
     for (uint i = 0; i < 2 * famAndIndNameList.size(); i++) {
@@ -377,6 +390,7 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
         exit(1);
       }
     }
+
     if (foldToMinorAlleles) {
       derivedAlleleCounts[pos] = std::min(DAcount, totalSamples - DAcount);
     } else {
@@ -387,13 +401,15 @@ void Data::readHaps(string hapsFileRoot, bool foldToMinorAlleles)
     }
     pos++;
   }
+
   hapsBr.close();
-  cout << "Read data for " << famAndIndNameList.size() * 2 << " haploid samples and " << pos << " markers, "
-       << monomorphic << " of which are monomorphic." << endl;
+
+  cout << "Read data for " << sampleSize * 2 << " haploid samples and " << pos << " markers, " << monomorphic
+       << " of which are monomorphic. This job will focus on " << FamIDList.size() * 2 << " haploid samples." << endl;
 }
 
 void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int jobs,
-                           vector<pair<unsigned long int, double>>& genetic_map)
+                    vector<pair<unsigned long int, double>>& genetic_map)
 {
   FileUtils::AutoGzIfstream hapsBr;
   if (FileUtils::fileExists(inFileRoot + ".hap.gz")) {
@@ -406,25 +422,32 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
     hapsBr.openOrExit(inFileRoot + ".haps");
   } else {
     cerr << "ERROR. Could not find hap file in " + inFileRoot + ".hap.gz, " + inFileRoot + ".hap, " + ".haps.gz, or " +
-            inFileRoot + ".haps"
+                inFileRoot + ".haps"
          << endl;
     exit(1);
   }
-  string line;
-  unsigned int pos = 0, monomorphic = 0;
+
+  unsigned long pos = 0ul;
+  unsigned long monomorphic = 0ul;
   totalSamplesCount = vector<int>(sites);
   derivedAlleleCounts = vector<int>(sites);
   string chr, snpID;
-  unsigned long int bp;
-  string alleleA, alleleB;
+  unsigned long bp;
+  string line;
+  string alleleA;
+  string alleleB;
+
   unsigned int cur_g = 0;
   while (hapsBr >> chr >> snpID >> bp >> alleleA >> alleleB) {
     getline(hapsBr, line);
     int DAcount = 0;
     if (!(line.length() == 4 * sampleSize || line.length() == 4 * sampleSize + 1)) {
-      cerr << "ERROR: haps line has wrong length." << endl;
+      cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
+           << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
+      cerr << "\thaps line is: " << line << endl;
       exit(1);
     }
+
     if (cur_g == 0) {
       // splitting inputs
       std::string delimiter = ":";
@@ -492,7 +515,9 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
     }
     pos++;
   }
+
   hapsBr.close();
+
   cout << "Read data for " << sampleSize * 2 << " haploid samples and " << pos << " markers, " << monomorphic
        << " of which are monomorphic. This job will focus on " << FamIDList.size() * 2 << " haploid samples." << endl;
 }
@@ -517,8 +542,8 @@ void Data::readGeneticMap(unsigned long int bp, vector<pair<unsigned long int, d
   } else {
     // interpolate from previous marker
     cm = genetic_map[cur_g - 1].second + (bp - genetic_map[cur_g - 1].first) *
-                                         (genetic_map[cur_g].second - genetic_map[cur_g - 1].second) /
-                                         (genetic_map[cur_g].first - genetic_map[cur_g - 1].first);
+                                             (genetic_map[cur_g].second - genetic_map[cur_g - 1].second) /
+                                             (genetic_map[cur_g].first - genetic_map[cur_g - 1].first);
     addMarker(bp, cm, pos);
   }
 }

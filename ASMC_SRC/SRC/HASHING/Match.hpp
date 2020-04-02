@@ -25,17 +25,16 @@
 
 /**
  * Match object that does \\todo not clear to me what this does...
- *
- * @tparam WORD_SIZE the word size
  */
-template <int WORD_SIZE> class Match
+class Match
 {
 private:
   std::array<int, 2> mInterval = {0, 0};
+  unsigned long mWordSize;
   unsigned mGaps = 0u;
 
 public:
-  explicit Match(const int i = 0) : mInterval{i, i}
+  explicit Match(const unsigned long wordSize, const int i = 0) : mInterval{i, i}, mWordSize{wordSize}
   {
   }
 
@@ -43,10 +42,11 @@ public:
   void print(std::pair<unsigned, unsigned> p, const double PAR_MIN_MATCH, const std::vector<float>& geneticPositions,
              HMM& hmm)
   {
-    double mlen = asmc::cmBetween(mInterval[0], mInterval[1], geneticPositions, WORD_SIZE);
+    const int intWordSize = static_cast<int>(mWordSize);
+    double mlen = asmc::cmBetween(mInterval[0], mInterval[1], geneticPositions, intWordSize);
     if (mlen >= PAR_MIN_MATCH) {
-      const int from = mInterval[0] * WORD_SIZE;
-      const int to = mInterval[1] * WORD_SIZE + WORD_SIZE - 1;
+      const int from = mInterval[0] * intWordSize;
+      const int to = mInterval[1] * intWordSize + intWordSize - 1;
       hmm.decodeFromGERMLINE(p.first, p.second, from, to);
     }
   }
@@ -74,6 +74,11 @@ public:
   unsigned int getGaps() const
   {
     return mGaps;
+  }
+
+  unsigned long getWordSize() const
+  {
+    return mWordSize;
   }
 };
 

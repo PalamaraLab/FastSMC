@@ -7,11 +7,12 @@ import sys
 def list_files(startpath):
     for root, dirs, files in os.walk(startpath):
         level = root.replace(startpath, '').count(os.sep)
-        indent = ' ' * 4 * (level)
+        indent = ' ' * 4 * level
         print('{}{}/'.format(indent, os.path.basename(root)))
         subindent = ' ' * 4 * (level + 1)
         for f in files:
             print('{}{}'.format(subindent, f))
+
 
 def test_regession(asmc_exe):
     """
@@ -37,12 +38,12 @@ def test_regession(asmc_exe):
 
     # New file contents are the result of running the example with the current ASMC source
     decoding_file = os.path.join(base_dir, 'FILES', 'DECODING_QUANTITIES', '30-100-2000.decodingQuantities.gz')
-    haps_file = os.path.join(base_dir, 'FILES', 'EXAMPLE', 'exampleFile.n300.array')
+    in_file_root = os.path.join(base_dir, 'FILES', 'EXAMPLE', 'exampleFile.n300.array')
 
     subprocess.call([
         asmc_exe,
         '--decodingQuantFile', decoding_file,
-        '--hapsFileRoot', haps_file,
+        '--inFileRoot', in_file_root,
         '--posteriorSums',
     ])
 

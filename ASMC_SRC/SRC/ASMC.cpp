@@ -11,7 +11,7 @@
 
 using namespace std;
 
-DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
+DecodingReturnValues run(string in_file_root, string decoding_quant_file,
          string out_file_root = "", DecodingModeOverall mode = DecodingModeOverall::array,
          int jobs = 0, int job_index = 0,
          float skip_csfs_distance = 0,
@@ -21,9 +21,9 @@ DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
     srand(1234);
 
     DecodingParams params;
-    params.hapsFileRoot = haps_file_root;
+    params.inFileRoot = in_file_root;
     params.decodingQuantFile = decoding_quant_file;
-    params.outFileRoot = out_file_root.empty() ? haps_file_root : out_file_root;
+    params.outFileRoot = out_file_root.empty() ? in_file_root : out_file_root;
     params.decodingModeOverall = mode;
     params.compress = compress;
     params.useAncestral = use_ancestral;
@@ -69,9 +69,9 @@ DecodingReturnValues run(string haps_file_root, string decoding_quant_file,
     printf("Read precomputed decoding info in %.9f seconds.\n", timer.update_time());
     // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
-    cout << "Data will be loaded from " << params.hapsFileRoot << "*\n";
-    int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
-    Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);
+    cout << "Data will be loaded from " << params.inFileRoot << "*\n";
+    int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
+    Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);
     printf("Read haps in %.9f seconds.\n", timer.update_time());
 
     HMM hmm(data, decodingQuantities, params, !params.noBatches);

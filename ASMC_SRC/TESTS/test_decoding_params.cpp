@@ -21,17 +21,17 @@
 
 TEST_CASE("test DecodingParams", "[DecodingParams]")
 {
-  std::string hapsFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
+  std::string inFileRoot = ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array";
   std::string decodingQuantFile = ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz";
 
   SECTION("test array folded") {
-    DecodingParams params(hapsFileRoot, decodingQuantFile);
+    DecodingParams params(inFileRoot, decodingQuantFile);
     REQUIRE(params.decodingMode == DecodingMode::arrayFolded);
     REQUIRE(params.compress == false);
   }
 
   SECTION("test sequence folded") {
-    DecodingParams params(hapsFileRoot, decodingQuantFile,
+    DecodingParams params(inFileRoot, decodingQuantFile,
         "", // _outFileRoot
         1, // _jobs
         1, // _jobInd
@@ -47,7 +47,7 @@ TEST_CASE("test DecodingParams", "[DecodingParams]")
   }
 
   SECTION("test sequence") {
-    DecodingParams params(hapsFileRoot, decodingQuantFile,
+    DecodingParams params(inFileRoot, decodingQuantFile,
         "", // _outFileRoot
         1, // _jobs
         1, // _jobInd

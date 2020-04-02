@@ -26,7 +26,7 @@ class DecodingParams
 {
 
 public:
-  std::string hapsFileRoot;
+  std::string inFileRoot;
   std::string decodingQuantFile;
   std::string outFileRoot;
   int jobs;
@@ -45,9 +45,8 @@ public:
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New params from FastSMC that were not originally in ASMC
 
-  std::string inFileRoot;
   std::string map;
-  int batchSize = 16;
+  int batchSize = 64;
   int recallThreshold = 3;
 
   float skip = 0.f;
@@ -56,6 +55,7 @@ public:
   float min_maf = 0;
   float min_m = 1;
   bool GERMLINE = false;
+  bool FastSMC = false;
   bool BIN_OUT = false;
   int time = 100; // state threshold for IBD detection
 
@@ -76,7 +76,7 @@ public:
 
   /// constructor with default parameters set
   DecodingParams();
-  DecodingParams(std::string _hapsFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
+  DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
                  int _jobs = 1, int _jobInd = 1, std::string _decodingModeString = "array",
                  bool _decodingSequence = false, bool _usingCSFS = true, bool _compress = false,
                  bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,

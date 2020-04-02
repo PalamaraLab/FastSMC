@@ -10,13 +10,13 @@ from asmc import (
 class TestASMC(unittest.TestCase):
 
     def setUp(self):
-        hapsFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
+        inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
         decodingQuantFile = "FILES/DECODING_QUANTITIES" \
             "/30-100-2000.decodingQuantities.gz"
-        self.sequenceLength = Data.countHapLines(hapsFileRoot)
-        params = DecodingParams(hapsFileRoot, decodingQuantFile)
+        self.sequenceLength = Data.countHapLines(inFileRoot)
+        params = DecodingParams(inFileRoot, decodingQuantFile)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(hapsFileRoot, self.sequenceLength,
+        self.data = Data(inFileRoot, self.sequenceLength,
                          self.decodingQuantities.CSFSSamples,
                          params.foldData, params.usingCSFS)
         self.hmm = HMM(self.data, self.decodingQuantities, params,
@@ -72,18 +72,18 @@ class TestASMC(unittest.TestCase):
 
 class TestASMCDecodingParams(unittest.TestCase):
     def test_no_compress(self):
-        hapsFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
+        inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
         decodingQuantFile = "FILES/DECODING_QUANTITIES" \
             "/30-100-2000.decodingQuantities.gz"
-        sequenceLength = Data.countHapLines(hapsFileRoot)
-        params = DecodingParams(hapsFileRoot, decodingQuantFile, compress=True,
+        sequenceLength = Data.countHapLines(inFileRoot)
+        params = DecodingParams(inFileRoot, decodingQuantFile, compress=True,
             skipCSFSdistance=float('nan'))
 
         self.assertEqual(params.compress, True)
         self.assertEqual(params.skipCSFSdistance, float('inf'))
 
         decodingQuantities = DecodingQuantities(decodingQuantFile)
-        data = Data(hapsFileRoot, sequenceLength,
+        data = Data(inFileRoot, sequenceLength,
                     decodingQuantities.CSFSSamples, params.foldData,
                     params.usingCSFS)
         hmm = HMM(data, decodingQuantities, params, not params.noBatches, 1)

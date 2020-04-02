@@ -13,20 +13,32 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifndef ASMC_FASTSMC_HPP
+#define ASMC_FASTSMC_HPP
 
-#ifndef ASMC_HPP
-#define ASMC_HPP
-
-#include "DecodingQuantities.hpp"
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
-DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file,
-         std::string out_file_root, DecodingModeOverall mode,
-         int jobs, int job_index,
-         float skip_csfs_distance,
-         bool compress, bool use_ancestral,
-         bool posterior_sums, bool major_minor_posterior_sums);
+namespace ASMC
+{
 
-#endif
+class FastSMC
+{
+
+private:
+  int mHashingWordSize = 64;
+  int mConstReadAhead = 10;
+  bool mHaploid = true;
+
+public:
+  explicit FastSMC(int hashingWordSize, int constReadAhead, bool haploid);
+
+  FastSMC() = default;
+
+  void run(const DecodingParams& params, const Data& data, HMM& hmm);
+};
+
+} // namespace ASMC
+
+#endif // ASMC_FASTSMC_HPP

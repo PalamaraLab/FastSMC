@@ -26,8 +26,8 @@ TEST_CASE("test hmm functions", "[HMM]")
       ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
       ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  int sequenceLength = Data::countHapLines(params.hapsFileRoot.c_str());
-  Data data(params.hapsFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
+  int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
+  Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
       params.foldData, params.usingCSFS);
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
