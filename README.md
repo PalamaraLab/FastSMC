@@ -67,6 +67,31 @@ cd ASMC
 pip install .
 ```
 
+### Decoding Quantities
+
+To generate decoding quantities, several additional requirements are required.
+
+**Ubuntu (using the package manager)**
+```bash
+sudo apt install libgmp-dev libmpfr-dev libgsl0-dev default-jdk jblas
+```
+
+**macOS (using homebrew and assuming cask is installed)**
+```bash
+brew install mpfr gmp gsl 
+brew cask install java 
+```
+
+**Install python dependencies**
+```bash
+pip install cython
+pip install -r TOOLS/PREPARE_DECODING/requirements.txt
+```
+
+Basic functionality for generating decoding quantities can be seen in:
+
+./prepare.sh
+
 ## License
 
 ASMC is distributed under the GNU General Public License v3.0 (GPLv3). For any questions or comments on ASMC, please contact Pier Palamara using `<lastname>@stats.ox.ac.uk`.

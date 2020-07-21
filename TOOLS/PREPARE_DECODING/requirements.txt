@@ -1,0 +1,3 @@
+cython
+numpy
+-e git+https://github.com/popgenmethods/smcpp#egg=smcpp
