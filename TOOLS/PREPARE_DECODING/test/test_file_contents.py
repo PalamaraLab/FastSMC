@@ -107,7 +107,8 @@ def main():
     lines_2 = extract_lines_from_file(file_2)
 
     if len(lines_1) != len(lines_2):
-        print(f'Files {file_1} and {file_2} do not have the same number of lines')
+        print(f'Files {file_1} and {file_2} do not have the same number of lines'
+              f' ({len(lines_1)} and {len(lines_2)} respectively)')
         sys.exit(1)
 
     for idx, [l1, l2] in enumerate(zip(lines_1, lines_2)):
