@@ -84,7 +84,7 @@ brew cask install java
 
 **Install python dependencies**
 ```bash
-pip install cython
+pip install cython numpy
 pip install -r TOOLS/PREPARE_DECODING/requirements.txt
 ```
 
