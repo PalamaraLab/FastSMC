@@ -40,9 +40,6 @@ python3 test/test_file_contents.py test/test_output.decodingQuantities.gz test/r
 
 echo "Successfully checked files"
 
-echo "another line" >> test/test_output.csfs
-python3 test/test_file_contents.py test/test_output.csfs test/reference_output.csfs || exit 1
-
 rm test/test_output.csfs
 rm test/test_output.intervalsInfo
 rm test/test_output.decodingQuantities.gz
