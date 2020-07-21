@@ -30,7 +30,9 @@ jobs:
 
       - name: install system dependencies
         run: |
-          sudo apt install libgmp-dev libmpfr-dev libgsl0-dev default-jdk jblas
+          sudo apt install libgmp-dev libmpfr-dev libgsl0-dev
+          sudo apt install jblas || true
+          sudo apt install libgfortran3 || true
 
       - name: install python dependencies
         run: |
