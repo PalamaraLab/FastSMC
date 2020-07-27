@@ -48,7 +48,6 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.inFileRoot = os.path.join(self.file_dir, self.name_prefix)
         self.params.outFileRoot = os.path.join('/tmp/FastSMCresults')
         self.params.decodingModeString = 'array'
-        self.params.decodingMode = DecodingMode.arrayFolded
         self.params.foldData = True
         self.params.usingCSFS = True
         self.params.batchSize = 32
@@ -61,6 +60,8 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.noConditionalAgeEstimates = True
         self.params.doPerPairMAP = True
         self.params.doPerPairPosteriorMean = True
+
+        assert self.params.validateParamsFastSMC()
 
         decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
         sequence_length = Data.countHapLines(self.params.inFileRoot)
@@ -95,7 +96,6 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.inFileRoot = os.path.join(self.file_dir, self.name_prefix)
         self.params.outFileRoot = os.path.join('/tmp/FastSMCresults')
         self.params.decodingModeString = 'array'
-        self.params.decodingMode = DecodingMode.arrayFolded
         self.params.foldData = True
         self.params.usingCSFS = True
         self.params.batchSize = 32
@@ -110,6 +110,8 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.doPerPairPosteriorMean = True
         self.params.jobInd = 7
         self.params.jobs = 9
+
+        assert self.params.validateParamsFastSMC()
 
         decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
         sequence_length = Data.countHapLines(self.params.inFileRoot)

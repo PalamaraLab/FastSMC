@@ -18,12 +18,17 @@
 
 #include <string>
 
+#include <boost/program_options.hpp>
+
 enum class DecodingMode { sequenceFolded, arrayFolded, sequence, array };
 
 enum class DecodingModeOverall { sequence, array };
 
 class DecodingParams
 {
+
+private:
+  bool fastSmcInvokedWithProgramOptions = false;
 
 public:
   std::string inFileRoot;
@@ -73,6 +78,14 @@ public:
   bool processOptions();
   bool processCommandLineArgs(int argc, char* argv[]);
   bool processCommandLineArgsFastSMC(int argc, char* argv[]);
+
+  /**
+   * Verify that the selected parameters are compatible. Incompatible options will cause FastSMC to exit with a message
+   * explaining the incompatibility.
+   *
+   * @return true if the parameters are compatible
+   */
+  bool validateParamsFastSMC();
 
   /// constructor with default parameters set
   DecodingParams();

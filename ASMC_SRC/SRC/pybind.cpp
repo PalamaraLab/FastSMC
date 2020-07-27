@@ -123,6 +123,7 @@ PYBIND11_MODULE(pyASMC, m) {
                 "withinOnly"_a = false,
                 "doMajorMinorPosteriorSums"_a = false)
         .def(py::init<>())
+        .def("validateParamsFastSMC", &DecodingParams::validateParamsFastSMC)
         .def_readwrite("inFileRoot", &DecodingParams::inFileRoot)
         .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
         .def_readwrite("outFileRoot", &DecodingParams::outFileRoot)
