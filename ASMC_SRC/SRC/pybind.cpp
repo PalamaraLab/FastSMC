@@ -155,9 +155,8 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
 
     py::class_<Data>(m, "Data")
-        .def(py::init<const std::string&, int, int, bool, bool, int, int, bool>(),
-             "inFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
-             "foldToMinorAlleles"_a, "decodingUsesCSFS"_a, "jobID"_a = -1, "jobs"_a = -1, "useKnownSeed"_a = false)
+        .def(py::init<const DecodingParams&, const DecodingQuantities&, bool>(),
+             "params"_a, "quantities"_a, "useKnownSeed"_a = false)
         .def_static("countHapLines", &Data::countHapLines)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)

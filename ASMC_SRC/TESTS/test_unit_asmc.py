@@ -16,9 +16,7 @@ class TestASMC(unittest.TestCase):
         self.sequenceLength = Data.countHapLines(inFileRoot)
         params = DecodingParams(inFileRoot, decodingQuantFile)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(inFileRoot, self.sequenceLength,
-                         self.decodingQuantities.CSFSSamples,
-                         params.foldData, params.usingCSFS)
+        self.data = Data(params, self.decodingQuantities)
         self.hmm = HMM(self.data, self.decodingQuantities, params,
                        not params.noBatches, 1)
 
@@ -75,7 +73,6 @@ class TestASMCDecodingParams(unittest.TestCase):
         inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
         decodingQuantFile = "FILES/DECODING_QUANTITIES" \
             "/30-100-2000.decodingQuantities.gz"
-        sequenceLength = Data.countHapLines(inFileRoot)
         params = DecodingParams(inFileRoot, decodingQuantFile, compress=True,
             skipCSFSdistance=float('nan'))
 
@@ -83,9 +80,7 @@ class TestASMCDecodingParams(unittest.TestCase):
         self.assertEqual(params.skipCSFSdistance, float('inf'))
 
         decodingQuantities = DecodingQuantities(decodingQuantFile)
-        data = Data(inFileRoot, sequenceLength,
-                    decodingQuantities.CSFSSamples, params.foldData,
-                    params.usingCSFS)
+        data = Data(params, decodingQuantities)
         hmm = HMM(data, decodingQuantities, params, not params.noBatches, 1)
 
         p = hmm.makePairObs(1, 0, 2, 0)

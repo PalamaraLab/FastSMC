@@ -16,15 +16,10 @@ class TestASMCRegression(unittest.TestCase):
 
     def setUp(self):
         inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
-        decodingQuantFile = "FILES/DECODING_QUANTITIES" \
-            "/30-100-2000.decodingQuantities.gz"
-        self.sequenceLength = Data.countHapLines(inFileRoot)
-        self.params = DecodingParams(inFileRoot, decodingQuantFile,
-                                     doPosteriorSums=True)
+        decodingQuantFile = "FILES/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz"
+        self.params = DecodingParams(inFileRoot, decodingQuantFile, doPosteriorSums=True)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(inFileRoot, self.sequenceLength,
-                         self.decodingQuantities.CSFSSamples,
-                         self.params.foldData, self.params.usingCSFS)
+        self.data = Data(self.params, self.decodingQuantities)
         self.hmm = HMM(self.data, self.decodingQuantities, self.params,
                        not self.params.noBatches, 1)
 
@@ -64,11 +59,8 @@ class TestFastSMCRegression(unittest.TestCase):
         assert self.params.validateParamsFastSMC()
 
         decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-        sequence_length = Data.countHapLines(self.params.inFileRoot)
 
-        use_known_seed = True
-        data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
-                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
+        data = Data(self.params, decoding_quantities, useKnownSeed=True)
 
         hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
 
@@ -114,11 +106,8 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         assert self.params.validateParamsFastSMC()
 
         decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-        sequence_length = Data.countHapLines(self.params.inFileRoot)
 
-        use_known_seed = True
-        data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
-                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
+        data = Data(self.params, decoding_quantities, useKnownSeed=True)
 
         hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
 
