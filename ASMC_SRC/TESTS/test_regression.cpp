@@ -40,7 +40,7 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
       true // _doPosteriorSums
       );
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  Data data(params.inFileRoot, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);
+  Data data(params, decodingQuantities);
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
   REQUIRE(data.individuals.size() > 20);

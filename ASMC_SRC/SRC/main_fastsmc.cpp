@@ -20,10 +20,8 @@ int main(int argc, char* argv[])
   }
 
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  const auto sequenceLength = Data::countHapLines(params.inFileRoot);
 
-  Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs);
+  Data data(params, decodingQuantities);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 

@@ -70,8 +70,7 @@ DecodingReturnValues run(string in_file_root, string decoding_quant_file,
     // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
     cout << "Data will be loaded from " << params.inFileRoot << "*\n";
-    int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
-    Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS);
+    Data data(params, decodingQuantities);
     printf("Read haps in %.9f seconds.\n", timer.update_time());
 
     HMM hmm(data, decodingQuantities, params, !params.noBatches);

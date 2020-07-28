@@ -113,9 +113,7 @@ int main(int argc, char* argv[])
   // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
   cout << "Data will be loaded from " << params.inFileRoot << "*\n";
-  int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
-  Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
-      params.foldData, params.usingCSFS);
+  Data data(params, decodingQuantities);
   printf("Read haps in %.3f seconds.\n", timer.update_time());
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);

@@ -30,10 +30,19 @@
 
 using namespace std;
 
-Data::Data(const string& inFileRoot, const int _totalSamplesBound, const bool foldToMinorAlleles,
-           const bool _decodingUsesCSFS, const int jobID, const int jobs, const bool useKnownSeed)
-    : totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
+Data::Data(const DecodingParams& params, const DecodingQuantities& quantities, const bool useKnownSeed)
 {
+  // Copy the DecodingParams that we need
+  const std::string inFileRoot = params.inFileRoot;
+  const bool foldToMinorAlleles = params.foldData;
+  const int jobID = params.jobInd;
+  const int jobs = params.jobs;
+  decodingUsesCSFS = params.usingCSFS;
+  const bool FastSMC = params.FastSMC;
+
+  // Copy the DecodingQuantities that we need
+  totalSamplesBound = quantities.CSFSSamples;
+
   // Determine if there is jobbing based on whether the jobID and jobs are at their default values
   mJobbing = (jobID != -1) && (jobs != -1);
 
@@ -76,9 +85,7 @@ Data::Data(const string& inFileRoot, const int _totalSamplesBound, const bool fo
     individuals.emplace_back(sites);
   }
 
-  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
-  TODO_REMOVE_FASTSMC = mJobbing;
-  if (TODO_REMOVE_FASTSMC) {
+  if (FastSMC) {
     vector<pair<unsigned long, double>> geneticMap = readMapFastSMC(inFileRoot);
     readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
   } else {

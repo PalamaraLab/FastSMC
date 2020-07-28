@@ -57,8 +57,7 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
 
   const bool useKnownSeed = true;
-  Data data(params.inFileRoot, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs, useKnownSeed);
+  Data data(params, decodingQuantities, useKnownSeed);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 
@@ -136,8 +135,7 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
 
   const bool useKnownSeed = true;
-  Data data(params.inFileRoot, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs, useKnownSeed);
+  Data data(params, decodingQuantities, useKnownSeed);
 
   HMM hmm(data, decodingQuantities, params, !params.noBatches);
 

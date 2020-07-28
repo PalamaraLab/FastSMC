@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "Individual.hpp"
+#include "DecodingParams.hpp"
+#include "DecodingQuantities.hpp"
 
 class Data
 {
@@ -56,26 +58,16 @@ public:
   /**
    * Construct the data object
    *
-   * @param inFileRoot location of input files
-   * @param totalSamplesBound
-   * @param foldToMinorAlleles
-   * @param decodingUsesCSFS whether to decode using CSFS
-   * @param jobID the jobID which defaults to -1 indicating no jobbing
-   * @param jobs the number of jobs which defaults to -1 indicating no jobbing
+   * @param params the decoding params
+   * @param quantities the decoding quantities
    * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
-  Data(const std::string& inFileRoot, int totalSamplesBound, bool foldToMinorAlleles,
-       bool decodingUsesCSFS, int jobID = -1, int jobs = -1, bool useKnownSeed = false);
+  Data(const DecodingParams& params, const DecodingQuantities& quantities, bool useKnownSeed = false);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
 
 private:
-
-  /**
-   * TODO: harmonise functionality in this class so that this switch is not necessary
-   */
-  bool TODO_REMOVE_FASTSMC = false;
 
   /**
    * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.
