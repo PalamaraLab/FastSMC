@@ -30,15 +30,18 @@
 
 using namespace std;
 
-Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
+Data::Data(const string& inFileRoot, const int _totalSamplesBound, const bool foldToMinorAlleles,
            const bool _decodingUsesCSFS, const int jobID, const int jobs, const bool useKnownSeed)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
-      siteWasFlippedDuringFolding(_sites, false)
+    : totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS)
 {
   // Determine if there is jobbing based on whether the jobID and jobs are at their default values
   mJobbing = (jobID != -1) && (jobs != -1);
+
+  sites = countHapLines(inFileRoot);
   sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
+
+  siteWasFlippedDuringFolding = std::vector<bool>(sites, false);
 
   if (useKnownSeed) {
     std::srand(1234u);

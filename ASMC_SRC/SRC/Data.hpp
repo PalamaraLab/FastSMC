@@ -57,7 +57,6 @@ public:
    * Construct the data object
    *
    * @param inFileRoot location of input files
-   * @param numOfSites number of sites
    * @param totalSamplesBound
    * @param foldToMinorAlleles
    * @param decodingUsesCSFS whether to decode using CSFS
@@ -65,7 +64,7 @@ public:
    * @param jobs the number of jobs which defaults to -1 indicating no jobbing
    * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
-  Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
+  Data(const std::string& inFileRoot, int totalSamplesBound, bool foldToMinorAlleles,
        bool decodingUsesCSFS, int jobID = -1, int jobs = -1, bool useKnownSeed = false);
 
   static int countHapLines(std::string inFileRoot);
