@@ -50,7 +50,6 @@ public:
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New params from FastSMC that were not originally in ASMC
 
-  std::string map;
   int batchSize = 64;
   int recallThreshold = 3;
 

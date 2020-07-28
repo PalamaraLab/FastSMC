@@ -189,8 +189,6 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
   options.add_options()
       ("inFileRoot", po::value<string>(&inFileRoot)->required(),
        "Prefix of hap|haps|hap.gz|haps.gz and sample|samples file.")
-      ("map", po::value<string>(&map)->required(),
-       "Genetic map file.")
       ("outFileRoot", po::value<string>(&outFileRoot)->required(),
        "Output file for sum of posterior distribution over pairs.")
       ("decodingQuantFile", po::value<string>(&decodingQuantFile),
@@ -415,7 +413,6 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "---------------------------" << endl;
 
   cout << "Input will have prefix : " << inFileRoot << endl;
-  cout << "Map file is : " << map << endl;
   cout << "Decoding quantities file : " << decodingQuantFile << endl;
   cout << "Output will have prefix : " << outFileRoot << "." << jobInd << "." << jobs;
 
