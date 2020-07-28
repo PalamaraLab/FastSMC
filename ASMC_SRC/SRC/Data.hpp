@@ -27,31 +27,31 @@ class Data
 {
 
 public:
-  std::vector<std::string> FamIDList;
-  std::vector<std::string> IIDList;
-  std::vector<std::string> famAndIndNameList;
-  std::vector<Individual> individuals;
+  std::vector<std::string> FamIDList = {};
+  std::vector<std::string> IIDList = {};
+  std::vector<std::string> famAndIndNameList = {};
+  std::vector<Individual> individuals = {};
 
-  unsigned long sampleSize;
-  unsigned long haploidSampleSize;
-  int sites;
-  int totalSamplesBound;
+  unsigned long sampleSize = 0ul;
+  unsigned long haploidSampleSize = 0ul;
+  int sites = 0;
+  int totalSamplesBound = 0;
   bool decodingUsesCSFS = false;
   bool mJobbing = false;
-  std::vector<float> geneticPositions;
-  std::vector<int> physicalPositions;
-  std::vector<bool> siteWasFlippedDuringFolding;
-  std::vector<float> recRateAtMarker;
-  std::vector<std::vector<int>> undistinguishedCounts;
+  std::vector<float> geneticPositions = {};
+  std::vector<int> physicalPositions = {};
+  std::vector<bool> siteWasFlippedDuringFolding = {};
+  std::vector<float> recRateAtMarker = {};
+  std::vector<std::vector<int>> undistinguishedCounts = {};
 
 
   // Variables relating to FastSMC
   int chrNumber = 0;
-  unsigned int windowSize; // window size in triangles for each job
-  unsigned int w_i;        // window id for ind_i for jobs
-  unsigned int w_j;        // window id for ind_j for jobs
-  bool is_j_above_diag;
-  std::unordered_map<int, unsigned int> physicalPositionsMap; // map where key=physicalPosition, value=indexPosition
+  unsigned int windowSize = 0u; // window size in triangles for each job
+  unsigned int w_i = 0u;        // window id for ind_i for jobs
+  unsigned int w_j = 0u;        // window id for ind_j for jobs
+  bool is_j_above_diag = false;
+  std::unordered_map<int, unsigned int> physicalPositionsMap = {}; // map where key=physicalPosition, value=indexPosition
 
   /**
    * Construct the data object
