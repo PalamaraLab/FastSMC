@@ -289,6 +289,12 @@ bool DecodingParams::validateParamsFastSMC()
 {
   const std::string del = fastSmcInvokedWithProgramOptions ? "--" : "";
 
+  if (!FastSMC) {
+    cerr << "Attempting to validate FastSMC parameters but FastSMC flag is false. Set DecodingParams::FastSMC to true?"
+         << endl;
+    exit(1);
+  }
+
   if (GERMLINE) {
     if (withinOnly) {
       cerr << del << "GERMLINE & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
