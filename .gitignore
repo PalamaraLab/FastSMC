@@ -24,6 +24,7 @@ venv*
 
 # Notebook outputs
 notebooks/tmp_output
+*checkpoint.ipynb
 
 # Python distribution / packaging
 .Python
@@ -45,3 +46,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Libraries
+*.so
