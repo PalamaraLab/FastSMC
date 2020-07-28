@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
   Data data(params, decodingQuantities);
   printf("Read haps in %.3f seconds.\n", timer.update_time());
 
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   hmm.decodeAll(params.jobs, params.jobInd);
   const DecodingReturnValues& decodingReturnValues = hmm.getDecodingReturnValues();

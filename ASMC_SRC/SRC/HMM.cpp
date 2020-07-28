@@ -58,10 +58,9 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 }
 
 // constructor
-HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
-         int _scalingSkip)
+HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, int _scalingSkip)
     : data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams), scalingSkip(_scalingSkip),
-      noBatches(!useBatches)
+      noBatches(_decodingParams.noBatches)
 {
   if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
     cerr << "Identification only is not yet supported Cannot have GERMLINE==true and FastSMC==false.\n";

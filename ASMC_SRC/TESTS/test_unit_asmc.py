@@ -17,8 +17,7 @@ class TestASMC(unittest.TestCase):
         params = DecodingParams(inFileRoot, decodingQuantFile)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
         self.data = Data(params, self.decodingQuantities)
-        self.hmm = HMM(self.data, self.decodingQuantities, params,
-                       not params.noBatches, 1)
+        self.hmm = HMM(self.data, self.decodingQuantities, params)
 
     def test_initialization(self):
         self.assertGreater(len(self.data.individuals), 20)
@@ -81,7 +80,7 @@ class TestASMCDecodingParams(unittest.TestCase):
 
         decodingQuantities = DecodingQuantities(decodingQuantFile)
         data = Data(params, decodingQuantities)
-        hmm = HMM(data, decodingQuantities, params, not params.noBatches, 1)
+        hmm = HMM(data, decodingQuantities, params)
 
         p = hmm.makePairObs(1, 0, 2, 0)
         d = hmm.decode(p)

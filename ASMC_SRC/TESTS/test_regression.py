@@ -20,8 +20,7 @@ class TestASMCRegression(unittest.TestCase):
         self.params = DecodingParams(inFileRoot, decodingQuantFile, doPosteriorSums=True)
         self.decodingQuantities = DecodingQuantities(decodingQuantFile)
         self.data = Data(self.params, self.decodingQuantities)
-        self.hmm = HMM(self.data, self.decodingQuantities, self.params,
-                       not self.params.noBatches, 1)
+        self.hmm = HMM(self.data, self.decodingQuantities, self.params)
 
     def test_regression(self):
         oldSumOverPairs = np.loadtxt(Path(__file__).parent / 'data' /
@@ -62,7 +61,7 @@ class TestFastSMCRegression(unittest.TestCase):
 
         data = Data(self.params, decoding_quantities, useKnownSeed=True)
 
-        hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
+        hmm = HMM(data, decoding_quantities, self.params)
 
         fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
         fast_smc.run(self.params, data, hmm)
@@ -109,7 +108,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
         data = Data(self.params, decoding_quantities, useKnownSeed=True)
 
-        hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
+        hmm = HMM(data, decoding_quantities, self.params)
 
         fast_smc = FastSMC()
         fast_smc.run(self.params, data, hmm)

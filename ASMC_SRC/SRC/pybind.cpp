@@ -174,7 +174,8 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("undistinguishedCounts", &Data::undistinguishedCounts)
         ;
     py::class_<HMM>(m, "HMM")
-        .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
+        .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, int>(), "data"_a,
+            "quantities"_a, "params"_a, "scalingSkip"_a = 1)
         .def("decode", py::overload_cast<const PairObservations&>(&HMM::decode))
         .def("decode", py::overload_cast<const PairObservations&, unsigned, unsigned>(&HMM::decode))
         .def("decodeAll", &HMM::decodeAll)

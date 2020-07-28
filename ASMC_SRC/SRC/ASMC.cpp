@@ -73,7 +73,7 @@ DecodingReturnValues run(string in_file_root, string decoding_quant_file,
     Data data(params, decodingQuantities);
     printf("Read haps in %.9f seconds.\n", timer.update_time());
 
-    HMM hmm(data, decodingQuantities, params, !params.noBatches);
+    HMM hmm(data, decodingQuantities, params);
 
     hmm.decodeAll(params.jobs, params.jobInd);
     return hmm.getDecodingReturnValues();

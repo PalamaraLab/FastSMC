@@ -59,7 +59,7 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   const bool useKnownSeed = true;
   Data data(params, decodingQuantities, useKnownSeed);
 
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;
@@ -137,7 +137,7 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   const bool useKnownSeed = true;
   Data data(params, decodingQuantities, useKnownSeed);
 
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   ASMC::FastSMC fastSMC;
   fastSMC.run(params, data, hmm);

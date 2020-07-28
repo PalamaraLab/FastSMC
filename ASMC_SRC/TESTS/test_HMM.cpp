@@ -27,7 +27,7 @@ TEST_CASE("test hmm functions", "[HMM]")
       ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   Data data(params, decodingQuantities);
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   REQUIRE(data.individuals.size() > 20);
 

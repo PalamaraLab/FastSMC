@@ -41,7 +41,7 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
       );
   DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
   Data data(params, decodingQuantities);
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   REQUIRE(data.individuals.size() > 20);
 

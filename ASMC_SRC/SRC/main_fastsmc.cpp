@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
   Data data(params, decodingQuantities);
 
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, decodingQuantities, params);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;

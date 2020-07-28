@@ -140,8 +140,7 @@ class HMM
 
 public:
   // constructor
-  HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
-      int _scalingSkip = 1);
+  HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, int _scalingSkip = 1);
 
   ~HMM();
 
