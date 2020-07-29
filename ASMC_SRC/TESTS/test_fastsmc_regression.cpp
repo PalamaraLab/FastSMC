@@ -53,13 +53,10 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 
   assert(params.validateParamsFastSMC());
 
-  // read decoding quantities from file
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-
   const bool useKnownSeed = true;
-  Data data(params, decodingQuantities, useKnownSeed);
+  Data data(params, useKnownSeed);
 
-  HMM hmm(data, decodingQuantities, params);
+  HMM hmm(data, params);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;
@@ -131,13 +128,10 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
 
   assert(params.validateParamsFastSMC());
 
-  // read decoding quantities from file
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-
   const bool useKnownSeed = true;
-  Data data(params, decodingQuantities, useKnownSeed);
+  Data data(params, useKnownSeed);
 
-  HMM hmm(data, decodingQuantities, params);
+  HMM hmm(data, params);
 
   ASMC::FastSMC fastSMC;
   fastSMC.run(params, data, hmm);

@@ -29,6 +29,7 @@ class Data
 {
 
 public:
+
   std::vector<std::string> FamIDList = {};
   std::vector<std::string> IIDList = {};
   std::vector<std::string> famAndIndNameList = {};
@@ -37,7 +38,6 @@ public:
   unsigned long sampleSize = 0ul;
   unsigned long haploidSampleSize = 0ul;
   int sites = 0;
-  int totalSamplesBound = 0;
   bool decodingUsesCSFS = false;
   bool mJobbing = false;
   std::vector<float> geneticPositions = {};
@@ -56,18 +56,28 @@ public:
   std::unordered_map<int, unsigned int> physicalPositionsMap = {}; // map where key=physicalPosition, value=indexPosition
 
   /**
-   * Construct the data object
+   * Construct the data object, which also constructs the decoding quantities that will be owned by this object
    *
    * @param params the decoding params
-   * @param quantities the decoding quantities
    * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
-  Data(const DecodingParams& params, const DecodingQuantities& quantities, bool useKnownSeed = false);
+  Data(const DecodingParams& params, bool useKnownSeed = false);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
 
+  /**
+   * @return const ref to the decoding quantities owned by this object
+   */
+  const DecodingQuantities& getDecodingQuantities() const;
+
 private:
+
+  /**
+   * The decoding quantities object, that is owned by Data. This member can be accessed publicly by const ref using
+   * Data::getDecodingQuantities
+   */
+  DecodingQuantities decodingQuantities;
 
   /**
    * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.

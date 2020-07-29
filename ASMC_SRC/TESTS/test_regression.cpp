@@ -39,9 +39,9 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
       false, // _noBatches
       true // _doPosteriorSums
       );
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  Data data(params, decodingQuantities);
-  HMM hmm(data, decodingQuantities, params);
+
+  Data data(params);
+  HMM hmm(data, params);
 
   REQUIRE(data.individuals.size() > 20);
 
@@ -56,7 +56,7 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
     for( std::string line; getline(fin, line); )
     {
       std::ostringstream oss;
-      for (uint k = 0; k < decodingQuantities.states; k++) {
+      for (uint k = 0; k < data.getDecodingQuantities().states; k++) {
         if (k) oss << "\t";
         oss << decodingReturnValues.sumOverPairs(pos,k);
       }

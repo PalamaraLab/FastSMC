@@ -65,15 +65,12 @@ DecodingReturnValues run(string in_file_root, string decoding_quant_file,
 
     // read decoding quantities from file
     std::string str(params.decodingQuantFile.c_str());
-    DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-    printf("Read precomputed decoding info in %.9f seconds.\n", timer.update_time());
-    // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
 
     cout << "Data will be loaded from " << params.inFileRoot << "*\n";
-    Data data(params, decodingQuantities);
+    Data data(params);
     printf("Read haps in %.9f seconds.\n", timer.update_time());
 
-    HMM hmm(data, decodingQuantities, params);
+    HMM hmm(data, params);
 
     hmm.decodeAll(params.jobs, params.jobInd);
     return hmm.getDecodingReturnValues();

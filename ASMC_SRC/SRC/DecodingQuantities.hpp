@@ -48,8 +48,8 @@ class DecodingQuantities
 {
 
 public:
-  unsigned int states;
-  int CSFSSamples;
+  unsigned int states = 0u;
+  int CSFSSamples = 0;
   std::vector<float> initialStateProb;
   std::vector<float> expectedTimes;
   std::vector<float> discretization;
@@ -67,12 +67,12 @@ public:
   std::vector<std::vector<std::vector<float>>> ascertainedCSFSmap;
   std::vector<std::vector<std::vector<float>>> foldedAscertainedCSFSmap;
 
-  explicit DecodingQuantities(const char* fileName);
+  explicit DecodingQuantities(const std::string& fileName);
 
 private:
   // implemented, but need to update other code
   // void createFromBinary(const char *fileName);
-  void createFromGzippedText(const char* fileName);
+  void createFromGzippedText(const std::string& fileName);
 };
 
 #endif

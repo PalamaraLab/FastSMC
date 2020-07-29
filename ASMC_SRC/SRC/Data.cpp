@@ -30,7 +30,7 @@
 
 using namespace std;
 
-Data::Data(const DecodingParams& params, const DecodingQuantities& quantities, const bool useKnownSeed)
+Data::Data(const DecodingParams& params, const bool useKnownSeed) : decodingQuantities(params.decodingQuantFile)
 {
   // Copy the DecodingParams that we need
   const std::string inFileRoot = params.inFileRoot;
@@ -39,9 +39,6 @@ Data::Data(const DecodingParams& params, const DecodingQuantities& quantities, c
   const int jobs = params.jobs;
   decodingUsesCSFS = params.usingCSFS;
   const bool FastSMC = params.FastSMC;
-
-  // Copy the DecodingQuantities that we need
-  totalSamplesBound = quantities.CSFSSamples;
 
   // Determine if there is jobbing based on whether the jobID and jobs are at their default values
   mJobbing = (jobID != -1) && (jobs != -1);
@@ -161,9 +158,9 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
     undistinguishedCounts[i] = vector<int>(3);
     int derivedAlleles = derivedAlleleCounts[i];
     int totalSamples = totalSamplesCount[i];
-    if (decodingUsesCSFS && totalSamplesBound > totalSamples) {
+    if (decodingUsesCSFS && decodingQuantities.CSFSSamples > totalSamples) {
       cerr << "ERROR. SNP " << SNP_IDs[i] << " has " << totalSamples
-           << " non-missing individuals, but the CSFS requires " << totalSamplesBound << endl;
+           << " non-missing individuals, but the CSFS requires " << decodingQuantities.CSFSSamples << endl;
       exit(1);
     }
     int ancestralAlleles = totalSamples - derivedAlleles;
@@ -173,9 +170,9 @@ void Data::makeUndistinguished(bool foldToMinorAlleles)
     for (int distinguished = 0; distinguished < 3; distinguished++) {
       // hypergeometric with (derivedAlleles - distinguished) derived alleles, (samples
       // - 2) samples
-      int undist = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, totalSamplesBound - 2);
-      if (foldToMinorAlleles && (undist + distinguished > totalSamplesBound / 2)) {
-        undist = (totalSamplesBound - 2 - undist);
+      int undist = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, decodingQuantities.CSFSSamples - 2);
+      if (foldToMinorAlleles && (undist + distinguished > decodingQuantities.CSFSSamples / 2)) {
+        undist = (decodingQuantities.CSFSSamples - 2 - undist);
       }
       undistinguishedCounts[i][distinguished] = undist;
     }
@@ -574,4 +571,9 @@ void Data::addMarker(unsigned long int physicalPos, double geneticPos, unsigned 
     }
     recRateAtMarker.push_back(recRate);
   }
+}
+
+const DecodingQuantities& Data::getDecodingQuantities() const
+{
+  return decodingQuantities;
 }

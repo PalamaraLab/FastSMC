@@ -19,11 +19,8 @@ int main(int argc, char* argv[])
     exit(1);
   }
 
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-
-  Data data(params, decodingQuantities);
-
-  HMM hmm(data, decodingQuantities, params);
+  Data data(params);
+  HMM hmm(data, params);
 
   const int WORD_SIZE = 64;
   const int CONST_READ_AHEAD = 10;

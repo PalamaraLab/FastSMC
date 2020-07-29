@@ -58,9 +58,9 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 }
 
 // constructor
-HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, int _scalingSkip)
-    : data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams), scalingSkip(_scalingSkip),
-      noBatches(_decodingParams.noBatches)
+HMM::HMM(Data& _data, DecodingParams _decodingParams, int _scalingSkip)
+    : data(_data), m_decodingQuant(_data.getDecodingQuantities()), decodingParams(_decodingParams),
+      scalingSkip(_scalingSkip), noBatches(_decodingParams.noBatches)
 {
   if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
     cerr << "Identification only is not yet supported Cannot have GERMLINE==true and FastSMC==false.\n";
@@ -71,7 +71,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   outFileRoot = decodingParams.outFileRoot;
   expectedCoalTimesFile = decodingParams.expectedCoalTimesFile;
   sequenceLength = data.sites;
-  states = _decodingQuant.states;
+  states = m_decodingQuant.states;
   useCSFSatThisPosition = vector<bool>(sequenceLength, false);
   emission1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   emission0minus1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
@@ -125,9 +125,9 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   resetDecoding();
 
   // output for python interface (TODO: not sure if this is the right place)
-  m_decodingReturnValues.sites = _data.sites;
-  m_decodingReturnValues.states = _decodingQuant.states;
-  m_decodingReturnValues.siteWasFlippedDuringFolding = _data.siteWasFlippedDuringFolding;
+  m_decodingReturnValues.sites = data.sites;
+  m_decodingReturnValues.states = m_decodingQuant.states;
+  m_decodingReturnValues.siteWasFlippedDuringFolding = data.siteWasFlippedDuringFolding;
 }
 
 HMM::~HMM()
@@ -243,7 +243,7 @@ void HMM::prepareEmissions()
           if (undistAtThisSiteFor2dist >= 0) {
             int dist = 2;
             int undist = undistAtThisSiteFor2dist;
-            if (undistAtThisSiteFor2dist == data.totalSamplesBound - 2) {
+            if (undistAtThisSiteFor2dist == m_decodingQuant.CSFSSamples - 2) {
               // for monomorphic derived, fold to CSFS[0][0]
               dist = 0;
               undist = 0;

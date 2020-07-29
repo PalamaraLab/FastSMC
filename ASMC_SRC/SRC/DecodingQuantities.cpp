@@ -29,12 +29,12 @@
 
 using namespace std;
 
-DecodingQuantities::DecodingQuantities(const char *fileName) {
+DecodingQuantities::DecodingQuantities(const std::string& fileName) {
   cout << "Using precomputed decoding info from " << fileName << endl;
   createFromGzippedText(fileName);
 }
 
-void DecodingQuantities::createFromGzippedText(const char *fileName) {
+void DecodingQuantities::createFromGzippedText(const std::string& fileName) {
   FileUtils::AutoGzIfstream br; br.openOrExit(fileName);
   string line;
   DataType currentType = DataType::None;
