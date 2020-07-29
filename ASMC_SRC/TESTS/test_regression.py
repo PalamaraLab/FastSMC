@@ -18,9 +18,8 @@ class TestASMCRegression(unittest.TestCase):
         inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
         decodingQuantFile = "FILES/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz"
         self.params = DecodingParams(inFileRoot, decodingQuantFile, doPosteriorSums=True)
-        self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(self.params, self.decodingQuantities)
-        self.hmm = HMM(self.data, self.decodingQuantities, self.params)
+        self.data = Data(self.params)
+        self.hmm = HMM(self.data, self.params)
 
     def test_regression(self):
         oldSumOverPairs = np.loadtxt(Path(__file__).parent / 'data' /
@@ -57,11 +56,8 @@ class TestFastSMCRegression(unittest.TestCase):
 
         assert self.params.validateParamsFastSMC()
 
-        decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-
-        data = Data(self.params, decoding_quantities, useKnownSeed=True)
-
-        hmm = HMM(data, decoding_quantities, self.params)
+        data = Data(self.params, useKnownSeed=True)
+        hmm = HMM(data, self.params)
 
         fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
         fast_smc.run(self.params, data, hmm)
@@ -104,11 +100,8 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
         assert self.params.validateParamsFastSMC()
 
-        decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-
-        data = Data(self.params, decoding_quantities, useKnownSeed=True)
-
-        hmm = HMM(data, decoding_quantities, self.params)
+        data = Data(self.params, useKnownSeed=True)
+        hmm = HMM(data, self.params)
 
         fast_smc = FastSMC()
         fast_smc.run(self.params, data, hmm)

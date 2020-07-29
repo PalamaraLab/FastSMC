@@ -155,9 +155,9 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
 
     py::class_<Data>(m, "Data")
-        .def(py::init<const DecodingParams&, const DecodingQuantities&, bool>(),
-             "params"_a, "quantities"_a, "useKnownSeed"_a = false)
+        .def(py::init<const DecodingParams&, bool>(), "params"_a, "useKnownSeed"_a = false)
         .def_static("countHapLines", &Data::countHapLines)
+        .def("getDecodingQuantities", &Data::getDecodingQuantities)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)
         .def_readwrite("famAndIndNameList", &Data::famAndIndNameList)
@@ -165,7 +165,6 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("sampleSize", &Data::sampleSize)
         .def_readwrite("haploidSampleSize", &Data::haploidSampleSize)
         .def_readwrite("sites", &Data::sites)
-        .def_readwrite("totalSamplesBound", &Data::totalSamplesBound)
         .def_readwrite("decodingUsesCSFS", &Data::decodingUsesCSFS)
         .def_readwrite("geneticPositions", &Data::geneticPositions)
         .def_readwrite("physicalPositions", &Data::physicalPositions)
@@ -174,8 +173,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("undistinguishedCounts", &Data::undistinguishedCounts)
         ;
     py::class_<HMM>(m, "HMM")
-        .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, int>(), "data"_a,
-            "quantities"_a, "params"_a, "scalingSkip"_a = 1)
+        .def(py::init<Data&, DecodingParams&, int>(), "data"_a, "params"_a, "scalingSkip"_a = 1)
         .def("decode", py::overload_cast<const PairObservations&>(&HMM::decode))
         .def("decode", py::overload_cast<const PairObservations&, unsigned, unsigned>(&HMM::decode))
         .def("decodeAll", &HMM::decodeAll)

@@ -15,9 +15,8 @@ class TestASMC(unittest.TestCase):
             "/30-100-2000.decodingQuantities.gz"
         self.sequenceLength = Data.countHapLines(inFileRoot)
         params = DecodingParams(inFileRoot, decodingQuantFile)
-        self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(params, self.decodingQuantities)
-        self.hmm = HMM(self.data, self.decodingQuantities, params)
+        self.data = Data(params)
+        self.hmm = HMM(self.data, params)
 
     def test_initialization(self):
         self.assertGreater(len(self.data.individuals), 20)
@@ -25,7 +24,7 @@ class TestASMC(unittest.TestCase):
     def test_sum_over_pairs_shape(self):
         ret = self.hmm.getDecodingReturnValues()
         self.assertEqual(ret.sumOverPairs.shape,
-                         (self.sequenceLength, self.decodingQuantities.states))
+                         (self.sequenceLength, self.data.getDecodingQuantities().states))
 
     def test_decode_pair(self):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
@@ -40,8 +39,8 @@ class TestASMC(unittest.TestCase):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 5)
 
     def test_decode_pair_observation(self):
-        self.assertEqual(len(self.decodingQuantities.discretization),
-                         len(self.decodingQuantities.expectedTimes) + 1)
+        self.assertEqual(len(self.data.getDecodingQuantities().discretization),
+                         len(self.data.getDecodingQuantities().expectedTimes) + 1)
         self.assertEqual(self.data.sites, self.sequenceLength)
 
         for p in [
@@ -49,7 +48,7 @@ class TestASMC(unittest.TestCase):
             self.hmm.makePairObs(1, 0, 1, 0),
             self.hmm.makePairObs(2, 0, 2, 0)]:
             d = self.hmm.decode(p)
-            self.assertEqual(len(d), len(self.decodingQuantities.expectedTimes))
+            self.assertEqual(len(d), len(self.data.getDecodingQuantities().expectedTimes))
             for i in range(len(d)):
                 self.assertEqual(len(d[i]), self.data.sites)
 
@@ -78,13 +77,12 @@ class TestASMCDecodingParams(unittest.TestCase):
         self.assertEqual(params.compress, True)
         self.assertEqual(params.skipCSFSdistance, float('inf'))
 
-        decodingQuantities = DecodingQuantities(decodingQuantFile)
-        data = Data(params, decodingQuantities)
-        hmm = HMM(data, decodingQuantities, params)
+        data = Data(params)
+        hmm = HMM(data, params)
 
         p = hmm.makePairObs(1, 0, 2, 0)
         d = hmm.decode(p)
-        self.assertEqual(len(d), len(decodingQuantities.expectedTimes))
+        self.assertEqual(len(d), len(data.getDecodingQuantities().expectedTimes))
         for i in range(len(d)):
             self.assertEqual(len(d[i]), data.sites)
 
