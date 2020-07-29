@@ -101,6 +101,9 @@ class HMM
   std::vector<std::vector<float>> emission0minus1AtSite;
   std::vector<std::vector<float>> emission2minus0AtSite;
 
+  /** Calculated by the data module in the HMM constructor */
+  std::vector<std::vector<int>> undistinguishedCounts;
+
   bool noBatches;
   uint64 currPair = 0;
 

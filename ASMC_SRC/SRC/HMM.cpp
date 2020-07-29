@@ -178,6 +178,8 @@ void HMM::makeBits(PairObservations& obs, unsigned from, unsigned to)
 
 void HMM::prepareEmissions()
 {
+  undistinguishedCounts = data.calculateUndistinguishedCounts(m_decodingQuant.CSFSSamples);
+
   if (decodingParams.skipCSFSdistance < std::numeric_limits<float>::infinity()) {
     useCSFSatThisPosition[0] = true;
     float lastGenCSFSwasUsed = 0.f;
@@ -191,9 +193,9 @@ void HMM::prepareEmissions()
   }
   for (int pos = 0; pos < sequenceLength; pos++) {
     if (useCSFSatThisPosition[pos]) {
-      int undistAtThisSiteFor0dist = data.undistinguishedCounts[pos][0];
-      int undistAtThisSiteFor1dist = data.undistinguishedCounts[pos][1];
-      int undistAtThisSiteFor2dist = data.undistinguishedCounts[pos][2];
+      int undistAtThisSiteFor0dist = undistinguishedCounts[pos][0];
+      int undistAtThisSiteFor1dist = undistinguishedCounts[pos][1];
+      int undistAtThisSiteFor2dist = undistinguishedCounts[pos][2];
       if (decodingParams.foldData) {
         // working with folded data
         for (int k = 0; k < states; k++) {
@@ -1491,7 +1493,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   // if both samples are carriers, there are two distinguished, otherwise, it's the or
   // (use previous xor). This affects the number of undistinguished for the site
   uint distinguished = observations.homMinorBits[from] ? 2 : emissionIndex;
-  uint undistinguished = useCSFSatThisPosition[from] ? data.undistinguishedCounts[from][distinguished] : -1;
+  uint undistinguished = useCSFSatThisPosition[from] ? undistinguishedCounts[from][distinguished] : -1;
   vector<float> emission = getEmission(from, distinguished, undistinguished, emissionIndex);
 
   vector<float> firstAlpha = asmc::elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);

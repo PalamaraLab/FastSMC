@@ -40,12 +40,11 @@ public:
   int sites = 0;
   bool decodingUsesCSFS = false;
   bool mJobbing = false;
+  bool foldToMinorAlleles = false;
   std::vector<float> geneticPositions = {};
   std::vector<int> physicalPositions = {};
   std::vector<bool> siteWasFlippedDuringFolding = {};
   std::vector<float> recRateAtMarker = {};
-  std::vector<std::vector<int>> undistinguishedCounts = {};
-
 
   // Variables relating to FastSMC
   int chrNumber = 0;
@@ -61,7 +60,7 @@ public:
    * @param params the decoding params
    * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
-  Data(const DecodingParams& params, bool useKnownSeed = false);
+  explicit Data(const DecodingParams& params, bool useKnownSeed = false);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
@@ -70,6 +69,14 @@ public:
    * @return const ref to the decoding quantities owned by this object
    */
   const DecodingQuantities& getDecodingQuantities() const;
+
+  /**
+   * Calculate the undistinguished counts
+   *
+   * @param numCsfsSamples the number of CSFS samples
+   * @return the undistinguished counts
+   */
+  std::vector<std::vector<int>> calculateUndistinguishedCounts(int numCsfsSamples) const;
 
 private:
 
@@ -113,12 +120,11 @@ private:
    */
   static std::vector<std::pair<unsigned long, double>> readMapFastSMC(const std::string& inFileRoot);
 
-
-  void makeUndistinguished(bool foldToMinorAlleles);
   std::vector<int> totalSamplesCount;
   std::vector<int> derivedAlleleCounts;
   std::vector<std::string> SNP_IDs;
-  int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
+
+  static int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
 
 
   void readGeneticMap(unsigned long int bp, std::vector<std::pair<unsigned long int, double>>& genetic_map,
