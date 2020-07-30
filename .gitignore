@@ -23,7 +23,7 @@ Release
 venv*
 
 # Notebook outputs
-notebooks/tmp_output
+notebooks/tmp_output*
 *checkpoint.ipynb
 
 # Python distribution / packaging
