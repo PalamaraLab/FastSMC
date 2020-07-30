@@ -30,7 +30,7 @@
 
 using namespace std;
 
-Data::Data(const DecodingParams& params, const bool useKnownSeed)
+Data::Data(const DecodingParams& params)
 {
   // Copy the DecodingParams that we need
   const std::string inFileRoot = params.inFileRoot;
@@ -49,7 +49,7 @@ Data::Data(const DecodingParams& params, const bool useKnownSeed)
 
   siteWasFlippedDuringFolding = std::vector<bool>(sites, false);
 
-  if (useKnownSeed) {
+  if (params.useKnownSeed) {
     std::srand(1234u);
   } else {
     std::random_device rd;

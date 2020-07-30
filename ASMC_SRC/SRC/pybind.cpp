@@ -144,6 +144,10 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("GERMLINE", &DecodingParams::GERMLINE)
         .def_readwrite("FastSMC", &DecodingParams::FastSMC)
         .def_readwrite("BIN_OUT", &DecodingParams::BIN_OUT)
+        .def_readwrite("useKnownSeed", &DecodingParams::useKnownSeed)
+        .def_readwrite("hashingWordSize", &DecodingParams::hashingWordSize)
+        .def_readwrite("constReadAhead", &DecodingParams::constReadAhead)
+        .def_readwrite("haploid", &DecodingParams::haploid)
         .def_readwrite("time", &DecodingParams::time)
         .def_readwrite("noConditionalAgeEstimates", &DecodingParams::noConditionalAgeEstimates)
         .def_readwrite("doPosteriorSums", &DecodingParams::doPosteriorSums)
@@ -155,7 +159,7 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
 
     py::class_<Data>(m, "Data")
-        .def(py::init<const DecodingParams&, bool>(), "params"_a, "useKnownSeed"_a = false)
+        .def(py::init<const DecodingParams&>(), "params"_a)
         .def_static("countHapLines", &Data::countHapLines)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)

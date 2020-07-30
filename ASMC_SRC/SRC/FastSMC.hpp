@@ -32,7 +32,6 @@ private:
   bool mHaploid = true;
 
 public:
-  explicit FastSMC(int hashingWordSize, int constReadAhead, bool haploid);
 
   FastSMC() = default;
 

@@ -58,9 +58,8 @@ public:
    * Construct the data object, which also constructs the decoding quantities that will be owned by this object
    *
    * @param params the decoding params
-   * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
    */
-  explicit Data(const DecodingParams& params, bool useKnownSeed = false);
+  explicit Data(const DecodingParams& params);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);

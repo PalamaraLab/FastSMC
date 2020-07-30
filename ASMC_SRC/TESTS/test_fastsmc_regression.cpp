@@ -50,18 +50,15 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   params.noConditionalAgeEstimates = true;
   params.doPerPairMAP = true;
   params.doPerPairPosteriorMean = true;
+  params.useKnownSeed = true;
 
   assert(params.validateParamsFastSMC());
 
-  const bool useKnownSeed = true;
-  Data data(params, useKnownSeed);
+  Data data(params);
 
   HMM hmm(data, params);
 
-  const int WORD_SIZE = 64;
-  const int CONST_READ_AHEAD = 10;
-  const bool PAR_HAPLOID = true;
-  ASMC::FastSMC fastSMC(WORD_SIZE, CONST_READ_AHEAD, PAR_HAPLOID);
+  ASMC::FastSMC fastSMC;
   fastSMC.run(params, data, hmm);
 
   SECTION("regression test")
@@ -125,11 +122,11 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   params.doPerPairPosteriorMean = true;
   params.jobInd = 7;
   params.jobs = 9;
+  params.useKnownSeed = true;
 
   assert(params.validateParamsFastSMC());
 
-  const bool useKnownSeed = true;
-  Data data(params, useKnownSeed);
+  Data data(params);
 
   HMM hmm(data, params);
 

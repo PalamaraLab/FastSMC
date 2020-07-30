@@ -61,7 +61,15 @@ public:
   bool GERMLINE = false;
   bool FastSMC = false;
   bool BIN_OUT = false;
+  bool useKnownSeed = false;
+
+  // Used by FastSCM itself
+  int hashingWordSize = 64;
+  int constReadAhead = 10;
+  bool haploid = true;
+
   int time = 100; // state threshold for IBD detection
+
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

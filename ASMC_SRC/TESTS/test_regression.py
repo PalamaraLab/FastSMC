@@ -53,10 +53,11 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.noConditionalAgeEstimates = True
         self.params.doPerPairMAP = True
         self.params.doPerPairPosteriorMean = True
+        self.params.useKnownSeed = True
 
         assert self.params.validateParamsFastSMC()
 
-        data = Data(self.params, useKnownSeed=True)
+        data = Data(self.params)
         hmm = HMM(data, self.params)
 
         fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
@@ -97,10 +98,11 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.doPerPairPosteriorMean = True
         self.params.jobInd = 7
         self.params.jobs = 9
+        self.params.useKnownSeed = True
 
         assert self.params.validateParamsFastSMC()
 
-        data = Data(self.params, useKnownSeed=True)
+        data = Data(self.params)
         hmm = HMM(data, self.params)
 
         fast_smc = FastSMC()

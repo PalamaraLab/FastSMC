@@ -26,11 +26,6 @@
 #include "HASHING/SeedHash.hpp"
 #include "Timer.hpp"
 
-ASMC::FastSMC::FastSMC(const int hashingWordSize, const int constReadAhead, const bool haploid)
-    : mHashingWordSize{hashingWordSize}, mConstReadAhead{constReadAhead}, mHaploid{haploid}
-{
-}
-
 void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm) {
 
   Timer timer;
