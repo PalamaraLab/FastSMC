@@ -56,7 +56,7 @@ TEST_CASE("test hmm with regression test", "[HMM_regression]")
     for( std::string line; getline(fin, line); )
     {
       std::ostringstream oss;
-      for (uint k = 0; k < data.getDecodingQuantities().states; k++) {
+      for (uint k = 0; k < hmm.getDecodingQuantities().states; k++) {
         if (k) oss << "\t";
         oss << decodingReturnValues.sumOverPairs(pos,k);
       }

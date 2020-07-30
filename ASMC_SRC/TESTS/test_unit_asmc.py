@@ -24,7 +24,7 @@ class TestASMC(unittest.TestCase):
     def test_sum_over_pairs_shape(self):
         ret = self.hmm.getDecodingReturnValues()
         self.assertEqual(ret.sumOverPairs.shape,
-                         (self.sequenceLength, self.data.getDecodingQuantities().states))
+                         (self.sequenceLength, self.hmm.getDecodingQuantities().states))
 
     def test_decode_pair(self):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 0)
@@ -39,8 +39,8 @@ class TestASMC(unittest.TestCase):
         self.assertEqual(len(self.hmm.getBatchBuffer()), 5)
 
     def test_decode_pair_observation(self):
-        self.assertEqual(len(self.data.getDecodingQuantities().discretization),
-                         len(self.data.getDecodingQuantities().expectedTimes) + 1)
+        self.assertEqual(len(self.hmm.getDecodingQuantities().discretization),
+                         len(self.hmm.getDecodingQuantities().expectedTimes) + 1)
         self.assertEqual(self.data.sites, self.sequenceLength)
 
         for p in [
@@ -48,7 +48,7 @@ class TestASMC(unittest.TestCase):
             self.hmm.makePairObs(1, 0, 1, 0),
             self.hmm.makePairObs(2, 0, 2, 0)]:
             d = self.hmm.decode(p)
-            self.assertEqual(len(d), len(self.data.getDecodingQuantities().expectedTimes))
+            self.assertEqual(len(d), len(self.hmm.getDecodingQuantities().expectedTimes))
             for i in range(len(d)):
                 self.assertEqual(len(d[i]), self.data.sites)
 
@@ -82,7 +82,7 @@ class TestASMCDecodingParams(unittest.TestCase):
 
         p = hmm.makePairObs(1, 0, 2, 0)
         d = hmm.decode(p)
-        self.assertEqual(len(d), len(data.getDecodingQuantities().expectedTimes))
+        self.assertEqual(len(d), len(hmm.getDecodingQuantities().expectedTimes))
         for i in range(len(d)):
             self.assertEqual(len(d[i]), data.sites)
 

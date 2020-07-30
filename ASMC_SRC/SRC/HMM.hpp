@@ -81,7 +81,12 @@ class HMM
 
   // for decoding
   Data& data;
-  const DecodingQuantities& m_decodingQuant;
+
+  /**
+   * The decoding quantities object, that is owned by Data. This member can be accessed publicly by const ref using
+   * Data::getDecodingQuantities
+   */
+  DecodingQuantities m_decodingQuant;
   const DecodingParams decodingParams;
 
   std::string outFileRoot;
@@ -224,6 +229,12 @@ public:
   void closeIBDFile();
 
   void finishFromGERMLINE();
+
+
+  /**
+   * @return const ref to the decoding quantities owned by this object
+   */
+  const DecodingQuantities& getDecodingQuantities() const;
 
 private:
   void writeBinaryInfoIntoFile();

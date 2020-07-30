@@ -30,7 +30,7 @@
 
 using namespace std;
 
-Data::Data(const DecodingParams& params, const bool useKnownSeed) : decodingQuantities(params.decodingQuantFile)
+Data::Data(const DecodingParams& params, const bool useKnownSeed)
 {
   // Copy the DecodingParams that we need
   const std::string inFileRoot = params.inFileRoot;
@@ -536,11 +536,6 @@ void Data::addMarker(unsigned long int physicalPos, double geneticPos, unsigned 
     }
     recRateAtMarker.push_back(recRate);
   }
-}
-
-const DecodingQuantities& Data::getDecodingQuantities() const
-{
-  return decodingQuantities;
 }
 
 std::vector<std::vector<int>> Data::calculateUndistinguishedCounts(const int numCsfsSamples) const {

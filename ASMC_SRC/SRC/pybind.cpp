@@ -157,7 +157,6 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<Data>(m, "Data")
         .def(py::init<const DecodingParams&, bool>(), "params"_a, "useKnownSeed"_a = false)
         .def_static("countHapLines", &Data::countHapLines)
-        .def("getDecodingQuantities", &Data::getDecodingQuantities)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)
         .def_readwrite("famAndIndNameList", &Data::famAndIndNameList)
@@ -182,6 +181,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("decodePairs", &HMM::decodePairs)
         .def("getBatchBuffer", &HMM::getBatchBuffer)
         .def("finishDecoding", &HMM::finishDecoding)
+        .def("getDecodingQuantities", &HMM::getDecodingQuantities)
         .def("makePairObs", &HMM::makePairObs, "iHap"_a, "ind1"_a, "jHap"_a, "ind2"_a);
     py::class_<ASMC::FastSMC>(m, "FastSMC")
         .def(py::init<int, int, bool>(), "hashingWordSize"_a, "constReadAhead"_a, "haploid"_a)

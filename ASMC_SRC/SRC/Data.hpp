@@ -66,11 +66,6 @@ public:
   static int countSamplesLines(std::string inFileRoot);
 
   /**
-   * @return const ref to the decoding quantities owned by this object
-   */
-  const DecodingQuantities& getDecodingQuantities() const;
-
-  /**
    * Calculate the undistinguished counts
    *
    * @param numCsfsSamples the number of CSFS samples
@@ -79,12 +74,6 @@ public:
   std::vector<std::vector<int>> calculateUndistinguishedCounts(int numCsfsSamples) const;
 
 private:
-
-  /**
-   * The decoding quantities object, that is owned by Data. This member can be accessed publicly by const ref using
-   * Data::getDecodingQuantities
-   */
-  DecodingQuantities decodingQuantities;
 
   /**
    * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.

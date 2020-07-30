@@ -59,7 +59,7 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 
 // constructor
 HMM::HMM(Data& _data, DecodingParams _decodingParams, int _scalingSkip)
-    : data(_data), m_decodingQuant(_data.getDecodingQuantities()), decodingParams(_decodingParams),
+    : data(_data), m_decodingQuant(_decodingParams.decodingQuantFile), decodingParams(_decodingParams),
       scalingSkip(_scalingSkip), noBatches(_decodingParams.noBatches)
 {
   if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
@@ -1664,4 +1664,9 @@ void HMM::getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputed
   for (int k = 0; k < states; k++) {
     currentBeta[k] = BL[k] + vec[k] * D[k] + BU[k];
   }
+}
+
+const DecodingQuantities& HMM::getDecodingQuantities() const
+{
+  return m_decodingQuant;
 }

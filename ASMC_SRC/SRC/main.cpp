@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
     FileUtils::AutoGzOfstream fout00;
     fout00.openOrExit(params.outFileRoot + ".00.sumOverPairs.gz");
     for (int pos = 0; pos < data.sites; pos++) {
-      for (uint k = 0; k < data.getDecodingQuantities().states; k++) {
+      for (uint k = 0; k < hmm.getDecodingQuantities().states; k++) {
         if (k)
           fout00 << "\t";
         if (!data.siteWasFlippedDuringFolding[pos]) {
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
     FileUtils::AutoGzOfstream fout11;
     fout11.openOrExit(params.outFileRoot + ".11.sumOverPairs.gz");
     for (int pos = 0; pos < data.sites; pos++) {
-      for (uint k = 0; k < data.getDecodingQuantities().states; k++) {
+      for (uint k = 0; k < hmm.getDecodingQuantities().states; k++) {
         if (k)
           fout11 << "\t";
         if (!data.siteWasFlippedDuringFolding[pos]) {
