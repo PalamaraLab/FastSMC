@@ -54,12 +54,8 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 
   assert(params.validateParamsFastSMC());
 
-  Data data(params);
-
-  HMM hmm(data, params);
-
-  ASMC::FastSMC fastSMC;
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   SECTION("regression test")
   {
@@ -126,12 +122,8 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
 
   assert(params.validateParamsFastSMC());
 
-  Data data(params);
-
-  HMM hmm(data, params);
-
-  ASMC::FastSMC fastSMC;
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   SECTION("regression test")
   {

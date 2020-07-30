@@ -80,14 +80,14 @@ class HMM
   float* currentMAPValue;
 
   // for decoding
-  Data& data;
+  Data data;
 
   /**
    * The decoding quantities object, that is owned by Data. This member can be accessed publicly by const ref using
    * Data::getDecodingQuantities
    */
   DecodingQuantities m_decodingQuant;
-  const DecodingParams decodingParams;
+  DecodingParams decodingParams;
 
   std::string outFileRoot;
   std::string expectedCoalTimesFile;
@@ -148,7 +148,7 @@ class HMM
 
 public:
   // constructor
-  HMM(Data& _data, DecodingParams _decodingParams, int _scalingSkip = 1);
+  HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip = 1);
 
   ~HMM();
 

@@ -34,9 +34,9 @@ public:
   std::string inFileRoot;
   std::string decodingQuantFile;
   std::string outFileRoot;
-  int jobs;
-  int jobInd;
-  std::string decodingModeString;
+  int jobs = 1;
+  int jobInd = 1;
+  std::string decodingModeString = "array";
   DecodingModeOverall decodingModeOverall;
   DecodingMode decodingMode;
   bool decodingSequence = false;
@@ -44,7 +44,7 @@ public:
   bool usingCSFS = false;
   bool compress = false;
   bool useAncestral = false;
-  float skipCSFSdistance;
+  float skipCSFSdistance{};
   bool noBatches = false;
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,8 +76,8 @@ public:
   // main tasks
   bool noConditionalAgeEstimates = false;
   bool doPosteriorSums = false;
-  bool doPerPairMAP = false;           // output MAP for each pair
   bool doPerPairPosteriorMean = false; // output posterior mean for each pair
+  bool doPerPairMAP = false;           // output MAP for each pair
   std::string expectedCoalTimesFile;   // expected coalescence times within each interval
   bool withinOnly = false;             // only compute decoding within individuals
   bool doMajorMinorPosteriorSums = false;
@@ -103,6 +103,17 @@ public:
                  bool _doPosteriorSums = false, bool _doPerPairPosteriorMean = false,
                  std::string _expectedCoalTimesFile = "", bool _withinOnly = false,
                  bool _doMajorMinorPosteriorSums = false);
+
+  /**
+   * Minimal constructor that sets defaults for FastSMC. An er will occur if you try to use this constructor for
+   * FastSMC == false.
+   *
+   * @param _inFileRoot the input file root
+   * @param _decodingQuantFile the decoding quantities file
+   * @param _outFileRoot the output file root
+   * @param _fastSMC whether to run in FastSMC: if this is set to false an error will occur
+   */
+  DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot, bool _fastSMC = true);
 };
 
 #endif

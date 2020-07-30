@@ -87,6 +87,23 @@ DecodingParams::DecodingParams(string _inFileRoot,
      if(!processOptions()) throw std::exception();
   }
 
+  DecodingParams::DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot,
+                                 bool _fastSMC)
+      : inFileRoot(std::move(_inFileRoot)), decodingQuantFile(std::move(_decodingQuantFile)),
+        outFileRoot(std::move(_outFileRoot)), jobs(1), jobInd(1), decodingModeString("array"),
+        decodingModeOverall(DecodingModeOverall::array), decodingMode(DecodingMode::arrayFolded), foldData(true),
+        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), GERMLINE(true), FastSMC(_fastSMC),
+        BIN_OUT(false), time(50), noConditionalAgeEstimates(true), doPerPairPosteriorMean(true), doPerPairMAP(true)
+  {
+    if (!FastSMC) {
+      cerr << "This DecodingParams constructor sets sensible FastSMC defaults, and is only intended for use with"
+              "FastSMC. Please set the fastSMC parameter to true, or use a different constructor."
+           << endl;
+      exit(1);
+    }
+
+    validateParamsFastSMC();
+  }
 
 bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 

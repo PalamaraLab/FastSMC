@@ -58,8 +58,8 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 }
 
 // constructor
-HMM::HMM(Data& _data, DecodingParams _decodingParams, int _scalingSkip)
-    : data(_data), m_decodingQuant(_decodingParams.decodingQuantFile), decodingParams(_decodingParams),
+HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
+    : data(std::move(_data)), m_decodingQuant(_decodingParams.decodingQuantFile), decodingParams(_decodingParams),
       scalingSkip(_scalingSkip), noBatches(_decodingParams.noBatches)
 {
   if (decodingParams.GERMLINE && !decodingParams.FastSMC) {

@@ -19,11 +19,8 @@ int main(int argc, char* argv[])
     exit(1);
   }
 
-  Data data(params);
-  HMM hmm(data, params);
-
-  ASMC::FastSMC fastSMC;
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   return 0;
 }

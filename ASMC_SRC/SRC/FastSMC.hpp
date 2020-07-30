@@ -27,15 +27,31 @@ class FastSMC
 {
 
 private:
-  int mHashingWordSize = 64;
-  int mConstReadAhead = 10;
-  bool mHaploid = true;
+
+  DecodingParams mParams;
+  Data mData;
+  HMM mHmm;
 
 public:
 
-  FastSMC() = default;
+  /**
+   * FastSMC constructor with full control over parameters, by manually specifying a DecodingParams object.
+   *
+   * @param params the decoding parameters
+   */
+  explicit FastSMC(DecodingParams params);
 
-  void run(const DecodingParams& params, const Data& data, HMM& hmm);
+  /**
+   * FastSMC constructor that will set sensible defaults. If you wish to fine-tune parameters, use the constructor that
+   * takes a DecodingParams object, which you can configure manually.
+   *
+   * @param inFileRoot the input file root
+   * @param decodingQuantFile the location of the decoding quantities file
+   * @param outFileRoot the output file root
+   */
+  FastSMC(std::string inFileRoot, std::string decodingQuantFile, std::string outFileRoot);
+
+  void run();
 };
 
 } // namespace ASMC
