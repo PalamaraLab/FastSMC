@@ -123,6 +123,8 @@ PYBIND11_MODULE(pyASMC, m) {
                 "withinOnly"_a = false,
                 "doMajorMinorPosteriorSums"_a = false)
         .def(py::init<>())
+        .def(py::init<std::string, std::string, std::string, bool>(), "in"_a, "decodingQuantFile"_a, "out"_a,
+             "FastSMC"_a = true)
         .def("validateParamsFastSMC", &DecodingParams::validateParamsFastSMC)
         .def_readwrite("inFileRoot", &DecodingParams::inFileRoot)
         .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
@@ -188,9 +190,9 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("getDecodingQuantities", &HMM::getDecodingQuantities)
         .def("makePairObs", &HMM::makePairObs, "iHap"_a, "ind1"_a, "jHap"_a, "ind2"_a);
     py::class_<ASMC::FastSMC>(m, "FastSMC")
-        .def(py::init<int, int, bool>(), "hashingWordSize"_a, "constReadAhead"_a, "haploid"_a)
-        .def(py::init<>())
-        .def("run", &ASMC::FastSMC::run, "params"_a, "data"_a, "hmm"_a);
+        .def(py::init<DecodingParams>(), "decodingParams"_a)
+        .def(py::init<std::string, std::string, std::string>(), "in"_a, "decodingQuantFile"_a, "out"_a)
+        .def("run", &ASMC::FastSMC::run);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "inFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,

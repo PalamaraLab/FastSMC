@@ -57,11 +57,8 @@ class TestFastSMCRegression(unittest.TestCase):
 
         assert self.params.validateParamsFastSMC()
 
-        data = Data(self.params)
-        hmm = HMM(data, self.params)
-
-        fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
-        fast_smc.run(self.params, data, hmm)
+        fast_smc = FastSMC(self.params)
+        fast_smc.run()
 
     def test_regression(self):
 
@@ -102,11 +99,8 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
         assert self.params.validateParamsFastSMC()
 
-        data = Data(self.params)
-        hmm = HMM(data, self.params)
-
-        fast_smc = FastSMC()
-        fast_smc.run(self.params, data, hmm)
+        fast_smc = FastSMC(self.params)
+        fast_smc.run()
 
     def test_regression(self):
         original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output_no_germline.ibd.gz'),
