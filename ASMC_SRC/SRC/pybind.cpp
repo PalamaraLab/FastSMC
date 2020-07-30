@@ -170,7 +170,6 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("physicalPositions", &Data::physicalPositions)
         .def_readwrite("siteWasFlippedDuringFolding", &Data::siteWasFlippedDuringFolding)
         .def_readwrite("recRateAtMarker", &Data::recRateAtMarker)
-        .def_readwrite("undistinguishedCounts", &Data::undistinguishedCounts)
         ;
     py::class_<HMM>(m, "HMM")
         .def(py::init<Data&, DecodingParams&, int>(), "data"_a, "params"_a, "scalingSkip"_a = 1)
