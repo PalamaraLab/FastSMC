@@ -46,10 +46,9 @@ public:
    * takes a DecodingParams object, which you can configure manually.
    *
    * @param inFileRoot the input file root
-   * @param decodingQuantFile the location of the decoding quantities file
    * @param outFileRoot the output file root
    */
-  FastSMC(std::string inFileRoot, std::string decodingQuantFile, std::string outFileRoot);
+  FastSMC(const std::string& inFileRoot, const std::string& outFileRoot);
 
   void run();
 };
