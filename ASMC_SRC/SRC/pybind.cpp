@@ -123,6 +123,9 @@ PYBIND11_MODULE(pyASMC, m) {
                 "withinOnly"_a = false,
                 "doMajorMinorPosteriorSums"_a = false)
         .def(py::init<>())
+        .def(py::init<std::string, std::string, std::string, bool>(), "in_dir"_a, "decoding_quants"_a, "out_dir"_a,
+             "FastSMC"_a = true)
+        .def("validateParamsFastSMC", &DecodingParams::validateParamsFastSMC)
         .def_readwrite("inFileRoot", &DecodingParams::inFileRoot)
         .def_readwrite("decodingQuantFile", &DecodingParams::decodingQuantFile)
         .def_readwrite("outFileRoot", &DecodingParams::outFileRoot)
@@ -143,6 +146,10 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("GERMLINE", &DecodingParams::GERMLINE)
         .def_readwrite("FastSMC", &DecodingParams::FastSMC)
         .def_readwrite("BIN_OUT", &DecodingParams::BIN_OUT)
+        .def_readwrite("useKnownSeed", &DecodingParams::useKnownSeed)
+        .def_readwrite("hashingWordSize", &DecodingParams::hashingWordSize)
+        .def_readwrite("constReadAhead", &DecodingParams::constReadAhead)
+        .def_readwrite("haploid", &DecodingParams::haploid)
         .def_readwrite("time", &DecodingParams::time)
         .def_readwrite("noConditionalAgeEstimates", &DecodingParams::noConditionalAgeEstimates)
         .def_readwrite("doPosteriorSums", &DecodingParams::doPosteriorSums)
@@ -154,9 +161,7 @@ PYBIND11_MODULE(pyASMC, m) {
         ;
 
     py::class_<Data>(m, "Data")
-        .def(py::init<const std::string&, int, int, bool, bool, int, int, bool>(),
-             "inFileRoot"_a, "sites"_a, "totalSamplesBound"_a,
-             "foldToMinorAlleles"_a, "decodingUsesCSFS"_a, "jobID"_a = -1, "jobs"_a = -1, "useKnownSeed"_a = false)
+        .def(py::init<const DecodingParams&>(), "params"_a)
         .def_static("countHapLines", &Data::countHapLines)
         .def_readwrite("FamIDList", &Data::FamIDList)
         .def_readwrite("IIDList", &Data::IIDList)
@@ -165,16 +170,14 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("sampleSize", &Data::sampleSize)
         .def_readwrite("haploidSampleSize", &Data::haploidSampleSize)
         .def_readwrite("sites", &Data::sites)
-        .def_readwrite("totalSamplesBound", &Data::totalSamplesBound)
         .def_readwrite("decodingUsesCSFS", &Data::decodingUsesCSFS)
         .def_readwrite("geneticPositions", &Data::geneticPositions)
         .def_readwrite("physicalPositions", &Data::physicalPositions)
         .def_readwrite("siteWasFlippedDuringFolding", &Data::siteWasFlippedDuringFolding)
         .def_readwrite("recRateAtMarker", &Data::recRateAtMarker)
-        .def_readwrite("undistinguishedCounts", &Data::undistinguishedCounts)
         ;
     py::class_<HMM>(m, "HMM")
-        .def(py::init<Data&, const DecodingQuantities&, DecodingParams&, bool, int>())
+        .def(py::init<Data&, DecodingParams&, int>(), "data"_a, "params"_a, "scalingSkip"_a = 1)
         .def("decode", py::overload_cast<const PairObservations&>(&HMM::decode))
         .def("decode", py::overload_cast<const PairObservations&, unsigned, unsigned>(&HMM::decode))
         .def("decodeAll", &HMM::decodeAll)
@@ -184,11 +187,12 @@ PYBIND11_MODULE(pyASMC, m) {
         .def("decodePairs", &HMM::decodePairs)
         .def("getBatchBuffer", &HMM::getBatchBuffer)
         .def("finishDecoding", &HMM::finishDecoding)
+        .def("getDecodingQuantities", &HMM::getDecodingQuantities)
         .def("makePairObs", &HMM::makePairObs, "iHap"_a, "ind1"_a, "jHap"_a, "ind2"_a);
     py::class_<ASMC::FastSMC>(m, "FastSMC")
-        .def(py::init<int, int, bool>(), "hashingWordSize"_a, "constReadAhead"_a, "haploid"_a)
-        .def(py::init<>())
-        .def("run", &ASMC::FastSMC::run, "params"_a, "data"_a, "hmm"_a);
+        .def(py::init<DecodingParams>(), "decodingParams"_a)
+        .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
+        .def("run", &ASMC::FastSMC::run);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "inFileRoot"_a, "decodingQuantFile"_a,
           "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,

@@ -80,9 +80,14 @@ class HMM
   float* currentMAPValue;
 
   // for decoding
-  Data& data;
-  const DecodingQuantities& m_decodingQuant;
-  const DecodingParams decodingParams;
+  Data data;
+
+  /**
+   * The decoding quantities object, that is owned by Data. This member can be accessed publicly by const ref using
+   * Data::getDecodingQuantities
+   */
+  DecodingQuantities m_decodingQuant;
+  DecodingParams decodingParams;
 
   std::string outFileRoot;
   std::string expectedCoalTimesFile;
@@ -100,6 +105,9 @@ class HMM
   std::vector<std::vector<float>> emission1AtSite;
   std::vector<std::vector<float>> emission0minus1AtSite;
   std::vector<std::vector<float>> emission2minus0AtSite;
+
+  /** Calculated by the data module in the HMM constructor */
+  std::vector<std::vector<int>> undistinguishedCounts;
 
   bool noBatches;
   uint64 currPair = 0;
@@ -140,8 +148,7 @@ class HMM
 
 public:
   // constructor
-  HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
-      int _scalingSkip = 1);
+  HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip = 1);
 
   ~HMM();
 
@@ -222,6 +229,12 @@ public:
   void closeIBDFile();
 
   void finishFromGERMLINE();
+
+
+  /**
+   * @return const ref to the decoding quantities owned by this object
+   */
+  const DecodingQuantities& getDecodingQuantities() const;
 
 private:
   void writeBinaryInfoIntoFile();

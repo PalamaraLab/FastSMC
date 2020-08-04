@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "FileUtils.hpp"
@@ -26,31 +27,37 @@
 #include "HASHING/SeedHash.hpp"
 #include "Timer.hpp"
 
-ASMC::FastSMC::FastSMC(const int hashingWordSize, const int constReadAhead, const bool haploid)
-    : mHashingWordSize{hashingWordSize}, mConstReadAhead{constReadAhead}, mHaploid{haploid}
+ASMC::FastSMC::FastSMC(DecodingParams params) : mParams{std::move(params)}, mData{mParams}, mHmm{mData, mParams}
 {
 }
 
-void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm) {
+ASMC::FastSMC::FastSMC(const std::string& inFileRoot, const std::string& outFileRoot)
+    : mParams{inFileRoot, inFileRoot + ".decodingQuantities.gz", outFileRoot, true},
+      mData{mParams},
+      mHmm{mData, mParams}
+{
+}
 
+void ASMC::FastSMC::run()
+{
   Timer timer;
 
-  hmm.decodeAll(params.jobs, params.jobInd);
+  mHmm.decodeAll(mParams.jobs, mParams.jobInd);
 
   // If FastSMC but not GERMLINE we're done
-  if(!params.GERMLINE) {
-    hmm.closeIBDFile();
+  if (!mParams.GERMLINE) {
+    mHmm.closeIBDFile();
     return;
   }
 
   std::vector<Individuals> all_ind;
 
-  const auto jobs = params.jobs;
-  const auto jobID = params.jobInd;
-  const auto windowSize = data.windowSize;
-  const auto w_i = data.w_i;
-  const auto w_j = data.w_j;
-  const bool is_j_above_diag = data.is_j_above_diag;
+  const auto jobs = mParams.jobs;
+  const auto jobID = mParams.jobInd;
+  const auto windowSize = mData.windowSize;
+  const auto w_i = mData.w_i;
+  const auto w_j = mData.w_j;
+  const bool is_j_above_diag = mData.is_j_above_diag;
 
   auto isSampleInJob = [windowSize, w_i, w_j, jobs, jobID](unsigned i) {
     return ((i >= (uint)((w_i - 1) * windowSize) / 2 && i < (uint)(w_i * windowSize) / 2) ||
@@ -61,7 +68,7 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
   // *** read Individuals information
   {
     FileUtils::AutoGzIfstream file_samp;
-    file_samp.openOrExit(params.inFileRoot + ".samples");
+    file_samp.openOrExit(mParams.inFileRoot + ".samples");
 
     std::string line;
     std::stringstream ss;
@@ -86,12 +93,12 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
       ss >> map_field[0] >> map_field[1];
 
       if (isSampleInJob(linectr)) {
-        if (mHaploid) {
-          all_ind.emplace_back(mHashingWordSize, mConstReadAhead, 2 * linectr);
-          all_ind.emplace_back(mHashingWordSize, mConstReadAhead, 2 * linectr + 1);
+        if (mParams.haploid) {
+          all_ind.emplace_back(mParams.hashingWordSize, mParams.constReadAhead, 2 * linectr);
+          all_ind.emplace_back(mParams.hashingWordSize, mParams.constReadAhead, 2 * linectr + 1);
         } else {
-          all_ind.emplace_back(mHashingWordSize, mConstReadAhead,2 * linectr);
-          all_ind.emplace_back(mHashingWordSize, mConstReadAhead,2 * linectr);
+          all_ind.emplace_back(mParams.hashingWordSize, mParams.constReadAhead, 2 * linectr);
+          all_ind.emplace_back(mParams.hashingWordSize, mParams.constReadAhead, 2 * linectr);
         }
       }
 
@@ -100,27 +107,26 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
     file_samp.close();
 
     std::cerr << all_ind.size() / 2 << " sample identifiers read" << std::endl;
-
   }
 
-  const auto PAR_MIN_MATCH = params.min_m;
-  const auto PAR_MIN_MAF = params.min_maf;
-  const auto PAR_GAP = params.gap;
-  const auto PAR_skip = params.skip;
-  const auto MAX_seeds = params.max_seeds;
+  const auto PAR_MIN_MATCH = mParams.min_m;
+  const auto PAR_MIN_MAF = mParams.min_maf;
+  const auto PAR_GAP = mParams.gap;
+  const auto PAR_skip = mParams.skip;
+  const auto MAX_seeds = mParams.max_seeds;
 
   {
     FileUtils::AutoGzIfstream file_haps;
-    file_haps.openOrExit(params.inFileRoot + ".hap.gz");
+    file_haps.openOrExit(mParams.inFileRoot + ".hap.gz");
 
-    const auto num_ind_tot = data.sampleSize * 2;
+    const auto num_ind_tot = mData.sampleSize * 2;
     const auto num_ind = all_ind.size();
 
     // Storage for seeds & extensions
     SeedHash seeds;
-    ExtendHash extend(mHashingWordSize, num_ind, mHaploid);
+    ExtendHash extend(mParams.hashingWordSize, num_ind, mParams.haploid);
 
-    const std::vector<float>& all_markers = data.geneticPositions;
+    const std::vector<float>& all_markers = mData.geneticPositions;
 
     int GLOBAL_READ_WORDS = 0;
     int GLOBAL_CURRENT_WORD = 0;
@@ -179,11 +185,12 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
         }
         snp_ctr++;
 
-        if (snp_ctr % mHashingWordSize == 0) {
-          if (++GLOBAL_READ_WORDS >= mConstReadAhead) {
+        if (snp_ctr % mParams.hashingWordSize == 0) {
+          if (++GLOBAL_READ_WORDS >= mParams.constReadAhead) {
             break;
           } else {
-            std::cerr << "*** loading word buffer " << GLOBAL_READ_WORDS << " / " << mConstReadAhead << std::endl;
+            std::cerr << "*** loading word buffer " << GLOBAL_READ_WORDS << " / " << mParams.constReadAhead
+                      << std::endl;
           }
           snp_ctr = 0;
         }
@@ -205,7 +212,7 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
       if (static_cast<float>(cur_seeds) / static_cast<float>(num_ind) > PAR_skip) {
         seeds.extendAllPairs(&extend, GLOBAL_CURRENT_WORD, all_ind, MAX_seeds, jobID, jobs, w_i, w_j, windowSize,
                              GLOBAL_READ_WORDS, GLOBAL_SKIPPED_WORDS, GLOBAL_CURRENT_WORD, is_j_above_diag);
-        extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD, PAR_MIN_MATCH, all_markers, hmm);
+        extend.clearPairsPriorTo(GLOBAL_CURRENT_WORD - PAR_GAP, GLOBAL_CURRENT_WORD, PAR_MIN_MATCH, all_markers, mHmm);
       } else {
         std::cerr << "low complexity word - " << cur_seeds << " - skipping" << std::endl;
         extend.extendAllPairsTo(GLOBAL_CURRENT_WORD);
@@ -219,11 +226,11 @@ void ASMC::FastSMC::run(const DecodingParams& params, const Data& data, HMM& hmm
       GLOBAL_CURRENT_WORD++;
     }
 
-    extend.clearAllPairs(PAR_MIN_MATCH, all_markers, hmm);
+    extend.clearAllPairs(PAR_MIN_MATCH, all_markers, mHmm);
     file_haps.close();
 
-    hmm.finishFromGERMLINE();
-    std::cerr << "processed " << GLOBAL_CURRENT_WORD * mHashingWordSize << " / " << all_markers.size() << " SNPs"
+    mHmm.finishFromGERMLINE();
+    std::cerr << "processed " << GLOBAL_CURRENT_WORD * mParams.hashingWordSize << " / " << all_markers.size() << " SNPs"
               << std::endl;
   }
 

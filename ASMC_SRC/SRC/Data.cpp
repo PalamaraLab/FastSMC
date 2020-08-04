@@ -30,17 +30,26 @@
 
 using namespace std;
 
-Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBound, const bool foldToMinorAlleles,
-           const bool _decodingUsesCSFS, const int jobID, const int jobs, const bool useKnownSeed)
-    : sites(_sites), totalSamplesBound(_totalSamplesBound), decodingUsesCSFS(_decodingUsesCSFS),
-      siteWasFlippedDuringFolding(_sites, false)
+Data::Data(const DecodingParams& params)
 {
+  // Copy the DecodingParams that we need
+  const std::string inFileRoot = params.inFileRoot;
+  const int jobID = params.jobInd;
+  const int jobs = params.jobs;
+  foldToMinorAlleles = params.foldData;
+  decodingUsesCSFS = params.usingCSFS;
+  const bool FastSMC = params.FastSMC;
+
   // Determine if there is jobbing based on whether the jobID and jobs are at their default values
   mJobbing = (jobID != -1) && (jobs != -1);
+
+  sites = countHapLines(inFileRoot);
   sampleSize = countSamplesLines(inFileRoot);
   haploidSampleSize = sampleSize * 2ul;
 
-  if (useKnownSeed) {
+  siteWasFlippedDuringFolding = std::vector<bool>(sites, false);
+
+  if (params.useKnownSeed) {
     std::srand(1234u);
   } else {
     std::random_device rd;
@@ -73,19 +82,12 @@ Data::Data(const string& inFileRoot, const int _sites, const int _totalSamplesBo
     individuals.emplace_back(sites);
   }
 
-  // TODO: remove this switch.  Hack to determine whether we're currently doing FastSMC or ASMC.
-  TODO_REMOVE_FASTSMC = mJobbing;
-  if (TODO_REMOVE_FASTSMC) {
+  if (FastSMC) {
     vector<pair<unsigned long, double>> geneticMap = readMapFastSMC(inFileRoot);
     readHaps(inFileRoot, foldToMinorAlleles, jobID, jobs, geneticMap);
   } else {
     readHaps(inFileRoot, foldToMinorAlleles);
     readMap(inFileRoot);
-  }
-
-  // make undistinguished counts
-  if (decodingUsesCSFS) {
-    makeUndistinguished(foldToMinorAlleles);
   }
 }
 
@@ -141,36 +143,6 @@ int Data::sampleHypergeometric(int populationSize, int numberOfSuccesses, int sa
     ret += samplingVector[i];
   }
   return ret;
-}
-
-void Data::makeUndistinguished(bool foldToMinorAlleles)
-{
-  // cout << "Building undistinguished counts...";
-  undistinguishedCounts = vector<vector<int>>(derivedAlleleCounts.size());
-  for (uint i = 0; i < derivedAlleleCounts.size(); i++) {
-    undistinguishedCounts[i] = vector<int>(3);
-    int derivedAlleles = derivedAlleleCounts[i];
-    int totalSamples = totalSamplesCount[i];
-    if (decodingUsesCSFS && totalSamplesBound > totalSamples) {
-      cerr << "ERROR. SNP " << SNP_IDs[i] << " has " << totalSamples
-           << " non-missing individuals, but the CSFS requires " << totalSamplesBound << endl;
-      exit(1);
-    }
-    int ancestralAlleles = totalSamples - derivedAlleles;
-    if (foldToMinorAlleles && derivedAlleles > ancestralAlleles) {
-      cerr << "Minor alleles has frequency > 50%. Data is supposed to be folded.\n";
-    }
-    for (int distinguished = 0; distinguished < 3; distinguished++) {
-      // hypergeometric with (derivedAlleles - distinguished) derived alleles, (samples
-      // - 2) samples
-      int undist = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, totalSamplesBound - 2);
-      if (foldToMinorAlleles && (undist + distinguished > totalSamplesBound / 2)) {
-        undist = (totalSamplesBound - 2 - undist);
-      }
-      undistinguishedCounts[i][distinguished] = undist;
-    }
-  }
-  // cout << " Done." << endl;
 }
 
 int Data::readMap(string inFileRoot)
@@ -564,4 +536,38 @@ void Data::addMarker(unsigned long int physicalPos, double geneticPos, unsigned 
     }
     recRateAtMarker.push_back(recRate);
   }
+}
+
+std::vector<std::vector<int>> Data::calculateUndistinguishedCounts(const int numCsfsSamples) const {
+
+  // This matrix is of size <derivedAlleleCounts.size() x 3>
+  std::vector<std::vector<int>> undistinguished(derivedAlleleCounts.size(), std::vector<int>(3));
+
+  for (auto i = 0ul; i < derivedAlleleCounts.size(); ++i) {
+    const int derivedAlleles = derivedAlleleCounts[i];
+    const int totalSamples = totalSamplesCount[i];
+
+    if (decodingUsesCSFS && numCsfsSamples > totalSamples) {
+      cerr << "ERROR. SNP " << SNP_IDs[i] << " has " << totalSamples
+           << " non-missing individuals, but the CSFS requires " << numCsfsSamples << endl;
+      exit(1);
+    }
+
+    const int ancestralAlleles = totalSamples - derivedAlleles;
+    if (foldToMinorAlleles && derivedAlleles > ancestralAlleles) {
+      cerr << "Minor alleles has frequency > 50%. Data is supposed to be folded.\n";
+      exit(1);
+    }
+
+    for (int distinguished = 0; distinguished < 3; distinguished++) {
+      // hypergeometric with (derivedAlleles - distinguished) derived alleles, (samples - 2) samples
+      int sample = sampleHypergeometric(totalSamples - 2, derivedAlleles - distinguished, numCsfsSamples - 2);
+      if (foldToMinorAlleles && (sample + distinguished > numCsfsSamples / 2)) {
+        sample = (numCsfsSamples - 2 - sample);
+      }
+      undistinguished.at(i).at(distinguished) = sample;
+    }
+  }
+
+  return undistinguished;
 }

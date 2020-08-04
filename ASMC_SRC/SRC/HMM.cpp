@@ -58,10 +58,9 @@ vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
 }
 
 // constructor
-HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _decodingParams, bool useBatches,
-         int _scalingSkip)
-    : data(_data), m_decodingQuant(_decodingQuant), decodingParams(_decodingParams), scalingSkip(_scalingSkip),
-      noBatches(!useBatches)
+HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
+    : data(std::move(_data)), m_decodingQuant(_decodingParams.decodingQuantFile), decodingParams(_decodingParams),
+      scalingSkip(_scalingSkip), noBatches(_decodingParams.noBatches)
 {
   if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
     cerr << "Identification only is not yet supported Cannot have GERMLINE==true and FastSMC==false.\n";
@@ -72,7 +71,7 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   outFileRoot = decodingParams.outFileRoot;
   expectedCoalTimesFile = decodingParams.expectedCoalTimesFile;
   sequenceLength = data.sites;
-  states = _decodingQuant.states;
+  states = m_decodingQuant.states;
   useCSFSatThisPosition = vector<bool>(sequenceLength, false);
   emission1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
   emission0minus1AtSite = vector<vector<float>>(sequenceLength, vector<float>(states));
@@ -126,9 +125,9 @@ HMM::HMM(Data& _data, const DecodingQuantities& _decodingQuant, DecodingParams _
   resetDecoding();
 
   // output for python interface (TODO: not sure if this is the right place)
-  m_decodingReturnValues.sites = _data.sites;
-  m_decodingReturnValues.states = _decodingQuant.states;
-  m_decodingReturnValues.siteWasFlippedDuringFolding = _data.siteWasFlippedDuringFolding;
+  m_decodingReturnValues.sites = data.sites;
+  m_decodingReturnValues.states = m_decodingQuant.states;
+  m_decodingReturnValues.siteWasFlippedDuringFolding = data.siteWasFlippedDuringFolding;
 }
 
 HMM::~HMM()
@@ -179,6 +178,8 @@ void HMM::makeBits(PairObservations& obs, unsigned from, unsigned to)
 
 void HMM::prepareEmissions()
 {
+  undistinguishedCounts = data.calculateUndistinguishedCounts(m_decodingQuant.CSFSSamples);
+
   if (decodingParams.skipCSFSdistance < std::numeric_limits<float>::infinity()) {
     useCSFSatThisPosition[0] = true;
     float lastGenCSFSwasUsed = 0.f;
@@ -192,9 +193,9 @@ void HMM::prepareEmissions()
   }
   for (int pos = 0; pos < sequenceLength; pos++) {
     if (useCSFSatThisPosition[pos]) {
-      int undistAtThisSiteFor0dist = data.undistinguishedCounts[pos][0];
-      int undistAtThisSiteFor1dist = data.undistinguishedCounts[pos][1];
-      int undistAtThisSiteFor2dist = data.undistinguishedCounts[pos][2];
+      int undistAtThisSiteFor0dist = undistinguishedCounts[pos][0];
+      int undistAtThisSiteFor1dist = undistinguishedCounts[pos][1];
+      int undistAtThisSiteFor2dist = undistinguishedCounts[pos][2];
       if (decodingParams.foldData) {
         // working with folded data
         for (int k = 0; k < states; k++) {
@@ -244,7 +245,7 @@ void HMM::prepareEmissions()
           if (undistAtThisSiteFor2dist >= 0) {
             int dist = 2;
             int undist = undistAtThisSiteFor2dist;
-            if (undistAtThisSiteFor2dist == data.totalSamplesBound - 2) {
+            if (undistAtThisSiteFor2dist == m_decodingQuant.CSFSSamples - 2) {
               // for monomorphic derived, fold to CSFS[0][0]
               dist = 0;
               undist = 0;
@@ -1492,7 +1493,7 @@ vector<vector<float>> HMM::forward(const PairObservations& observations, const u
   // if both samples are carriers, there are two distinguished, otherwise, it's the or
   // (use previous xor). This affects the number of undistinguished for the site
   uint distinguished = observations.homMinorBits[from] ? 2 : emissionIndex;
-  uint undistinguished = useCSFSatThisPosition[from] ? data.undistinguishedCounts[from][distinguished] : -1;
+  uint undistinguished = useCSFSatThisPosition[from] ? undistinguishedCounts[from][distinguished] : -1;
   vector<float> emission = getEmission(from, distinguished, undistinguished, emissionIndex);
 
   vector<float> firstAlpha = asmc::elementWiseMultVectorVector(m_decodingQuant.initialStateProb, emission);
@@ -1663,4 +1664,9 @@ void HMM::getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputed
   for (int k = 0; k < states; k++) {
     currentBeta[k] = BL[k] + vec[k] * D[k] + BU[k];
   }
+}
+
+const DecodingQuantities& HMM::getDecodingQuantities() const
+{
+  return m_decodingQuant;
 }

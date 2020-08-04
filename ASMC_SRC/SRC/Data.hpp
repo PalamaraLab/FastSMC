@@ -22,61 +22,57 @@
 #include <vector>
 
 #include "Individual.hpp"
+#include "DecodingParams.hpp"
+#include "DecodingQuantities.hpp"
 
 class Data
 {
 
 public:
-  std::vector<std::string> FamIDList;
-  std::vector<std::string> IIDList;
-  std::vector<std::string> famAndIndNameList;
-  std::vector<Individual> individuals;
 
-  unsigned long sampleSize;
-  unsigned long haploidSampleSize;
-  int sites;
-  int totalSamplesBound;
+  std::vector<std::string> FamIDList = {};
+  std::vector<std::string> IIDList = {};
+  std::vector<std::string> famAndIndNameList = {};
+  std::vector<Individual> individuals = {};
+
+  unsigned long sampleSize = 0ul;
+  unsigned long haploidSampleSize = 0ul;
+  int sites = 0;
   bool decodingUsesCSFS = false;
   bool mJobbing = false;
-  std::vector<float> geneticPositions;
-  std::vector<int> physicalPositions;
-  std::vector<bool> siteWasFlippedDuringFolding;
-  std::vector<float> recRateAtMarker;
-  std::vector<std::vector<int>> undistinguishedCounts;
-
+  bool foldToMinorAlleles = false;
+  std::vector<float> geneticPositions = {};
+  std::vector<int> physicalPositions = {};
+  std::vector<bool> siteWasFlippedDuringFolding = {};
+  std::vector<float> recRateAtMarker = {};
 
   // Variables relating to FastSMC
   int chrNumber = 0;
-  unsigned int windowSize; // window size in triangles for each job
-  unsigned int w_i;        // window id for ind_i for jobs
-  unsigned int w_j;        // window id for ind_j for jobs
-  bool is_j_above_diag;
-  std::unordered_map<int, unsigned int> physicalPositionsMap; // map where key=physicalPosition, value=indexPosition
+  unsigned int windowSize = 0u; // window size in triangles for each job
+  unsigned int w_i = 0u;        // window id for ind_i for jobs
+  unsigned int w_j = 0u;        // window id for ind_j for jobs
+  bool is_j_above_diag = false;
+  std::unordered_map<int, unsigned int> physicalPositionsMap = {}; // map where key=physicalPosition, value=indexPosition
 
   /**
-   * Construct the data object
+   * Construct the data object, which also constructs the decoding quantities that will be owned by this object
    *
-   * @param inFileRoot location of input files
-   * @param numOfSites number of sites
-   * @param totalSamplesBound
-   * @param foldToMinorAlleles
-   * @param decodingUsesCSFS whether to decode using CSFS
-   * @param jobID the jobID which defaults to -1 indicating no jobbing
-   * @param jobs the number of jobs which defaults to -1 indicating no jobbing
-   * @param useKnownSeed use a known random seed ensuring predictable random numbers for testing
+   * @param params the decoding params
    */
-  Data(const std::string& inFileRoot, int numOfSites, int totalSamplesBound, bool foldToMinorAlleles,
-       bool decodingUsesCSFS, int jobID = -1, int jobs = -1, bool useKnownSeed = false);
+  explicit Data(const DecodingParams& params);
 
   static int countHapLines(std::string inFileRoot);
   static int countSamplesLines(std::string inFileRoot);
 
-private:
-
   /**
-   * TODO: harmonise functionality in this class so that this switch is not necessary
+   * Calculate the undistinguished counts
+   *
+   * @param numCsfsSamples the number of CSFS samples
+   * @return the undistinguished counts
    */
-  bool TODO_REMOVE_FASTSMC = false;
+  std::vector<std::vector<int>> calculateUndistinguishedCounts(int numCsfsSamples) const;
+
+private:
 
   /**
    * Determine whether a sample should be read, based on the jobID, number of jobs, and the number of lines processed.
@@ -112,12 +108,11 @@ private:
    */
   static std::vector<std::pair<unsigned long, double>> readMapFastSMC(const std::string& inFileRoot);
 
-
-  void makeUndistinguished(bool foldToMinorAlleles);
   std::vector<int> totalSamplesCount;
   std::vector<int> derivedAlleleCounts;
   std::vector<std::string> SNP_IDs;
-  int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
+
+  static int sampleHypergeometric(int populationSize, int numberOfSuccesses, int sampleSize);
 
 
   void readGeneticMap(unsigned long int bp, std::vector<std::pair<unsigned long int, double>>& genetic_map,

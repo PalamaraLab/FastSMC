@@ -106,19 +106,11 @@ int main(int argc, char* argv[])
   // used for benchmarking
   Timer timer;
 
-  // read decoding quantities from file
-  std::string str(params.decodingQuantFile.c_str());
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  printf("Read precomputed decoding info in %.3f seconds.\n", timer.update_time());
-  // cout << "CSFS samples: " << decodingQuantities.CSFSSamples << endl;
-
   cout << "Data will be loaded from " << params.inFileRoot << "*\n";
-  int sequenceLength = Data::countHapLines(params.inFileRoot.c_str());
-  Data data(params.inFileRoot.c_str(), sequenceLength, decodingQuantities.CSFSSamples,
-      params.foldData, params.usingCSFS);
+  Data data(params);
   printf("Read haps in %.3f seconds.\n", timer.update_time());
 
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
+  HMM hmm(data, params);
 
   hmm.decodeAll(params.jobs, params.jobInd);
   const DecodingReturnValues& decodingReturnValues = hmm.getDecodingReturnValues();
@@ -136,7 +128,7 @@ int main(int argc, char* argv[])
     FileUtils::AutoGzOfstream fout00;
     fout00.openOrExit(params.outFileRoot + ".00.sumOverPairs.gz");
     for (int pos = 0; pos < data.sites; pos++) {
-      for (uint k = 0; k < decodingQuantities.states; k++) {
+      for (uint k = 0; k < hmm.getDecodingQuantities().states; k++) {
         if (k)
           fout00 << "\t";
         if (!data.siteWasFlippedDuringFolding[pos]) {
@@ -158,7 +150,7 @@ int main(int argc, char* argv[])
     FileUtils::AutoGzOfstream fout11;
     fout11.openOrExit(params.outFileRoot + ".11.sumOverPairs.gz");
     for (int pos = 0; pos < data.sites; pos++) {
-      for (uint k = 0; k < decodingQuantities.states; k++) {
+      for (uint k = 0; k < hmm.getDecodingQuantities().states; k++) {
         if (k)
           fout11 << "\t";
         if (!data.siteWasFlippedDuringFolding[pos]) {

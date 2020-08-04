@@ -32,13 +32,10 @@
 TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
-  params.decodingQuantFile = ASMC_FILE_DIR
-      "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array.decodingQuantities.gz";
-  params.inFileRoot =
-      ASMC_FILE_DIR "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array";
+  params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
+  params.inFileRoot = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example";
   params.outFileRoot = "/tmp/FastSMCresults";
   params.decodingModeString = "array";
-  params.decodingMode = DecodingMode::arrayFolded;
   params.foldData = true;
   params.usingCSFS = true;
   params.batchSize = 32;
@@ -51,22 +48,12 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   params.noConditionalAgeEstimates = true;
   params.doPerPairMAP = true;
   params.doPerPairPosteriorMean = true;
+  params.useKnownSeed = true;
 
-  // read decoding quantities from file
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  const auto sequenceLength = Data::countHapLines(params.inFileRoot);
+  assert(params.validateParamsFastSMC());
 
-  const bool useKnownSeed = true;
-  Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs, useKnownSeed);
-
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
-
-  const int WORD_SIZE = 64;
-  const int CONST_READ_AHEAD = 10;
-  const bool PAR_HAPLOID = true;
-  ASMC::FastSMC fastSMC(WORD_SIZE, CONST_READ_AHEAD, PAR_HAPLOID);
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   SECTION("regression test")
   {
@@ -109,13 +96,10 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
-  params.decodingQuantFile = ASMC_FILE_DIR
-                             "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array.decodingQuantities.gz";
-  params.inFileRoot =
-      ASMC_FILE_DIR "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array";
+  params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
+  params.inFileRoot = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example";
   params.outFileRoot = "/tmp/FastSMCresults";
   params.decodingModeString = "array";
-  params.decodingMode = DecodingMode::arrayFolded;
   params.foldData = true;
   params.usingCSFS = true;
   params.batchSize = 32;
@@ -130,19 +114,12 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   params.doPerPairPosteriorMean = true;
   params.jobInd = 7;
   params.jobs = 9;
+  params.useKnownSeed = true;
 
-  // read decoding quantities from file
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  const auto sequenceLength = Data::countHapLines(params.inFileRoot);
+  assert(params.validateParamsFastSMC());
 
-  const bool useKnownSeed = true;
-  Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs, useKnownSeed);
-
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
-
-  ASMC::FastSMC fastSMC;
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   SECTION("regression test")
   {

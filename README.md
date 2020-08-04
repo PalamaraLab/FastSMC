@@ -50,14 +50,16 @@ brew install cmake boost eigen
 
 ### Getting and compiling ASMC
 
-**C++ library only**
+**C++ library only**:
 ```bash
 git clone https://github.com/OxfordRSE/ASMC.git
 
-mkdir ASMC_BUILD_DIR && cd ASMC_BUILD_DIR
-cmake /path/to/ASMC
+mkdir ASMC/ASMC_BUILD_DIR && cd ASMC/ASMC_BUILD_DIR
+cmake ..
 cmake --build .
 ```
+
+Note: you can locate the build directory outside the `ASMC` directory if you wish: just run `cmake /path/to/ASMC` from any directory you like.
 
 **C++ library and Python bindings**
 ```bash
@@ -66,6 +68,9 @@ git clone --recurse-submodules https://github.com/OxfordRSE/ASMC.git
 cd ASMC
 pip install .
 ```
+
+Note: the `--recurse-submodules` is important as PyBind11 is distributed as a submodule.
+You will **not** get PyBind11 if you download the zip archive from GitHub.
 
 ### Decoding Quantities
 

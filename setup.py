@@ -67,7 +67,7 @@ setup(
     packages=find_packages('src'),
     package_dir={'':'src'},
     long_description='',
-    install_requires=['numpy'],
+    install_requires=['jupyter', 'numpy', 'pandas'],
     ext_modules=[CMakeExtension('asmc/asmc')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,

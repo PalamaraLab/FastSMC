@@ -87,6 +87,23 @@ DecodingParams::DecodingParams(string _inFileRoot,
      if(!processOptions()) throw std::exception();
   }
 
+  DecodingParams::DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot,
+                                 bool _fastSMC)
+      : inFileRoot(std::move(_inFileRoot)), decodingQuantFile(std::move(_decodingQuantFile)),
+        outFileRoot(std::move(_outFileRoot)), jobs(1), jobInd(1), decodingModeString("array"),
+        decodingModeOverall(DecodingModeOverall::array), decodingMode(DecodingMode::arrayFolded), foldData(true),
+        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), GERMLINE(true), FastSMC(_fastSMC),
+        BIN_OUT(false), time(50), noConditionalAgeEstimates(true), doPerPairPosteriorMean(true), doPerPairMAP(true)
+  {
+    if (!FastSMC) {
+      cerr << "This DecodingParams constructor sets sensible FastSMC defaults, and is only intended for use with"
+              "FastSMC. Please set the fastSMC parameter to true, or use a different constructor."
+           << endl;
+      exit(1);
+    }
+
+    validateParamsFastSMC();
+  }
 
 bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 
@@ -179,6 +196,8 @@ bool DecodingParams::processCommandLineArgs(int argc, char *argv[]) {
 bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
   namespace po = boost::program_options;
 
+  fastSmcInvokedWithProgramOptions = true;
+
   FastSMC = true;
 
   string decodingModeString;
@@ -187,8 +206,6 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
   options.add_options()
       ("inFileRoot", po::value<string>(&inFileRoot)->required(),
        "Prefix of hap|haps|hap.gz|haps.gz and sample|samples file.")
-      ("map", po::value<string>(&map)->required(),
-       "Genetic map file.")
       ("outFileRoot", po::value<string>(&outFileRoot)->required(),
        "Output file for sum of posterior distribution over pairs.")
       ("decodingQuantFile", po::value<string>(&decodingQuantFile),
@@ -269,161 +286,179 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
 
     if (vm.count("bad-args")) {
       cerr << "ERROR: Unknown options:";
-      vector <string> bad_args = vm["bad-args"].as< vector <string> >();
-      for (uint i = 0; i < bad_args.size(); i++) cerr << " " << bad_args[i];
+      vector<string> bad_args = vm["bad-args"].as<vector<string>>();
+      for (uint i = 0; i < bad_args.size(); i++)
+        cerr << " " << bad_args[i];
       cerr << endl;
       return false;
     }
 
-    if (GERMLINE) {
-      if (withinOnly) {
-        cerr << "--GERMLINE & --withinOnly cannot be used together. Please remove one of the two flags." << endl;
-        exit(1);
-      }
-      if (time <= 0) {
-        cerr << "--time must be a positive integer." << endl;
-        exit(1);
-      }
-    }
-
-    if ( batchSize == 0 || batchSize%8 != 0) {
-      cerr << "--batchSize must be strictly positive and a multiple of 8." << endl;
-      exit(1);
-    }
-
-    if (compress) {
-      if (useAncestral) {
-        cerr << "--compress & --useAncestral cannot be used together. A compressed emission cannot use ancestral allele information." << endl;
-        exit(1);
-      }
-      if (!isnan(skipCSFSdistance)) {
-        cerr << "--compress & --skipCSFSdistance cannot be used together. --compress is a shorthand for --skipCSFSdistance Infinity." << endl;
-        exit(1);
-      }
-      skipCSFSdistance = std::numeric_limits<float>::infinity();
-    }
-    else {
-      if (isnan(skipCSFSdistance)) {
-        // default: use CSFS at all sites
-        skipCSFSdistance = 0.f;
-      }
-    }
-
-    if (skipCSFSdistance != std::numeric_limits<float>::infinity()) {
-      usingCSFS = true;
-    }
-
-    boost::algorithm::to_lower(decodingModeString);
-    if (decodingModeString == string("sequence")) {
-      decodingSequence = true;
-      if (useAncestral) {
-        decodingMode = DecodingMode::sequence;
-        foldData = false;
-      }
-      else {
-        decodingMode = DecodingMode::sequenceFolded;
-        foldData = true;
-      }
-    } else if (decodingModeString == string("array")) {
-      decodingSequence = false;
-      if (useAncestral) {
-        decodingMode = DecodingMode::array;
-        foldData = false;
-      }
-      else {
-        decodingMode = DecodingMode::arrayFolded;
-        foldData = true;
-      }
-    } else {
-      cerr << "ERROR. Unknown decoding mode: " << decodingModeString << endl;
-      exit(1);
-    }
-
-    if (decodingQuantFile.empty()) {
-      cout << "Setting --decodingQuantFile to --inFileRoot + .decodingQuantities.bin" << endl;
-      decodingQuantFile = inFileRoot + ".decodingQuantities.bin";
-    }
-
-    if ((jobs == 0) != (jobInd == 0)) {
-      cerr << "ERROR: --jobs and --jobInd must either both be set or both be unset" << endl;
-      return false;
-    }
-
-    if (jobs == 0) {
-      jobs = 1;
-      jobInd = 1;
-    }
-
-    if (jobInd <= 0 || jobInd > jobs || jobs <= 0) {
-      cerr << "ERROR: --jobInd must be between 1 and --jobs inclusive" << endl;
-      return false;
-    }
-
-    bool valid_job = false;
-    int x = 1;
-    int u = 1;
-    int prev_u = u;
-    for (int i = 0; i < 200 ; i++) {
-      if ( u == jobs ) {
-        valid_job = true;
-        break;
-      } else if ( u > jobs ) {
-        break;
-      }
-      x = x + 2;
-      prev_u = u ;
-      u = u + x;
-    }
-
-    if ( !valid_job ) {
-      cerr << "ERROR: jobs value is incorrect. You should use either " << prev_u << " or " << u << endl;
-      return false;
-    }
-
-    if ( recallThreshold < 0 || recallThreshold > 3 ) {
-      cerr << "ERROR: --recall must be between 0 and 3. " << prev_u << " or " << u << endl;
-      return false;
-    }
-
-    if (outFileRoot.empty()) {
-      outFileRoot = inFileRoot;
-      if (jobs > 0) {
-        outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
-      }
-    }
-
-//    inFileRoot = inFileRoot;
-
-  } catch (po::error &e) {
+  } catch (po::error& e) {
     cerr << "ERROR: " << e.what() << endl << endl;
     cerr << options << endl;
     return false;
   }
 
+  return validateParamsFastSMC();
+}
+
+bool DecodingParams::validateParamsFastSMC()
+{
+  const std::string del = fastSmcInvokedWithProgramOptions ? "--" : "";
+
+  if (!FastSMC) {
+    cerr << "Attempting to validate FastSMC parameters but FastSMC flag is false. Set DecodingParams::FastSMC to true?"
+         << endl;
+    exit(1);
+  }
+
+  if (GERMLINE) {
+    if (withinOnly) {
+      cerr << del << "GERMLINE & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
+           << endl;
+      exit(1);
+    }
+    if (time <= 0) {
+      cerr << del << "time must be a positive integer." << endl;
+      exit(1);
+    }
+  }
+
+  if (batchSize == 0 || batchSize % 8 != 0) {
+    cerr << del << "batchSize must be strictly positive and a multiple of 8." << endl;
+    exit(1);
+  }
+
+  if (compress) {
+    if (useAncestral) {
+      cerr << del << "compress & " << del << "useAncestral cannot be used together. A compressed emission cannot use"
+           << " ancestral allele information." << endl;
+      exit(1);
+    }
+    if (!isnan(skipCSFSdistance)) {
+      cerr << del << "compress & " << del << "skipCSFSdistance cannot be used together. " << del << "compress is a"
+           << " shorthand for " << del << "skipCSFSdistance Infinity." << endl;
+      exit(1);
+    }
+    skipCSFSdistance = std::numeric_limits<float>::infinity();
+  } else {
+    if (isnan(skipCSFSdistance)) {
+      // default: use CSFS at all sites
+      skipCSFSdistance = 0.f;
+    }
+  }
+
+  if (skipCSFSdistance != std::numeric_limits<float>::infinity()) {
+    usingCSFS = true;
+  }
+
+  boost::algorithm::to_lower(decodingModeString);
+  if (decodingModeString == string("sequence")) {
+    decodingSequence = true;
+    if (useAncestral) {
+      decodingMode = DecodingMode::sequence;
+      foldData = false;
+    } else {
+      decodingMode = DecodingMode::sequenceFolded;
+      foldData = true;
+    }
+  } else if (decodingModeString == string("array")) {
+    decodingSequence = false;
+    if (useAncestral) {
+      decodingMode = DecodingMode::array;
+      foldData = false;
+    } else {
+      decodingMode = DecodingMode::arrayFolded;
+      foldData = true;
+    }
+  } else {
+    cerr << "ERROR. Unknown decoding mode: " << decodingModeString << endl;
+    exit(1);
+  }
+
+  if (decodingQuantFile.empty()) {
+    cout << "Setting " << del << "decodingQuantFile to " << del << "inFileRoot + .decodingQuantities.bin" << endl;
+    decodingQuantFile = inFileRoot + ".decodingQuantities.bin";
+  }
+
+  if ((jobs == 0) != (jobInd == 0)) {
+    cerr << "ERROR: " << del << "jobs and " << del << "jobInd must either both be set or both be unset" << endl;
+    exit(1);
+  }
+
+  if (jobs == 0) {
+    jobs = 1;
+    jobInd = 1;
+  }
+
+  if (jobInd <= 0 || jobInd > jobs || jobs <= 0) {
+    cerr << "ERROR: " << del << "jobInd must be between 1 and " << del << "jobs inclusive" << endl;
+    exit(1);
+  }
+
+  bool valid_job = false;
+  int x = 1;
+  int u = 1;
+  int prev_u = u;
+  for (int i = 0; i < 200; i++) {
+    if (u == jobs) {
+      valid_job = true;
+      break;
+    } else if (u > jobs) {
+      break;
+    }
+    x = x + 2;
+    prev_u = u;
+    u = u + x;
+  }
+
+  if (!valid_job) {
+    cerr << "ERROR: jobs value is incorrect. You should use either " << prev_u << " or " << u << endl;
+    exit(1);
+  }
+
+  if (recallThreshold < 0 || recallThreshold > 3) {
+    cerr << "ERROR: " << del << "recall must be between 0 and 3. " << endl;
+    exit(1);
+  }
+
+  if (outFileRoot.empty()) {
+    outFileRoot = inFileRoot;
+    if (jobs > 0) {
+      outFileRoot += "." + std::to_string(jobInd) + "-" + std::to_string(jobs);
+    }
+  }
+
+  cout << boolalpha;
   cout << endl;
   cout << "---------------------------" << endl;
   cout << "        ASMC OPTIONS       " << endl;
   cout << "---------------------------" << endl;
 
   cout << "Input will have prefix : " << inFileRoot << endl;
-  cout << "Map file is : " << map << endl;
   cout << "Decoding quantities file : " << decodingQuantFile << endl;
   cout << "Output will have prefix : " << outFileRoot << "." << jobInd << "." << jobs;
+
   if (GERMLINE) {
     cout << ".gasmc";
-
   } else {
     cout << ".asmc";
   }
+
   if (BIN_OUT) {
     cout << ".bibd" << endl;
   } else {
     cout << ".ibd.gz" << endl;
   }
+
   cout << "Binary output ? " << BIN_OUT << endl;
   cout << "Time threshold to define IBD in generations : " << time << endl;
   cout << "Use batches ? " << !noBatches << endl;
-  if ( !noBatches ) { cout << "Batch size : " << batchSize << endl; }
+
+  if (!noBatches) {
+    cout << "Batch size : " << batchSize << endl;
+  }
+
   cout << "Running job " << jobInd << " of " << jobs << endl;
   cout << "Recall level " << recallThreshold << endl;
   cout << "skipCSFSdistance is " << skipCSFSdistance << endl;
@@ -445,6 +480,7 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
     cout << "Allowed gaps " << gap << endl;
     cout << "Dynamic hash seed cutoff : " << max_seeds << endl;
   }
+  cout << noboolalpha;
 
   return true;
 }

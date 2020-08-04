@@ -16,17 +16,10 @@ class TestASMCRegression(unittest.TestCase):
 
     def setUp(self):
         inFileRoot = "FILES/EXAMPLE/exampleFile.n300.array"
-        decodingQuantFile = "FILES/DECODING_QUANTITIES" \
-            "/30-100-2000.decodingQuantities.gz"
-        self.sequenceLength = Data.countHapLines(inFileRoot)
-        self.params = DecodingParams(inFileRoot, decodingQuantFile,
-                                     doPosteriorSums=True)
-        self.decodingQuantities = DecodingQuantities(decodingQuantFile)
-        self.data = Data(inFileRoot, self.sequenceLength,
-                         self.decodingQuantities.CSFSSamples,
-                         self.params.foldData, self.params.usingCSFS)
-        self.hmm = HMM(self.data, self.decodingQuantities, self.params,
-                       not self.params.noBatches, 1)
+        decodingQuantFile = "FILES/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz"
+        self.params = DecodingParams(inFileRoot, decodingQuantFile, doPosteriorSums=True)
+        self.data = Data(self.params)
+        self.hmm = HMM(self.data, self.params)
 
     def test_regression(self):
         oldSumOverPairs = np.loadtxt(Path(__file__).parent / 'data' /
@@ -40,7 +33,7 @@ class TestFastSMCRegression(unittest.TestCase):
 
     def setUp(self):
         self.file_dir = os.path.join(os.getcwd(), 'FILES', 'FASTSMC_EXAMPLE')
-        self.name_prefix = 'out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array'
+        self.name_prefix = 'example'
 
         # Create decoding params object with required options
         self.params = DecodingParams()
@@ -48,7 +41,6 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.inFileRoot = os.path.join(self.file_dir, self.name_prefix)
         self.params.outFileRoot = os.path.join('/tmp/FastSMCresults')
         self.params.decodingModeString = 'array'
-        self.params.decodingMode = DecodingMode.arrayFolded
         self.params.foldData = True
         self.params.usingCSFS = True
         self.params.batchSize = 32
@@ -61,18 +53,12 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.noConditionalAgeEstimates = True
         self.params.doPerPairMAP = True
         self.params.doPerPairPosteriorMean = True
+        self.params.useKnownSeed = True
 
-        decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-        sequence_length = Data.countHapLines(self.params.inFileRoot)
+        assert self.params.validateParamsFastSMC()
 
-        use_known_seed = True
-        data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
-                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
-
-        hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
-
-        fast_smc = FastSMC(hashingWordSize=64, constReadAhead=10, haploid=True)
-        fast_smc.run(self.params, data, hmm)
+        fast_smc = FastSMC(self.params)
+        fast_smc.run()
 
     def test_regression(self):
 
@@ -87,7 +73,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
     def setUp(self):
         self.file_dir = os.path.join(os.getcwd(), 'FILES', 'FASTSMC_EXAMPLE')
-        self.name_prefix = 'out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array'
+        self.name_prefix = 'example'
 
         # Create decoding params object with required options
         self.params = DecodingParams()
@@ -95,7 +81,6 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.inFileRoot = os.path.join(self.file_dir, self.name_prefix)
         self.params.outFileRoot = os.path.join('/tmp/FastSMCresults')
         self.params.decodingModeString = 'array'
-        self.params.decodingMode = DecodingMode.arrayFolded
         self.params.foldData = True
         self.params.usingCSFS = True
         self.params.batchSize = 32
@@ -110,18 +95,12 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.doPerPairPosteriorMean = True
         self.params.jobInd = 7
         self.params.jobs = 9
+        self.params.useKnownSeed = True
 
-        decoding_quantities = DecodingQuantities(self.params.decodingQuantFile)
-        sequence_length = Data.countHapLines(self.params.inFileRoot)
+        assert self.params.validateParamsFastSMC()
 
-        use_known_seed = True
-        data = Data(self.params.inFileRoot, sequence_length, decoding_quantities.CSFSSamples,
-                    self.params.foldData, self.params.usingCSFS, self.params.jobInd, self.params.jobs, use_known_seed)
-
-        hmm = HMM(data, decoding_quantities, self.params, not self.params.noBatches, 1)
-
-        fast_smc = FastSMC()
-        fast_smc.run(self.params, data, hmm)
+        fast_smc = FastSMC(self.params)
+        fast_smc.run()
 
     def test_regression(self):
         original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output_no_germline.ibd.gz'),

@@ -19,19 +19,8 @@ int main(int argc, char* argv[])
     exit(1);
   }
 
-  DecodingQuantities decodingQuantities(params.decodingQuantFile.c_str());
-  const auto sequenceLength = Data::countHapLines(params.inFileRoot);
-
-  Data data(params.inFileRoot, sequenceLength, decodingQuantities.CSFSSamples, params.foldData, params.usingCSFS,
-            params.jobInd, params.jobs);
-
-  HMM hmm(data, decodingQuantities, params, !params.noBatches);
-
-  const int WORD_SIZE = 64;
-  const int CONST_READ_AHEAD = 10;
-  const bool PAR_HAPLOID = true;
-  ASMC::FastSMC fastSMC(WORD_SIZE, CONST_READ_AHEAD, PAR_HAPLOID);
-  fastSMC.run(params, data, hmm);
+  ASMC::FastSMC fastSMC(params);
+  fastSMC.run();
 
   return 0;
 }
