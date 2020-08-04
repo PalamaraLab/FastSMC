@@ -69,6 +69,9 @@ cd ASMC
 pip install .
 ```
 
+Note: the `--recurse-submodules` is important as PyBind11 is distributed as a submodule.
+You will **not** get PyBind11 if you download the zip archive from GitHub.
+
 ### Decoding Quantities
 
 To generate decoding quantities, several additional requirements are required.
