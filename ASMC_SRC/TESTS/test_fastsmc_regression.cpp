@@ -32,10 +32,8 @@
 TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
-  params.decodingQuantFile = ASMC_FILE_DIR
-      "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array.decodingQuantities.gz";
-  params.inFileRoot =
-      ASMC_FILE_DIR "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array";
+  params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
+  params.inFileRoot = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example";
   params.outFileRoot = "/tmp/FastSMCresults";
   params.decodingModeString = "array";
   params.foldData = true;
@@ -98,10 +96,8 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
-  params.decodingQuantFile = ASMC_FILE_DIR
-                             "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array.decodingQuantities.gz";
-  params.inFileRoot =
-      ASMC_FILE_DIR "/FASTSMC_EXAMPLE/out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array";
+  params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
+  params.inFileRoot = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example";
   params.outFileRoot = "/tmp/FastSMCresults";
   params.decodingModeString = "array";
   params.foldData = true;

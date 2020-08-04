@@ -33,7 +33,7 @@ class TestFastSMCRegression(unittest.TestCase):
 
     def setUp(self):
         self.file_dir = os.path.join(os.getcwd(), 'FILES', 'FASTSMC_EXAMPLE')
-        self.name_prefix = 'out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array'
+        self.name_prefix = 'example'
 
         # Create decoding params object with required options
         self.params = DecodingParams()
@@ -73,7 +73,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
 
     def setUp(self):
         self.file_dir = os.path.join(os.getcwd(), 'FILES', 'FASTSMC_EXAMPLE')
-        self.name_prefix = 'out.25.n300.chr2.len30.dens1.disc10-20-2000.demoCEU.mapnorm.array'
+        self.name_prefix = 'example'
 
         # Create decoding params object with required options
         self.params = DecodingParams()
