@@ -10,19 +10,21 @@ jobs:
     if:  ${{ github.repository == 'PalamaraLab/FastSMC_dev' }}
     runs-on: ubuntu-latest
     steps:
-      
+
       - name: checkout private repo
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-      
-      - name: Add public as remote and push master
-        run: |
-          git remote add public_repo git@github.com:PalamaraLab/FastSMC.git
-          git push public_repo master
-        
+
+      - name: mirror master to public repo
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+          repository: git@github.com:PalamaraLab/FastSMC.git
+          branch: master
