@@ -1,30 +1,28 @@
-on: push
+name: mirror to public repo
+
+on:
+  push:
+    branches:
+      - master
 
 jobs:
-  one:
-    runs-on: ubuntu-16.04
+  mirror:
+    if:  ${{ github.repository == 'PalamaraLab/FastSMC_dev' }}
+    runs-on: ubuntu-latest
     steps:
+      
+      - name: checkout private repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-      - name: Dump job context
-        env:
-          JOB_CONTEXT: ${{ toJson(job) }}
-        run: echo "$JOB_CONTEXT"
-      - name: Dump steps context
-        env:
-          STEPS_CONTEXT: ${{ toJson(steps) }}
-        run: echo "$STEPS_CONTEXT"
-      - name: Dump runner context
-        env:
-          RUNNER_CONTEXT: ${{ toJson(runner) }}
-        run: echo "$RUNNER_CONTEXT"
-      - name: Dump strategy context
-        env:
-          STRATEGY_CONTEXT: ${{ toJson(strategy) }}
-        run: echo "$STRATEGY_CONTEXT"
-      - name: Dump matrix context
-        env:
-          MATRIX_CONTEXT: ${{ toJson(matrix) }}
-        run: echo "$MATRIX_CONTEXT"
+      
+      - name: Add public as remote and push master
+        run: |
+          git remote add public_repo git@github.com:PalamaraLab/FastSMC.git
+          git push public_repo master
+        
