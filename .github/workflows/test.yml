@@ -26,5 +26,5 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          repository: git@github.com:PalamaraLab/FastSMC.git
+          repository: PalamaraLab/FastSMC
           branch: master
