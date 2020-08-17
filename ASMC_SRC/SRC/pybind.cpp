@@ -147,6 +147,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("FastSMC", &DecodingParams::FastSMC)
         .def_readwrite("BIN_OUT", &DecodingParams::BIN_OUT)
         .def_readwrite("useKnownSeed", &DecodingParams::useKnownSeed)
+        .def_readwrite("outputIbdSegmentLength", &DecodingParams::outputIbdSegmentLength)
         .def_readwrite("hashingWordSize", &DecodingParams::hashingWordSize)
         .def_readwrite("constReadAhead", &DecodingParams::constReadAhead)
         .def_readwrite("haploid", &DecodingParams::haploid)

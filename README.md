@@ -97,11 +97,96 @@ Basic functionality for generating decoding quantities can be seen in:
 
 ./prepare.sh
 
+
+```
+   ███████╗  █████╗  ███████╗ ████████╗ ███████╗ ███╗   ███╗  ██████╗
+   ██╔════╝ ██╔══██╗ ██╔════╝ ╚══██╔══╝ ██╔════╝ ████╗ ████║ ██╔════╝
+   █████╗   ███████║ ███████╗    ██║    ███████╗ ██╔████╔██║ ██║     
+   ██╔══╝   ██╔══██║ ╚════██║    ██║    ╚════██║ ██║╚██╔╝██║ ██║     
+   ██║      ██║  ██║ ███████║    ██║    ███████║ ██║ ╚═╝ ██║ ╚██████╗
+   ╚═╝      ╚═╝  ╚═╝ ╚══════╝    ╚═╝    ╚══════╝ ╚═╝     ╚═╝  ╚═════╝
+```
+
+The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using GERMLINE2).
+
+## Installation
+
+FastSMC is compiled with ASMC, using the same instructions as above.
+
+### Examples using the Python bindings
+
+See the `notebooks` directory for an example of running FastSMC.
+There are two Jupyter notebooks:
+ - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
+ - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, and how to analyse the output if it is too large to fit in memory
+
+### Example using the compiled FastSMC executable
+
+Following the compilation instructions above will create an executable
+
+```
+ASMC_BUILD_DIR/FastSMC_exe
+```
+
+which can be used by providing command line arguments summarised below.
+
+Either way of running FastSMC will run it on a simulated dataset with default parameters values.
+An output file with IBD segments will be generated, and run time should be less than 4s.
+
+### Command line arguments for FastSMC_exe
+See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
+
+	--GERMLINE			Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
+               	                 	[default 0/off]
+	--min_m arg (=1)        	Minimum match length (in cM).
+					[default = 1.0]
+	--time arg (=100)       	Time threshold to define IBD in number of generations.
+					[default = 100]
+	--skip arg (=0)               	Skip words with (seeds/samples) less than this value
+					[default 0.0]
+	--min_maf arg (=0)            	Minimum minor allele frequency
+					[default 0.0]
+	--gap arg (=1)                	Allowed gaps
+					[default 1]
+	--max_seeds arg (=0)         	Dynamic hash seed cutoff
+					[default 0/off]
+	--recall arg (=3)       	Recall level from 0 to 3 (higher value means higher recall).
+					[default = 3]
+	--segmentLength                	Output length in centimorgans of each IBD segment.
+                                	[default 0/off]
+	--perPairMAP                  	Output MAP age estimate for each IBD segment.
+                                	[default 0/off]
+	--perPairPosteriorMeans       	Output posterior mean age estimate for each IBD segment.
+					[default 0/off]
+	--noConditionalAgeEstimates	Do not condition the age estimates on the TMRCA being between present time and t generations ago
+					(where t is the time threshold).
+					[default 0/off]
+	--bin                         	Binary output
+					[default off]
+
+### Output format
+
+FastSMC generates an .ibd.gz (or .bibd.gz if binary output) file in the specified location.
+Each line corresponds to a pairwise shared segment, with the following fields:
+
+	0. First individual's family identifier
+	1. First individual identifier
+	2. First individual haplotype identifier (1 or 2)
+	3. Second individual's family identifier
+	4. Second individual identifier
+	5. Second individual identifier (1 or 2)
+	6. Chromosome number
+	7. Starting position of the IBD segment (inclusive)
+	8. Ending position of the IBD segment (inclusive)
+	9. (optional) length in centimorgans of IBD segment
+	10. IBD score
+	11. (optional) Posterior age estimate of the IBD segment
+	12. (optional). MAP age estimate of the IBD segment
+
 ## License
 
-ASMC is distributed under the GNU General Public License v3.0 (GPLv3). For any questions or comments on ASMC, please contact Pier Palamara using `<lastname>@stats.ox.ac.uk`.
+ASMC and FastSMC are distributed under the GNU General Public License v3.0 (GPLv3). For any questions or comments on ASMC, please contact Pier Palamara using `<lastname>@stats.ox.ac.uk`.
 
 If you use this software, please cite:
 
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
-
