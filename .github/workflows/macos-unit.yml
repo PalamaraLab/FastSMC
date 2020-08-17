@@ -1,0 +1,40 @@
+name: macOS unit
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches-ignore:
+      - '**'
+
+jobs:
+
+  build-and-test:
+    name: Unit tests on macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: checkout submodule
+        run: git submodule update --init
+
+      - name: install dependencies
+        run: |
+          brew install boost libomp eigen
+
+      - name: make build directory
+        run: mkdir asmc_build_dir
+
+      - name: cmake configure
+        run: cmake ..
+        working-directory: asmc_build_dir
+
+      - name: cmake build
+        run: cmake --build . --parallel 2 --target ASMC_unit_tests
+        working-directory: asmc_build_dir
+
+      - name: cmake test
+        run: ctest -j2 -R Asmc_unit_tests --output-on-failure
+        working-directory: asmc_build_dir
