@@ -44,6 +44,7 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   params.GERMLINE = true;
   params.FastSMC = true;
   params.BIN_OUT = false;
+  params.outputIbdSegmentLength = true;
   params.time = 50;
   params.noConditionalAgeEstimates = true;
   params.doPerPairMAP = true;
@@ -108,6 +109,7 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   params.GERMLINE = false;
   params.FastSMC = true;
   params.BIN_OUT = false;
+  params.outputIbdSegmentLength = true;
   params.time = 50;
   params.noConditionalAgeEstimates = true;
   params.doPerPairMAP = true;

@@ -63,6 +63,9 @@ public:
   bool BIN_OUT = false;
   bool useKnownSeed = false;
 
+  /// Whether to write IBD segment length (in centimorgans)
+  bool outputIbdSegmentLength = false;
+
   // Used by FastSCM itself
   int hashingWordSize = 64;
   int constReadAhead = 10;

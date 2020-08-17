@@ -17,11 +17,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-
       - name: mirror master to public repo
         run: |
           remote_repo="https://fcooper8472:${{ secrets.DEPLOY_ACCESS_TOKEN }}@github.com/PalamaraLab/FastSMC.git"

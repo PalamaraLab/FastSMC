@@ -18,6 +18,7 @@
 #include <cassert>
 #include <chrono>
 #include <exception>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <utility>
@@ -402,19 +403,9 @@ void HMM::decodeAll(int jobs, int jobInd)
 
 void HMM::writeBinaryInfoIntoFile()
 {
-  int mode;
-  if (!decodingParams.doPerPairMAP && !decodingParams.doPerPairPosteriorMean) {
-    mode = 0;
-  } else {
-    if (decodingParams.doPerPairPosteriorMean && decodingParams.doPerPairMAP) {
-      mode = 1;
-    } else if (decodingParams.doPerPairPosteriorMean) {
-      mode = 2;
-    } else if (decodingParams.doPerPairMAP) {
-      mode = 3;
-    }
-  }
-  gzwrite(gzoutIBD, (char*)&mode, sizeof(int));
+  gzwrite(gzoutIBD, (char*)&decodingParams.outputIbdSegmentLength, sizeof(bool));
+  gzwrite(gzoutIBD, (char*)&decodingParams.doPerPairPosteriorMean, sizeof(bool));
+  gzwrite(gzoutIBD, (char*)&decodingParams.doPerPairMAP, sizeof(bool));
   gzwrite(gzoutIBD, (char*)&data.chrNumber, sizeof(int));
   unsigned int nbInd = data.individuals.size();
   unsigned int lengthFamid;
@@ -1118,24 +1109,36 @@ void HMM::writePairIBD(const PairObservations& obs, unsigned int posStart, unsig
 {
   nbSegmentsDetected++;
   if (!decodingParams.BIN_OUT) {
-    string ind1 = data.FamIDList[obs.iInd] + "\t" + data.IIDList[obs.iInd] + "\t" + to_string(obs.iHap) + "\t";
-    string ind2 = data.FamIDList[obs.jInd] + "\t" + data.IIDList[obs.jInd] + "\t" + to_string(obs.jHap) + "\t";
-    string segment = std::to_string(data.chrNumber) + "\t" + std::to_string(data.physicalPositions[posStart]) + "\t" +
-                     std::to_string(data.physicalPositions[posEnd]) + "\t" +
-                     std::to_string(prob / (posEnd - posStart + 1));
-    gzwrite(gzoutIBD, (ind1 + ind2 + segment).c_str(), (ind1 + ind2 + segment).size());
+
+    std::stringstream record;
+    record << std::setprecision(std::numeric_limits<float>::digits10 + 1);
+
+    record << data.FamIDList[obs.iInd] << '\t' << data.IIDList[obs.iInd] << '\t' << static_cast<int>(obs.iHap) << '\t'
+           << data.FamIDList[obs.jInd] << '\t' << data.IIDList[obs.jInd] << '\t' << static_cast<int>(obs.iHap) << '\t'
+           << data.chrNumber;
+
+    record << '\t' << data.physicalPositions[posStart] << '\t' << data.physicalPositions[posEnd];
+
+    if (decodingParams.outputIbdSegmentLength) {
+      const float length_cM = 100.f * (data.geneticPositions[posEnd] - data.geneticPositions[posStart]);
+      record << '\t' << length_cM;
+    }
+
+    const double ibd_score = prob / static_cast<double>(posEnd - posStart + 1u);
+    record << '\t' << ibd_score;
+
     if (decodingParams.doPerPairPosteriorMean) {
-      float postMean = getPosteriorMean(posterior);
-      string post = "\t" + std::to_string(postMean);
-      gzwrite(gzoutIBD, post.c_str(), post.size());
+      record << '\t' << getPosteriorMean(posterior);
     }
+
     if (decodingParams.doPerPairMAP) {
-      float map = getMAP(posterior);
-      string map_string = "\t" + std::to_string(map);
-      gzwrite(gzoutIBD, map_string.c_str(), map_string.size());
+      record << '\t' << getMAP(posterior);
     }
-    string end_string = "\n";
-    gzwrite(gzoutIBD, end_string.c_str(), end_string.size());
+
+    record << '\n';
+
+    const std::string record_str = record.str();
+    gzwrite(gzoutIBD, record_str.c_str(), record_str.size());
 
   } else {
     int ind[2];
@@ -1147,14 +1150,18 @@ void HMM::writePairIBD(const PairObservations& obs, unsigned int posStart, unsig
     unsigned int pos[2];
     pos[0] = data.physicalPositions[posStart];
     pos[1] = data.physicalPositions[posEnd];
-    float score = prob / (posEnd - posStart + 1);
+    const auto ibd_score = static_cast<float>(prob / static_cast<double>(posEnd - posStart + 1u));
     gzwrite(gzoutIBD, (char*)&ind[0], sizeof(int));
     gzwrite(gzoutIBD, &hap[0], sizeof(char));
     gzwrite(gzoutIBD, (char*)&ind[1], sizeof(int));
     gzwrite(gzoutIBD, &hap[1], sizeof(char));
     gzwrite(gzoutIBD, (char*)&pos[0], sizeof(unsigned int));
     gzwrite(gzoutIBD, (char*)&pos[1], sizeof(unsigned int));
-    gzwrite(gzoutIBD, (char*)&score, sizeof(float));
+    if (decodingParams.outputIbdSegmentLength) {
+      const float length_cM = 100.f * (data.geneticPositions[posEnd] - data.geneticPositions[posStart]);
+      gzwrite(gzoutIBD, (char*)&length_cM, sizeof(float));
+    }
+    gzwrite(gzoutIBD, (char*)&ibd_score, sizeof(float));
     if (decodingParams.doPerPairPosteriorMean) {
       float postMean = getPosteriorMean(posterior);
       gzwrite(gzoutIBD, (char*)&postMean, sizeof(float));

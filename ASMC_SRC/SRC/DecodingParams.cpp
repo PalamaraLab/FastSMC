@@ -93,7 +93,8 @@ DecodingParams::DecodingParams(string _inFileRoot,
         outFileRoot(std::move(_outFileRoot)), jobs(1), jobInd(1), decodingModeString("array"),
         decodingModeOverall(DecodingModeOverall::array), decodingMode(DecodingMode::arrayFolded), foldData(true),
         usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), GERMLINE(true), FastSMC(_fastSMC),
-        BIN_OUT(false), time(50), noConditionalAgeEstimates(true), doPerPairPosteriorMean(true), doPerPairMAP(true)
+        BIN_OUT(false), outputIbdSegmentLength(true), time(50), noConditionalAgeEstimates(true),
+        doPerPairPosteriorMean(true), doPerPairMAP(true)
   {
     if (!FastSMC) {
       cerr << "This DecodingParams constructor sets sensible FastSMC defaults, and is only intended for use with"
@@ -226,6 +227,8 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
        "Recall level from 0 to 3 (higher value means higher recall). [default = 3]")
 
       // TASKS
+      ("segmentLength", po::bool_switch(&outputIbdSegmentLength)->default_value(false),
+       "Output length in centimorgans of each IBD segment. [default 0/off]")
       ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(false),
        "Output per-pair MAP for each IBD segment. [default 0/off]")
       ("perPairPosteriorMeans", po::bool_switch(&doPerPairPosteriorMean)->default_value(false),
@@ -464,6 +467,7 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "skipCSFSdistance is " << skipCSFSdistance << endl;
   cout << "compress ? " << compress << endl;
   cout << "useAncestral ? " << useAncestral << endl;
+  cout << "outputIbdSegmentLength ? " << outputIbdSegmentLength << endl;
   cout << "doPerPairPosteriorMean ? " << doPerPairPosteriorMean << endl;
   cout << "doPerPairMAP ? " << doPerPairMAP << endl;
   cout << "noConditionalAgeEstimates ? " << noConditionalAgeEstimates << endl;

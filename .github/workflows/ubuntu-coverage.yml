@@ -1,0 +1,50 @@
+name: Ubuntu coverage
+
+on:
+  push:
+    branches-ignore:
+      - '**'
+  pull_request:
+    branches-ignore:
+      - '**'
+
+jobs:
+
+  build-and-test:
+    name: Coverage on Ubuntu 18.04
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: checkout submodule
+        run: git submodule update --init
+
+      - name: install dependencies
+        run: |
+          sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
+          sudo apt install lcov
+          sudo apt install libeigen3-dev
+
+      - name: make build directory
+        run: mkdir asmc_build_dir
+
+      - name: cmake configure
+        run: cmake .. -DASMC_ENABLE_COVERAGE:BOOL=TRUE
+        working-directory: asmc_build_dir
+
+      - name: cmake build
+        run: cmake --build . --parallel 2 --target ASMC_unit_tests
+        working-directory: asmc_build_dir
+
+      - name: cmake test
+        run: ctest -j2 -R Asmc_unit_tests --output-on-failure
+        working-directory: asmc_build_dir
+
+      - name: upload coverage results
+        run: |
+          lcov --directory . --capture --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
+          lcov --list coverage.info
+          bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
+        working-directory: asmc_build_dir

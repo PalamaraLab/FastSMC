@@ -49,6 +49,7 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.GERMLINE = True
         self.params.FastSMC = True
         self.params.BIN_OUT = False
+        self.params.outputIbdSegmentLength = True
         self.params.time = 50
         self.params.noConditionalAgeEstimates = True
         self.params.doPerPairMAP = True
@@ -89,6 +90,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.GERMLINE = False
         self.params.FastSMC = True
         self.params.BIN_OUT = False
+        self.params.outputIbdSegmentLength = True
         self.params.time = 50
         self.params.noConditionalAgeEstimates = True
         self.params.doPerPairMAP = True
