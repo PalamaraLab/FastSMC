@@ -226,5 +226,6 @@ If you use this software, please cite the appropriate reference(s) below.
 
 The ASMC algorithm and software were developed in
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
+
 The FastASMC algorithm and software were developed in
 - J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale population structure, evolutionary history, and trait associations. *Nature Communications*, in press.
