@@ -51,6 +51,9 @@ public:
   FastSMC(const std::string& inFileRoot, const std::string& outFileRoot);
 
   void run();
+
+  void convertBinaryFile(std::string input_file, std::string output_file);
+
 };
 
 } // namespace ASMC

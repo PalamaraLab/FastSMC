@@ -221,8 +221,8 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
        "job index (1..jobs). [default = 1]")
       ("bin", po::bool_switch(&BIN_OUT)->default_value(false),
        "Binary output [default off]")
-      ("batchSize", po::value<int>(&batchSize)->default_value(16),
-       "Batch size [default = 16]")
+      ("batchSize", po::value<int>(&batchSize)->default_value(32),
+       "Batch size [default = 32]")
       ("recall", po::value<int>(&recallThreshold)->default_value(3),
        "Recall level from 0 to 3 (higher value means higher recall). [default = 3]")
 
@@ -579,4 +579,3 @@ bool DecodingParams::processOptions() {
     }
    return true;
 }
-

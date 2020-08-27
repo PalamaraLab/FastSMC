@@ -136,6 +136,8 @@ class HMM
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
   gzFile gzoutIBD;
+  gzFile gzinBIBD;
+  std::ofstream gzoutIBDconverted;
 
   // timing
   std::chrono::duration<double> t1sum = std::chrono::high_resolution_clock::duration::zero();
@@ -229,6 +231,9 @@ public:
   void closeIBDFile();
 
   void finishFromGERMLINE();
+
+  // convert binary output to text format
+  void convertBinaryFile(std::string input_file, std::string output_file);
 
 
   /**

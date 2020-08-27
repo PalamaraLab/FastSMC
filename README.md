@@ -30,14 +30,14 @@ The ASMC C++ library requires:
  - CMake (3.12 or later)
  - Boost (1.62 or later)
  - Eigen (3.3.4 or later)
- 
+
  The Python bindings additionally require:
- 
+
  - Python (3.5 or later)
  - PyBind11 (distributed with ASMC as a submodule)
- 
+
 ### Install dependencies
- 
+
 **Ubuntu (using the package manager)**
 ```bash
 sudo apt install g++ cmake libboost-all-dev libeigen3-dev
@@ -83,8 +83,8 @@ sudo apt install libgmp-dev libmpfr-dev libgsl0-dev default-jdk jblas
 
 **macOS (using homebrew and assuming cask is installed)**
 ```bash
-brew install mpfr gmp gsl 
-brew cask install java 
+brew install mpfr gmp gsl
+brew cask install java
 ```
 
 **Install python dependencies**
@@ -118,7 +118,7 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 See the `notebooks` directory for an example of running FastSMC.
 There are two Jupyter notebooks:
  - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
- - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, and how to analyse the output if it is too large to fit in memory
+ - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory
 
 ### Example using the compiled FastSMC executable
 
@@ -133,36 +133,59 @@ which can be used by providing command line arguments summarised below.
 Either way of running FastSMC will run it on a simulated dataset with default parameters values.
 An output file with IBD segments will be generated, and run time should be less than 4s.
 
-### Command line arguments for FastSMC_exe
+## Running FastSMC
+
+### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
 
-	--GERMLINE			Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
-               	                 	[default 0/off]
-	--min_m arg (=1)        	Minimum match length (in cM).
-					[default = 1.0]
-	--time arg (=100)       	Time threshold to define IBD in number of generations.
-					[default = 100]
+  --inFileRoot            	      Prefix of input files (.hap, .samples, .map).
+                                  [mandatory]
+  --decodingQuantFile             Decoding quantities file.
+                                  [mandatory]
+  --outFileRoot                   Prefix of output file.
+                                  [mandatory]
+	--GERMLINE			                Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
+                                  [default 0/off]
+	--min_m arg (=1)        	      Minimum match length (in cM).
+                                  [default = 1.0]
+	--time arg (=100)       	      Time threshold to define IBD in number of generations.
+                                  [default = 100]
 	--skip arg (=0)               	Skip words with (seeds/samples) less than this value
-					[default 0.0]
+                                  [default 0.0]
 	--min_maf arg (=0)            	Minimum minor allele frequency
-					[default 0.0]
+                                  [default 0.0]
 	--gap arg (=1)                	Allowed gaps
-					[default 1]
-	--max_seeds arg (=0)         	Dynamic hash seed cutoff
-					[default 0/off]
-	--recall arg (=3)       	Recall level from 0 to 3 (higher value means higher recall).
-					[default = 3]
+                                  [default 1]
+	--max_seeds arg (=0)            Dynamic hash seed cutoff
+                                  [default 0/off]
+	--recall arg (=3)       	      Recall level from 0 to 3 (higher value means higher recall).
+                                  [default = 3]
 	--segmentLength                	Output length in centimorgans of each IBD segment.
                                 	[default 0/off]
 	--perPairMAP                  	Output MAP age estimate for each IBD segment.
                                 	[default 0/off]
 	--perPairPosteriorMeans       	Output posterior mean age estimate for each IBD segment.
-					[default 0/off]
-	--noConditionalAgeEstimates	Do not condition the age estimates on the TMRCA being between present time and t generations ago
+                                  [default 0/off]
+	--noConditionalAgeEstimates	    Do not condition the age estimates on the TMRCA being between present time and t generations ago
 					(where t is the time threshold).
-					[default 0/off]
+                                  [default 0/off]
 	--bin                         	Binary output
-					[default off]
+                                  [default off]
+  --batchSize                     Size of batches to be decoded.
+                                  [default = 32]
+
+### Input file formats
+
+Input files are provided to FastSMC with the --inFileRoot option. You may want to look at files in FILES/FASTSMC_EXAMPLE/* for examples of the file formats described below.
+
+#### Phased haplotypes in Oxford haps/sample format (.hap/.hap.gz, .samples)
+These files are provided in input to FastSMC. The file format explained [here](https://www.cog-genomics.org/plink/2.0/formats#haps). These files are output by phasing programs like Eagle and Shapeit.
+
+#### Genetic map (.map)
+The genetic map provided in input to FastSMC has 4 columns with format "Physical_position Recombination_rate Genetic_position Mutation_rate". Genetic positions are in centimorgans, physical positions are in bp. The map can be optionally compressed using gzip.
+
+#### Decoding quantities (.decodingQuantities.gz)
+See the instructions above to generate decoding quantities files and the ASMC manual [here](https://www.palamaralab.org/software/ASMC) for more details.
 
 ### Output format
 
@@ -174,19 +197,26 @@ Each line corresponds to a pairwise shared segment, with the following fields:
 	2. First individual haplotype identifier (1 or 2)
 	3. Second individual's family identifier
 	4. Second individual identifier
-	5. Second individual identifier (1 or 2)
+	5. Second individual haplotype identifier (1 or 2)
 	6. Chromosome number
 	7. Starting position of the IBD segment (inclusive)
 	8. Ending position of the IBD segment (inclusive)
-	9. (optional) length in centimorgans of IBD segment
+	9. (optional) Length in centimorgans of IBD segment
 	10. IBD score
-	11. (optional) Posterior age estimate of the IBD segment
-	12. (optional). MAP age estimate of the IBD segment
+	11. (optional) Average mean posterior age estimate of the IBD segment
+	12. (optional) Average MAP age estimate of the IBD segment
+
+### Binary output
+
+If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. You can then convert it to text format (see notebooks for an example).
 
 ## License
 
 ASMC and FastSMC are distributed under the GNU General Public License v3.0 (GPLv3). For any questions or comments on ASMC, please contact Pier Palamara using `<lastname>@stats.ox.ac.uk`.
 
+## Reference
+
 If you use this software, please cite:
 
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
+- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara, *Nature Communications*, in press.
