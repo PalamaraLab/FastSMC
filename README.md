@@ -139,41 +139,41 @@ An output file with IBD segments will be generated, and run time should be less 
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
 
 ```
-  --inFileRoot            	      Prefix of input files (.hap, .samples, .map).
-                                  [mandatory]
-  --decodingQuantFile             Decoding quantities file.
-                                  [mandatory]
-  --outFileRoot                   Prefix of output file.
-                                  [mandatory]
-	--GERMLINE			                Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
-                                  [default 0/off]
-	--min_m arg (=1)        	      Minimum match length (in cM).
-                                  [default = 1.0]
-	--time arg (=100)       	      Time threshold to define IBD in number of generations.
-                                  [default = 100]
-	--skip arg (=0)               	Skip words with (seeds/samples) less than this value
-                                  [default 0.0]
-	--min_maf arg (=0)            	Minimum minor allele frequency
-                                  [default 0.0]
-	--gap arg (=1)                	Allowed gaps
-                                  [default 1]
-	--max_seeds arg (=0)            Dynamic hash seed cutoff
-                                  [default 0/off]
-	--recall arg (=3)       	      Recall level from 0 to 3 (higher value means higher recall).
-                                  [default = 3]
-	--segmentLength                	Output length in centimorgans of each IBD segment.
-                                	[default 0/off]
-	--perPairMAP                  	Output MAP age estimate for each IBD segment.
-                                	[default 0/off]
-	--perPairPosteriorMeans       	Output posterior mean age estimate for each IBD segment.
-                                  [default 0/off]
-	--noConditionalAgeEstimates	    Do not condition the age estimates on the TMRCA being between present time and t generations ago
-					(where t is the time threshold).
-                                  [default 0/off]
-	--bin                         	Binary output
-                                  [default off]
-  --batchSize                     Size of batches to be decoded.
-                                  [default = 32]
+  --inFileRoot                	Prefix of input files (.hap, .samples, .map).
+                              	[mandatory]
+  --decodingQuantFile         	Decoding quantities file.
+                              	[mandatory]
+  --outFileRoot               	Prefix of output file.
+                              	[mandatory]
+  --GERMLINE                  	Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
+                              	[default 0/off]
+  --min_m arg (=1)		Minimum match length (in cM).
+				[default = 1.0]
+  --time arg (=100)		Time threshold to define IBD in number of generations.
+				[default = 100]
+  --skip arg (=0)		Skip words with (seeds/samples) less than this value
+				[default 0.0]
+  --min_maf arg (=0)		Minimum minor allele frequency
+				[default 0.0]
+  --gap arg (=1)		Allowed gaps
+                                [default 1]
+  --max_seeds arg (=0)		Dynamic hash seed cutoff
+				[default 0/off]
+  --recall arg (=3)		Recall level from 0 to 3 (higher value means higher recall).
+				[default = 3]
+  --segmentLength		Output length in centimorgans of each IBD segment.
+				[default 0/off]
+  --perPairMAP			Output MAP age estimate for each IBD segment.
+				[default 0/off]
+  --perPairPosteriorMeans	Output posterior mean age estimate for each IBD segment.
+				[default 0/off]
+  --noConditionalAgeEstimates	Do not condition the age estimates on the TMRCA being between present time and t generations ago
+				(where t is the time threshold).
+				[default 0/off]
+  --bin				Binary output
+				[default off]
+  --batchSize			Size of batches to be decoded.
+				[default = 32]
 ```
 
 ### Input file formats
