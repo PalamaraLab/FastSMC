@@ -17,7 +17,7 @@
 
 The Ascertained Sequentially Markovian Coalescent is a method to efficiently estimate pairwise coalescence time along the genome. It can be run using SNP array or whole-genome sequencing (WGS) data.
 
-**This repository contains the code and example files for the ASMC program. A user manual can be found [here](http://www.palamaralab.org/software/ASMC), data and annotations from the paper can be found [here](http://www.palamaralab.org/data/ASMC).**
+**This repository contains the code and example files for the ASMC program. A user manual can be found [here](http://www.palamaralab.org/software/ASMC), data and annotations from the ASMC paper can be found [here](http://www.palamaralab.org/data/ASMC).**
 
 ## Installation
 
@@ -107,33 +107,15 @@ Basic functionality for generating decoding quantities can be seen in:
    ╚═╝      ╚═╝  ╚═╝ ╚══════╝    ╚═╝    ╚══════╝ ╚═╝     ╚═╝  ╚═════╝
 ```
 
-The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using GERMLINE2).
+The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using GERMLINE2). FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
 ## Installation
 
 FastSMC is compiled with ASMC, using the same instructions as above.
 
-### Examples using the Python bindings
-
-See the `notebooks` directory for an example of running FastSMC.
-There are two Jupyter notebooks:
- - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
- - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory
-
-### Example using the compiled FastSMC executable
-
-Following the compilation instructions above will create an executable
-
-```
-ASMC_BUILD_DIR/FastSMC_exe
-```
-
-which can be used by providing command line arguments summarised below.
-
-Either way of running FastSMC will run it on a simulated dataset with default parameters values.
-An output file with IBD segments will be generated, and run time should be less than 4s.
-
 ## Running FastSMC
+
+You can run FastSMC both in C++ and in Python (see below for a Python and C++ example). 
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
@@ -176,6 +158,8 @@ See ASMC's documentation for parameters related to the validation step. Addition
 				[default = 32]
 ```
 
+Optimal parameters for IBD detection within the past 25, 50, 100, 150 and 200 generations are provided in the FastSMC paper.
+
 ### Input file formats
 
 Input files are provided to FastSMC with the --inFileRoot option. You may want to look at files in FILES/FASTSMC_EXAMPLE/* for examples of the file formats described below.
@@ -212,13 +196,35 @@ Each line corresponds to a pairwise shared segment, with the following fields:
 
 If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. You can then convert it to text format (see notebooks for an example).
 
+### Examples using the Python bindings (Python)
+
+See the `notebooks` directory for an example of running FastSMC.
+There are two Jupyter notebooks:
+ - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
+ - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory
+
+### Example using the compiled FastSMC executable (C++)
+
+Following the compilation instructions above will create an executable
+
+```
+ASMC_BUILD_DIR/FastSMC_exe
+```
+
+which can be used by providing command line arguments summarised below.
+
+Either way of running FastSMC will run it on a simulated dataset with default parameters values.
+An output file with IBD segments will be generated, and run time should be less than 4s.
+
 ## License
 
 ASMC and FastSMC are distributed under the GNU General Public License v3.0 (GPLv3). For any questions or comments on ASMC, please contact Pier Palamara using `<lastname>@stats.ox.ac.uk`.
 
 ## Reference
 
-If you use this software, please cite:
+If you use this software, please cite the appropriate reference(s) below.
 
+The ASMC algorithm and software were developed in
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
-- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara, *Nature Communications*, in press.
+The FastASMC algorithm and software were developed in
+- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale population structure, evolutionary history, and trait associations. *Nature Communications*, in press.
