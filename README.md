@@ -138,6 +138,7 @@ An output file with IBD segments will be generated, and run time should be less 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
 
+```
   --inFileRoot            	      Prefix of input files (.hap, .samples, .map).
                                   [mandatory]
   --decodingQuantFile             Decoding quantities file.
@@ -173,6 +174,7 @@ See ASMC's documentation for parameters related to the validation step. Addition
                                   [default off]
   --batchSize                     Size of batches to be decoded.
                                   [default = 32]
+```
 
 ### Input file formats
 
