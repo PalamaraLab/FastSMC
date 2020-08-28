@@ -17,7 +17,7 @@
 
 The Ascertained Sequentially Markovian Coalescent is a method to efficiently estimate pairwise coalescence time along the genome. It can be run using SNP array or whole-genome sequencing (WGS) data.
 
-**This repository contains code, installation instructions, and example files for the ASMC program. A user manual can be found [here](http://www.palamaralab.github.io/software/ASMC), data and annotations from the ASMC paper can be found [here](http://www.palamaralab.github.io/data/ASMC).**
+**This repository contains code, installation instructions, and example files for the ASMC program. A user manual can be found [here](https://palamaralab.github.io/software/ASMC), data and annotations from the ASMC paper can be found [here](https://palamaralab.github.io/data/ASMC).**
 
 ## Installation
 
@@ -117,7 +117,7 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 
 You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
 
-**This document is not intended as an extensive guide, a more detailed user manual can be found [here](http://www.palamaralab.github.io/software/FastASMC), data and annotations from the FastASMC paper can be found [here](http://www.palamaralab.github.io/data/FastASMC).**
+**This document is not intended as an extensive guide, a more detailed user manual can be found [here](https://palamaralab.github.io/software/FastASMC), data and annotations from the FastASMC paper can be found [here](https://palamaralab.github.io/data/FastASMC).**
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Note: default parameter values are likely to change in future versions.
@@ -173,7 +173,7 @@ These files are provided in input to FastSMC. The file format explained [here](h
 The genetic map provided in input to FastSMC has 4 columns with format "Physical_position Recombination_rate Genetic_position Mutation_rate". Genetic positions are in centimorgans, physical positions are in bp. The map can be optionally compressed using gzip.
 
 #### Decoding quantities (.decodingQuantities.gz)
-See the instructions above to generate decoding quantities files and the ASMC manual [here](https://www.palamaralab.github.io/software/ASMC) for more details.
+See the instructions above to generate decoding quantities files and the ASMC manual [here](https://palamaralab.github.io/software/ASMC) for more details.
 
 ### Output format
 
