@@ -117,7 +117,7 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 
 You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
 
-**This document is not intended as an extensive guide, a more detailed user manual can be found [here](https://palamaralab.github.io/software/FastASMC), data and annotations from the FastASMC paper can be found [here](https://palamaralab.github.io/data/FastASMC).**
+**This document is not intended as an extensive guide, a more detailed user manual can be found [here](https://palamaralab.github.io/software/FastASMC), data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastASMC).**
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Note: default parameter values are likely to change in future versions.
