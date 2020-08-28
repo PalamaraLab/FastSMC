@@ -17,7 +17,7 @@
 
 The Ascertained Sequentially Markovian Coalescent is a method to efficiently estimate pairwise coalescence time along the genome. It can be run using SNP array or whole-genome sequencing (WGS) data.
 
-**This repository contains the code and example files for the ASMC program. A user manual can be found [here](http://www.palamaralab.org/software/ASMC), data and annotations from the ASMC paper can be found [here](http://www.palamaralab.org/data/ASMC).**
+**This repository contains code, installation instructions, and example files for the ASMC program. A user manual can be found [here](http://www.palamaralab.github.io/software/ASMC), data and annotations from the ASMC paper can be found [here](http://www.palamaralab.github.io/data/ASMC).**
 
 ## Installation
 
@@ -107,7 +107,7 @@ Basic functionality for generating decoding quantities can be seen in:
    ╚═╝      ╚═╝  ╚═╝ ╚══════╝    ╚═╝    ╚══════╝ ╚═╝     ╚═╝  ╚═════╝
 ```
 
-The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using GERMLINE2). FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
+The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using an improved version of the GERMLINE algorithm). FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
 ## Installation
 
@@ -115,10 +115,12 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 
 ## Running FastSMC
 
-You can run FastSMC both in C++ and in Python (see below for a Python and C++ example). 
+You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
+
+**This document is not intended as an extensive guide, a more detailed user manual can be found [here](http://www.palamaralab.github.io/software/FastASMC), data and annotations from the FastASMC paper can be found [here](http://www.palamaralab.github.io/data/FastASMC).**
 
 ### Detailed command line options
-See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
+See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Note: default parameter values are likely to change in future versions.
 
 ```
   --inFileRoot                	Prefix of input files (.hap, .samples, .map).
@@ -158,7 +160,7 @@ See ASMC's documentation for parameters related to the validation step. Addition
 				[default = 32]
 ```
 
-Optimal parameters for IBD detection within the past 25, 50, 100, 150 and 200 generations are provided in the FastSMC paper.
+Suggested optimal parameters for IBD detection within the past 25, 50, 100, 150 and 200 generations are provided in the FastSMC paper.
 
 ### Input file formats
 
@@ -171,7 +173,7 @@ These files are provided in input to FastSMC. The file format explained [here](h
 The genetic map provided in input to FastSMC has 4 columns with format "Physical_position Recombination_rate Genetic_position Mutation_rate". Genetic positions are in centimorgans, physical positions are in bp. The map can be optionally compressed using gzip.
 
 #### Decoding quantities (.decodingQuantities.gz)
-See the instructions above to generate decoding quantities files and the ASMC manual [here](https://www.palamaralab.org/software/ASMC) for more details.
+See the instructions above to generate decoding quantities files and the ASMC manual [here](https://www.palamaralab.github.io/software/ASMC) for more details.
 
 ### Output format
 
@@ -194,14 +196,14 @@ Each line corresponds to a pairwise shared segment, with the following fields:
 
 ### Binary output
 
-If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. You can then convert it to text format (see notebooks for an example).
+If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. This can be then converted to text format (see notebooks for an example).
 
 ### Examples using the Python bindings (Python)
 
-See the `notebooks` directory for an example of running FastSMC.
+FastSMC can also be run using Python. See the `notebooks` directory for an example.
 There are two Jupyter notebooks:
  - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
- - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory
+ - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory.
 
 ### Example using the compiled FastSMC executable (C++)
 
