@@ -50,7 +50,7 @@ brew install cmake boost eigen
 
 ### Getting and compiling ASMC
 
-**C++ library and executable**:
+**C++ library and executable**
 ```bash
 git clone https://github.com/OxfordRSE/ASMC.git
 
@@ -115,7 +115,9 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 
 ## Running FastSMC
 
-You can run FastSMC both in C++ and in Python (see below for a Python and C++ example).
+You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
+
+This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
@@ -158,7 +160,7 @@ See ASMC's documentation for parameters related to the validation step. Addition
 				[default = 32]
 ```
 
-Optimal parameters for IBD detection within the past 25, 50, 100, 150 and 200 generations are provided in the FastSMC paper.
+Suggested optimal parameters for IBD detection within the past 25, 50, 100, 150 and 200 generations are provided in the FastSMC paper.
 
 ### Input file formats
 
