@@ -39,6 +39,7 @@ include(cmake/SIMD.cmake)
 set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
 set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
 set(ASMC_file_dir ${ASMC_SOURCE_DIR}/FILES)
+add_definitions(-DASMC_TEST_DIR=\"${ASMC_test_dir}\")
 add_definitions(-DASMC_FILE_DIR=\"${ASMC_file_dir}\")
 
 set(ASMC_source
@@ -59,6 +60,7 @@ set(ASMC_source
 
 set(ASMC_headers
   ${ASMC_source_dir}/AvxDefinitions.hpp
+  ${ASMC_source_dir}/BinaryDataReader.hpp
   ${ASMC_source_dir}/HMM.hpp
   ${ASMC_source_dir}/HmmUtils.hpp
   ${ASMC_source_dir}/Data.hpp
@@ -88,6 +90,7 @@ set(FastSMC_main
 
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_binary_data_reader.cpp
   ${ASMC_test_dir}/test_hashing.cpp
   ${ASMC_test_dir}/test_HMM.cpp
   ${ASMC_test_dir}/test_hmm_utils.cpp
