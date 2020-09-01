@@ -21,6 +21,7 @@
 #include "ASMC.hpp"
 #include "Individual.hpp"
 #include "HMM.hpp"
+#include "BinaryDataReader.hpp"
 #include "Data.hpp"
 #include "DecodingQuantities.hpp"
 #include "DecodingParams.hpp"
@@ -37,6 +38,8 @@ PYBIND11_MAKE_OPAQUE(DecodingQuantities)
 PYBIND11_MAKE_OPAQUE(DecodingReturnValues)
 PYBIND11_MAKE_OPAQUE(PairObservations)
 PYBIND11_MAKE_OPAQUE(Individual)
+PYBIND11_MAKE_OPAQUE(IbdPairDataLine)
+PYBIND11_MAKE_OPAQUE(BinaryDataReader)
 PYBIND11_MAKE_OPAQUE(Data)
 PYBIND11_MAKE_OPAQUE(HMM)
 PYBIND11_MAKE_OPAQUE(ASMC::FastSMC)
@@ -160,6 +163,27 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("withinOnly", &DecodingParams::withinOnly)
         .def_readwrite("doMajorMinorPosteriorSums", &DecodingParams::doMajorMinorPosteriorSums)
         ;
+
+    py::class_<IbdPairDataLine>(m, "IbdPairDataLine")
+        .def_readwrite("ind1FamId", &IbdPairDataLine::ind1FamId)
+        .def_readwrite("ind1Id", &IbdPairDataLine::ind1Id)
+        .def_readwrite("ind1Hap", &IbdPairDataLine::ind1Hap)
+        .def_readwrite("ind2FamId", &IbdPairDataLine::ind2FamId)
+        .def_readwrite("ind2Id", &IbdPairDataLine::ind2Id)
+        .def_readwrite("ind2Hap", &IbdPairDataLine::ind2Hap)
+        .def_readwrite("chromosome", &IbdPairDataLine::chromosome)
+        .def_readwrite("ibdStart", &IbdPairDataLine::ibdStart)
+        .def_readwrite("ibdEnd", &IbdPairDataLine::ibdEnd)
+        .def_readwrite("lengthInCentimorgans", &IbdPairDataLine::lengthInCentimorgans)
+        .def_readwrite("ibdScore", &IbdPairDataLine::ibdScore)
+        .def_readwrite("postEst", &IbdPairDataLine::postEst)
+        .def_readwrite("mapEst", &IbdPairDataLine::mapEst)
+        .def("toString", &IbdPairDataLine::toString);
+
+    py::class_<BinaryDataReader>(m, "BinaryDataReader")
+        .def(py::init<const std::string&>(), "binaryFile"_a)
+        .def("getNextLine", &BinaryDataReader::getNextLine)
+        .def("moreLinesInFile", &BinaryDataReader::moreLinesInFile);
 
     py::class_<Data>(m, "Data")
         .def(py::init<const DecodingParams&>(), "params"_a)
