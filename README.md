@@ -109,6 +109,8 @@ Basic functionality for generating decoding quantities can be seen in:
 
 The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using GERMLINE2). FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
+**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
+
 ## Installation
 
 FastSMC is compiled with ASMC, using the same instructions as above.
@@ -116,8 +118,6 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 ## Running FastSMC
 
 You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
-
-This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
