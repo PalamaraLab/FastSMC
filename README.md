@@ -50,7 +50,7 @@ brew install cmake boost eigen
 
 ### Getting and compiling ASMC
 
-**C++ library only**:
+**C++ library and executable**
 ```bash
 git clone https://github.com/OxfordRSE/ASMC.git
 
@@ -109,6 +109,8 @@ Basic functionality for generating decoding quantities can be seen in:
 
 The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using an improved version of the GERMLINE algorithm). FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
+**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
+
 ## Installation
 
 FastSMC is compiled with ASMC, using the same instructions as above.
@@ -116,8 +118,6 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 ## Running FastSMC
 
 You can run FastSMC as a C++ compiled executable or using Python (see below for examples).
-
-**This document is not intended as an extensive guide, a more detailed user manual can be found [here](https://palamaralab.github.io/software/FastSMC), data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Note: default parameter values are likely to change in future versions.
@@ -213,10 +213,13 @@ Following the compilation instructions above will create an executable
 ASMC_BUILD_DIR/FastSMC_exe
 ```
 
-which can be used by providing command line arguments summarised below.
+which can be used by providing command line arguments summarised above. For an example of IBD detection within the past 50 generations, please run the following command line:
 
-Either way of running FastSMC will run it on a simulated dataset with default parameters values.
-An output file with IBD segments will be generated, and run time should be less than 4s.
+```bash
+sh c++_example/FastSMC_example.sh
+```
+
+Either way of running FastSMC (Python bindings or C++) will run it on a simulated dataset as described in the FastSMC paper. An output file with IBD segments will be generated (in notebooks/ or c++\_example/ respectively), and run time should be less than 4s.
 
 ## License
 
@@ -229,5 +232,5 @@ If you use this software, please cite the appropriate reference(s) below.
 The ASMC algorithm and software were developed in
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
 
-The FastASMC algorithm and software were developed in
-- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale population structure, evolutionary history, and trait associations. *Nature Communications*, in press.
+The FastSMC algorithm and software were developed in
+- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale evolutionary history and trait associations. *Nature Communications*, in press.

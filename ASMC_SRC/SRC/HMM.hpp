@@ -233,7 +233,7 @@ public:
   void finishFromGERMLINE();
 
   // convert binary output to text format
-  void convertBinaryFile(std::string input_file, std::string output_file);
+  void convertBinaryFile(std::string input_file);
 
 
   /**

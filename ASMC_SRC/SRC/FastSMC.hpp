@@ -52,7 +52,7 @@ public:
 
   void run();
 
-  void convertBinaryFile(std::string input_file, std::string output_file);
+  void convertBinaryFile(std::string input_file);
 
 };
 
