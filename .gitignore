@@ -1,3 +1,8 @@
+# cached files
+.DS_Store
+notebooks/.DS_Store
+TOOLS/.DS_Store
+
 # VS & VS code config files
 .vscode/
 .vs/
