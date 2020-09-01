@@ -50,7 +50,7 @@ brew install cmake boost eigen
 
 ### Getting and compiling ASMC
 
-**C++ library only**:
+**C++ library and executable**:
 ```bash
 git clone https://github.com/OxfordRSE/ASMC.git
 
@@ -115,7 +115,7 @@ FastSMC is compiled with ASMC, using the same instructions as above.
 
 ## Running FastSMC
 
-You can run FastSMC both in C++ and in Python (see below for a Python and C++ example). 
+You can run FastSMC both in C++ and in Python (see below for a Python and C++ example).
 
 ### Detailed command line options
 See ASMC's documentation for parameters related to the validation step. Additional parameters related to the identification step are listed below. Default parameters values will be modified in the future.
@@ -201,7 +201,7 @@ If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz)
 See the `notebooks` directory for an example of running FastSMC.
 There are two Jupyter notebooks:
  - a [minimal working example](notebooks/fastsmc-minimal.ipynb), where sensible defaults for parameters are chosen automatically
- - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters, how to convert the binary file to text format, and how to analyse the output if it is too large to fit in memory
+ - a [more detailed example](notebooks/fastsmc.ipynb) that demonstrates how to customise parameters and how to analyse the output if it is too large to fit in memory
 
 ### Example using the compiled FastSMC executable (C++)
 
@@ -211,10 +211,13 @@ Following the compilation instructions above will create an executable
 ASMC_BUILD_DIR/FastSMC_exe
 ```
 
-which can be used by providing command line arguments summarised below.
+which can be used by providing command line arguments summarised above. For an example of IBD detection within the past 50 generations, please run the following command line:
 
-Either way of running FastSMC will run it on a simulated dataset with default parameters values.
-An output file with IBD segments will be generated, and run time should be less than 4s.
+```bash
+sh c++_example/FastSMC_example.sh
+```
+
+Either way of running FastSMC (Python bindings or C++) will run it on a simulated dataset as described in the FastSMC paper. An output file with IBD segments will be generated (in notebooks/ or c++\_example/ respectively), and run time should be less than 4s.
 
 ## License
 
@@ -227,5 +230,5 @@ If you use this software, please cite the appropriate reference(s) below.
 The ASMC algorithm and software were developed in
 - P. Palamara, J. Terhorst, Y. Song, A. Price. High-throughput inference of pairwise coalescence times identifies signals of selection and enriched disease heritability. *Nature Genetics*, 2018.
 
-The FastASMC algorithm and software were developed in
-- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale population structure, evolutionary history, and trait associations. *Nature Communications*, in press.
+The FastSMC algorithm and software were developed in
+- J. Nait Saada, G. Kalantzis, D. Shyr, F. Cooper, M. Robinson, A. Gusev, P. F. Palamara. Identity-by-descent detection across 487,409 British samples reveals fine-scale evolutionary history and trait associations. *Nature Communications*, in press.

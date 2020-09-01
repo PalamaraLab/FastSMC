@@ -421,13 +421,12 @@ void HMM::writeBinaryInfoIntoFile()
   }
 }
 
-void HMM::convertBinaryFile(std::string input_file, std::string output_file)
+void HMM::convertBinaryFile(std::string input_file)
 {
   if (!decodingParams.BIN_OUT) {
     cout << "Binary option was not activated." << endl;
   } else {
     gzinBIBD = gzopen( (input_file).c_str() , "rb" );
-    gzoutIBDconverted.open( (output_file).c_str() );
 
     cout << "Converting binary output... " << endl;
 
@@ -470,35 +469,34 @@ void HMM::convertBinaryFile(std::string input_file, std::string output_file)
       gzread( gzinBIBD , &hap[1] , sizeof( char ) );
       gzread( gzinBIBD , (char*) &pos[0] , sizeof( unsigned int ) );
       gzread( gzinBIBD , (char*) &pos[1] , sizeof( unsigned int ) );
-      gzoutIBDconverted << idsFam[ind[0]] << "\t" << idsId[ind[0]] << "\t" << hap[0] << "\t";
-      gzoutIBDconverted << idsFam[ind[1]] << "\t" << idsId[ind[1]] << "\t" << hap[1] << "\t";
-      gzoutIBDconverted << chrNumber << "\t" << pos[0] << "\t" << pos[1] << "\t";
+      cout << idsFam[ind[0]] << "\t" << idsId[ind[0]] << "\t" << hap[0] << "\t";
+      cout << idsFam[ind[1]] << "\t" << idsId[ind[1]] << "\t" << hap[1] << "\t";
+      cout << chrNumber << "\t" << pos[0] << "\t" << pos[1] << "\t";
 
       if (outputIbdSegmentLength) {
         gzread( gzinBIBD , (char*) &length_cM , sizeof( float ) );
-        gzoutIBDconverted << length_cM << "\t";
+        cout << length_cM << "\t";
       }
 
       gzread( gzinBIBD , (char*) &score , sizeof( float ) );
-      gzoutIBDconverted << score;
+      cout << score;
 
       if (doPerPairPosteriorMean) {
         float postMean;
         gzread( gzinBIBD , (char*) &postMean , sizeof( float ) );
-        gzoutIBDconverted << "\t" << postMean;
+        cout << "\t" << postMean;
       }
 
       if (doPerPairMAP) {
         float map;
         gzread( gzinBIBD , (char*) &map , sizeof( float ) );
-        gzoutIBDconverted << "\t" << map;
+        cout << "\t" << map;
       }
 
-      gzoutIBDconverted << "\n";
+      cout << "\n";
     }
 
     gzclose(gzinBIBD);
-    gzoutIBDconverted.close();
 
   }
 }
