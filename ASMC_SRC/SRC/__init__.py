@@ -17,9 +17,11 @@ import numpy as np
 import collections
 from .pyASMC import (  # NOQA
     asmc,
+    BinaryDataReader,
     DecodingModeOverall,
     DecodingMode,
     DecodingReturnValues,
+    IbdPairDataLine,
     Individual,
     PairObservations,
     DecodingQuantities,
