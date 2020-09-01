@@ -1196,7 +1196,7 @@ void HMM::writePairIBD(const PairObservations& obs, unsigned int posStart, unsig
     record << std::setprecision(std::numeric_limits<float>::digits10 + 1);
 
     record << data.FamIDList[obs.iInd] << '\t' << data.IIDList[obs.iInd] << '\t' << static_cast<int>(obs.iHap) << '\t'
-           << data.FamIDList[obs.jInd] << '\t' << data.IIDList[obs.jInd] << '\t' << static_cast<int>(obs.iHap) << '\t'
+           << data.FamIDList[obs.jInd] << '\t' << data.IIDList[obs.jInd] << '\t' << static_cast<int>(obs.jHap) << '\t'
            << data.chrNumber;
 
     record << '\t' << data.physicalPositions[posStart] << '\t' << data.physicalPositions[posEnd];
