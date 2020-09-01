@@ -193,7 +193,6 @@ PYBIND11_MODULE(pyASMC, m) {
     py::class_<ASMC::FastSMC>(m, "FastSMC")
         .def(py::init<DecodingParams>(), "decodingParams"_a)
         .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
-        .def("convertBinaryFile", &ASMC::FastSMC::convertBinaryFile)
         .def("run", &ASMC::FastSMC::run);
     m.def("asmc", &run, "Runs ASMC on HAPS files",
           "inFileRoot"_a, "decodingQuantFile"_a,

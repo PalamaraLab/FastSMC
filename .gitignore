@@ -2,6 +2,7 @@
 .DS_Store
 notebooks/.DS_Store
 TOOLS/.DS_Store
+FILES/.DS_Store
 
 # VS & VS code config files
 .vscode/

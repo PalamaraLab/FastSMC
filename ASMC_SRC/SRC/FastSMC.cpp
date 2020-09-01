@@ -236,8 +236,3 @@ void ASMC::FastSMC::run()
 
   printf("\n*** Inference done in %.3f seconds. ***\n\n", timer.update_time());
 }
-
-void ASMC::FastSMC::convertBinaryFile(std::string input_file)
-{
-  mHmm.convertBinaryFile(input_file);
-}
