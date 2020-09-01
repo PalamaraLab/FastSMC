@@ -1223,22 +1223,22 @@ void HMM::writePairIBD(const PairObservations& obs, unsigned int posStart, unsig
     gzwrite(gzoutIBD, record_str.c_str(), record_str.size());
 
   } else {
-    int ind[2];
+    unsigned int ind[2];
     ind[0] = obs.iInd;
     ind[1] = obs.jInd;
-    char hap[2];
+    std::uint_least8_t hap[2];
     hap[0] = obs.iHap;
     hap[1] = obs.jHap;
-    unsigned int pos[2];
+    int pos[2];
     pos[0] = data.physicalPositions[posStart];
     pos[1] = data.physicalPositions[posEnd];
     const auto ibd_score = static_cast<float>(prob / static_cast<double>(posEnd - posStart + 1u));
-    gzwrite(gzoutIBD, (char*)&ind[0], sizeof(int));
-    gzwrite(gzoutIBD, &hap[0], sizeof(char));
-    gzwrite(gzoutIBD, (char*)&ind[1], sizeof(int));
-    gzwrite(gzoutIBD, &hap[1], sizeof(char));
-    gzwrite(gzoutIBD, (char*)&pos[0], sizeof(unsigned int));
-    gzwrite(gzoutIBD, (char*)&pos[1], sizeof(unsigned int));
+    gzwrite(gzoutIBD, (char*)&ind[0], sizeof(unsigned int));
+    gzwrite(gzoutIBD, &hap[0], sizeof(std::uint_least8_t));
+    gzwrite(gzoutIBD, (char*)&ind[1], sizeof(unsigned int));
+    gzwrite(gzoutIBD, &hap[1], sizeof(std::uint_least8_t));
+    gzwrite(gzoutIBD, (char*)&pos[0], sizeof(int));
+    gzwrite(gzoutIBD, (char*)&pos[1], sizeof(int));
     if (decodingParams.outputIbdSegmentLength) {
       const float length_cM = 100.f * (data.geneticPositions[posEnd] - data.geneticPositions[posStart]);
       gzwrite(gzoutIBD, (char*)&length_cM, sizeof(float));
