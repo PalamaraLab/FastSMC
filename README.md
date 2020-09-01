@@ -196,7 +196,7 @@ Each line corresponds to a pairwise shared segment, with the following fields:
 
 ### Binary output
 
-If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. This can be then converted to text format (see notebooks for an example).
+If you use the --bin option, FastSMC will generate a compressed binary (.bib.gz) output. This can be then converted to text format using the BinaryDataReader class in Python (see notebooks for an example) and using the convertBinary executable in C++ (see the C++ example below).
 
 ### Examples using the Python bindings (Python)
 
@@ -218,6 +218,8 @@ which can be used by providing command line arguments summarised above. For an e
 ```bash
 sh c++_example/FastSMC_example.sh
 ```
+
+A binary output file will be generated and then converted to text format using the convertBinary executable. The first 10 lines will be printed.
 
 Either way of running FastSMC (Python bindings or C++) will run it on a simulated dataset as described in the FastSMC paper. An output file with IBD segments will be generated (in notebooks/ or c++\_example/ respectively), and run time should be less than 4s.
 
