@@ -10,6 +10,7 @@
 #include <array>
 #include <cstdint>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
