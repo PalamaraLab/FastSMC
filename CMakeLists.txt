@@ -88,6 +88,10 @@ set(FastSMC_main
   ${ASMC_source_dir}/main_fastsmc.cpp
   )
 
+set(convertBinary_main
+  ${ASMC_source_dir}/main_convertBinary.cpp
+  )
+
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
   ${ASMC_test_dir}/test_binary_data_reader.cpp
@@ -120,6 +124,10 @@ target_link_libraries(ASMC_exe PRIVATE ASMC)
 # The main FastSMC executable
 add_executable(FastSMC_exe ${FastSMC_main})
 target_link_libraries(FastSMC_exe PRIVATE ASMC)
+
+# The main convertBinary executable
+add_executable(convertBinary_exe ${convertBinary_main})
+target_link_libraries(convertBinary_exe PRIVATE ASMC)
 
 enable_testing()
 

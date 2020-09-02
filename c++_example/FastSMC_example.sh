@@ -13,4 +13,10 @@ cd ASMC_BUILD_DIR/
         --GERMLINE \
         --perPairPosteriorMeans \
         --perPairMAP \
-	--noConditionalAgeEstimates
+	--noConditionalAgeEstimates \
+	--bin
+
+# Binary output file can be converted with the following command line
+
+echo 'Showing first lines of the binary output...'
+./convertBinary_exe ../c++_example/FastSMC_output_example.1.1.FastSMC.bibd.gz | head 
