@@ -4,14 +4,12 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches-ignore:
-      - '**'
 
 jobs:
 
   build-and-test:
     name: Unit tests on macOS
+    if:  ${{ github.repository == 'PalamaraLab/FastSMC' }}
     runs-on: macos-latest
 
     steps:
