@@ -19,11 +19,7 @@ jobs:
 
       - name: test some things
         run: |
-          echo "${{ github.event.id }}"
-          echo "${{ github.event.type }}"
-          echo "${{ github.event.actor }}"
-          echo "${{ github.event.repo }}"
-          echo "${{ github.event.payload }}"
+          echo "${{ github.event_name }}"
 
       - name: install dependencies
         run: |
