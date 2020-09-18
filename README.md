@@ -1,10 +1,10 @@
-[![Ubuntu unit tests](https://github.com/OxfordRSE/ASMC/workflows/Ubuntu%20unit/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![macOS unit tests](https://github.com/OxfordRSE/ASMC/workflows/macOS%20unit/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![Python tests](https://github.com/OxfordRSE/ASMC/workflows/Python%203.5%203.8/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![Regression test](https://github.com/OxfordRSE/ASMC/workflows/Regression%20test/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![Ubuntu asan](https://github.com/OxfordRSE/ASMC/workflows/Ubuntu%20asan/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![Ubuntu no sse/avx](https://github.com/OxfordRSE/ASMC/workflows/Ubuntu%20no%20sse/avx/badge.svg)](https://github.com/OxfordRSE/ASMC/actions)
-[![codecov](https://codecov.io/gh/OxfordRSE/ASMC/branch/master/graph/badge.svg)](https://codecov.io/gh/OxfordRSE/ASMC)
+[![Ubuntu unit tests](https://github.com/PalamaraLab/FastSMC/workflows/Ubuntu%20unit/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![macOS unit tests](https://github.com/PalamaraLab/FastSMC/workflows/macOS%20unit/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![Python tests](https://github.com/PalamaraLab/FastSMC/workflows/Python%203.5%203.8/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![Regression test](https://github.com/PalamaraLab/FastSMC/workflows/Regression%20test/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![Ubuntu asan](https://github.com/PalamaraLab/FastSMC/workflows/Ubuntu%20asan/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![Ubuntu no sse/avx](https://github.com/PalamaraLab/FastSMC/workflows/Ubuntu%20no%20sse/avx/badge.svg)](https://github.com/PalamaraLab/FastSMC/actions)
+[![codecov](https://codecov.io/gh/PalamaraLab/FastSMC/branch/master/graph/badge.svg)](https://codecov.io/gh/PalamaraLab/FastSMC)
 
 ```
     █████╗   ███████╗  ███╗   ███╗   ██████╗
@@ -48,24 +48,53 @@ sudo apt install g++ cmake libboost-all-dev libeigen3-dev
 brew install cmake boost eigen
 ```
 
-### Getting and compiling ASMC
+### Getting and compiling FastSMC
 
-**C++ library and executable**
+#### C++ library and executable
+
+First, get the code.
+
+**For code users**
 ```bash
-git clone https://github.com/OxfordRSE/ASMC.git
+git clone https://github.com/PalamaraLab/FastSMC
+cd FastSMC
+```
 
-mkdir ASMC/ASMC_BUILD_DIR && cd ASMC/ASMC_BUILD_DIR
+**For code developers**
+```bash
+git clone https://github.com/PalamaraLab/FastSMC_dev
+cd FastSMC_dev
+```
+
+Then, build the library and executable
+
+```bash
+mkdir FASTSMC_BUILD_DIR && cd FASTSMC_BUILD_DIR
 cmake ..
 cmake --build .
 ```
 
-Note: you can locate the build directory outside the `ASMC` directory if you wish: just run `cmake /path/to/ASMC` from any directory you like.
+Note: you can locate the build directory outside the `FastSMC` directory if you wish: just run `cmake /path/to/FastSMC` from any directory you like.
 
-**C++ library and Python bindings**
+#### C++ library and Python bindings
+
+First, get the code.
+
+**For code users**
 ```bash
-git clone --recurse-submodules https://github.com/OxfordRSE/ASMC.git
+git clone --recurse-submodules https://github.com/PalamaraLab/FastSMC
+cd FastSMC
+```
 
-cd ASMC
+**For code developers**
+```bash
+git clone --recurse-submodules https://github.com/PalamaraLab/FastSMC_dev
+cd FastSMC_dev
+```
+
+Then, build the library and executable
+
+```bash
 pip install .
 ```
 

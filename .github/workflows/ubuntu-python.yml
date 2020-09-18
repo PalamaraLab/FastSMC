@@ -11,23 +11,24 @@ on:
 jobs:
 
   build-and-test:
-    name: Unit tests via Python on Ubuntu 18.04
+    name: Unit tests via Python on Ubuntu latest
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.repository == 'PalamaraLab/FastSMC' }}
+
     strategy:
       matrix:
         python-version: [3.5, 3.8]
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-
-      - name: checkout submodule
-        run: git submodule update --init
 
       - name: install dependencies
         run: |

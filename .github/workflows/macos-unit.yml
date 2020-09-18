@@ -4,21 +4,16 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches-ignore:
-      - '**'
 
 jobs:
 
   build-and-test:
     name: Unit tests on macOS
     runs-on: macos-latest
+    if:  ${{ github.repository == 'PalamaraLab/FastSMC' }}
 
     steps:
-      - uses: actions/checkout@v1
-
-      - name: checkout submodule
-        run: git submodule update --init
+      - uses: actions/checkout@v2
 
       - name: install dependencies
         run: |
