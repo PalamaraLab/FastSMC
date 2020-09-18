@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: test some things
+        run: echo "${{ github.event }}"
+
       - name: install dependencies
         run: |
           sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
