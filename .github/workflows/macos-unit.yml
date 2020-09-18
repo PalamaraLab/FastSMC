@@ -15,9 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: checkout submodule
-        run: git submodule update --init
-
       - name: install dependencies
         run: |
           brew install boost libomp eigen

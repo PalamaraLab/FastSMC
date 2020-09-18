@@ -17,9 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: checkout submodule
-        run: git submodule update --init
-
       - name: install dependencies
         run: |
           sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev

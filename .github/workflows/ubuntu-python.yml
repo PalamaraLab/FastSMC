@@ -19,15 +19,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        submodules: recursive
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-
-      - name: checkout submodule
-        run: git submodule update --init
 
       - name: install dependencies
         run: |
