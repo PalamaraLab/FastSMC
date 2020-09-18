@@ -18,7 +18,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: test some things
-        run: echo "${{ github.event }}"
+        run: |
+          echo "${{ github.event.id }}"
+          echo "${{ github.event.type }}"
+          echo "${{ github.event.actor }}"
+          echo "${{ github.event.repo }}"
+          echo "${{ github.event.payload }}"
 
       - name: install dependencies
         run: |
