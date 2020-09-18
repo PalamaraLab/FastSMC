@@ -9,8 +9,8 @@ jobs:
 
   build-and-test:
     name: Coverage on Ubuntu latest
-    if: ${{ github.repository == 'PalamaraLab/FastSMC' }}
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'PalamaraLab/FastSMC' }}
 
     steps:
       - uses: actions/checkout@v2

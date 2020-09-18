@@ -13,6 +13,7 @@ jobs:
   build-and-test:
     name: Unit tests with out sse/avx on Ubuntu latest
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.repository == 'PalamaraLab/FastSMC' }}
 
     steps:
       - uses: actions/checkout@v2

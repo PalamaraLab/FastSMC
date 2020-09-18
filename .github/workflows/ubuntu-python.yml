@@ -13,6 +13,8 @@ jobs:
   build-and-test:
     name: Unit tests via Python on Ubuntu latest
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.repository == 'PalamaraLab/FastSMC' }}
+
     strategy:
       matrix:
         python-version: [3.5, 3.8]

@@ -13,13 +13,10 @@ jobs:
   build-and-test:
     name: Unit tests on Ubuntu latest
     runs-on: ubuntu-latest
+    if:  ${{ github.event_name == 'pull_request' || github.repository == 'PalamaraLab/FastSMC' }}
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: test some things
-        run: |
-          echo "${{ github.event_name }}"
 
       - name: install dependencies
         run: |

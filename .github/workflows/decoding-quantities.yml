@@ -8,9 +8,9 @@ on:
 jobs:
 
   build-and-test:
-    if:  ${{ github.repository == 'PalamaraLab/FastSMC_dev' }}
     name: Test decoding quantities can be generated
     runs-on: ubuntu-latest
+    if:  ${{ github.repository == 'PalamaraLab/FastSMC_dev' }}
 
     steps:
       - uses: actions/checkout@v2
