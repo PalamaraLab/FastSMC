@@ -4,13 +4,11 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - '**'
 
 jobs:
 
   build-and-test:
+    if:  ${{ github.repository == 'PalamaraLab/FastSMC_dev' }}
     name: Test decoding quantities can be generated
     runs-on: ubuntu-latest
 
