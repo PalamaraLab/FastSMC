@@ -11,7 +11,7 @@ on:
 jobs:
 
   build-and-test:
-    name: Unit tests with address sanitizer on Ubuntu 18.04
+    name: Unit tests with address sanitizer on Ubuntu latest
     runs-on: ubuntu-latest
 
     steps:

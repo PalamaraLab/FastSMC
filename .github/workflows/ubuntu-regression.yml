@@ -11,7 +11,7 @@ on:
 jobs:
 
   build-and-test:
-    name: Regression test on Ubuntu 18.04
+    name: Regression test on Ubuntu latest
     runs-on: ubuntu-latest
 
     steps:
