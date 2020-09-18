@@ -2,16 +2,14 @@ name: Ubuntu coverage
 
 on:
   push:
-    branches-ignore:
-      - '**'
-  pull_request:
-    branches-ignore:
-      - '**'
+    branches:
+      - master
 
 jobs:
 
   build-and-test:
-    name: Coverage on Ubuntu 18.04
+    name: Coverage on Ubuntu latest
+    if: ${{ github.repository == 'PalamaraLab/FastSMC' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -46,5 +44,7 @@ jobs:
           lcov --directory . --capture --output-file coverage.info
           lcov --remove coverage.info '/usr/*' '*/TESTS/*' --output-file coverage.info
           lcov --list coverage.info
-          bash <(curl https://codecov.io/bash) -f coverage.info -t 3ad5d7a8-138a-4041-acdf-bbf26f2cc491
+          bash <(curl https://codecov.io/bash) -f coverage.info
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         working-directory: asmc_build_dir
