@@ -68,7 +68,7 @@ setup(
     author_email='palamara@stats.ox.ac.uk',
     description='ASMC is a method to efficiently estimate pairwise coalescence time along the genome',
     url="https://github.com/PalamaraLab/FastSMC",
-    python_requires=">=3.6,<3.10",
+    python_requires=">=3.5",
     packages=find_packages('src'),
     package_dir={'':'src'},
     long_description=readme,
