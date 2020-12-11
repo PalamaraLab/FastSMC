@@ -58,15 +58,21 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
+with open("README.md", encoding="utf-8") as f:
+    readme = f.read()
+
 setup(
     name='asmc',
     version='0.1',
     author='Pier Palamara',
     author_email='palamara@stats.ox.ac.uk',
     description='ASMC is a method to efficiently estimate pairwise coalescence time along the genome',
+    url="https://github.com/PalamaraLab/FastSMC",
+    python_requires=">=3.6,<3.10",
     packages=find_packages('src'),
     package_dir={'':'src'},
-    long_description='',
+    long_description=readme,
+    long_description_content_type="text/markdown",
     install_requires=['jupyter', 'numpy', 'pandas'],
     ext_modules=[CMakeExtension('asmc/asmc')],
     cmdclass=dict(build_ext=CMakeBuild),
