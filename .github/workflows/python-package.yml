@@ -45,6 +45,11 @@ jobs:
       run: |
         python -m pip wheel . -w dist/ --no-deps
 
+    - name: Remove non-manylinux wheels
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        rm dist/*-linux_x86_64.whl
+
     - name: Upload wheels
       uses: actions/upload-artifact@v1
       with:
