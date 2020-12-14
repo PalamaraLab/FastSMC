@@ -9,11 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        include:
-          - os: ubuntu-latest
-            python-version: 3.8
+        os: [macos-latest, ubuntu-latest]
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -21,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.8
 
     - name: Build manylinux wheels
       if: matrix.os == 'ubuntu-latest'
@@ -31,19 +28,19 @@ jobs:
         system-packages: 'boost-devel eigen3-devel zlib-devel cmake'
         pip-wheel-args: '-w ./dist --no-deps'
 
-    - name: Install standard python dependencies
-      if: matrix.os != 'ubuntu-latest'
-      run: |
-        python -m pip install --upgrade pip wheel setuptools
+    - name: Install cibuildwheel
+      if: matrix.os == 'macos-latest'
+      run: python -m pip install cibuildwheel==1.7.1
 
     - name: Install build-time deps for macOS
       if: matrix.os == 'macos-latest'
       run: brew install cmake boost libomp eigen
 
     - name: Build wheels for macOS
-      if: matrix.os != 'ubuntu-latest'
-      run: |
-        python -m pip wheel . -w dist/ --no-deps
+      if: matrix.os == 'macos-latest'
+      run: python -m cibuildwheel --output-dir dist
+      env:
+        CIBW_BUILD: cp36-macosx_x86_64 cp37-macosx_x86_64 cp38-macosx_x86_64 cp39-macosx_x86_64
 
     - name: Upload wheels
       uses: actions/upload-artifact@v1
