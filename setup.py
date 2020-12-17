@@ -63,7 +63,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name='asmc',
-    version='0.1.post2',
+    version='0.1',
     author='Pier Palamara',
     description='ASMC is a method to efficiently estimate pairwise coalescence time along the genome',
     url="https://github.com/PalamaraLab/FastSMC",
