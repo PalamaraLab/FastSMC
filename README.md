@@ -242,10 +242,17 @@ Following the compilation instructions above will create an executable
 ASMC_BUILD_DIR/FastSMC_exe
 ```
 
-which can be used by providing command line arguments summarised above. For an example of IBD detection within the past 50 generations, please run the following command line:
+which can be used by providing command line arguments summarised above.
+For an example of IBD detection within the past 50 generations, please run the following command line:
 
 ```bash
 sh c++_example/FastSMC_example.sh
+```
+
+To parallelise this run over 4 independent jobs, you can run the following command line instead:
+
+```bash
+sh c++_example/FastSMC_example_multiple_jobs.sh
 ```
 
 A binary output file will be generated and then converted to text format using the convertBinary executable. The first 10 lines will be printed.
