@@ -4,7 +4,7 @@
 cd ../ASMC_BUILD_DIR/ || exit
 
 ./FastSMC_exe --inFileRoot ../FILES/FASTSMC_EXAMPLE/example \
-  --outFileRoot ../c++_example/FastSMC_output_example \
+  --outFileRoot ../cpp_example/FastSMC_output_example \
   --decodingQuantFile ../FILES/FASTSMC_EXAMPLE/example.decodingQuantities.gz \
   --mode array \
   --time 50 \
@@ -18,4 +18,4 @@ cd ../ASMC_BUILD_DIR/ || exit
 
 # Binary output file can be converted with the following command line
 echo 'Showing first lines of the binary output...'
-./convertBinary_exe ../c++_example/FastSMC_output_example.1.1.FastSMC.bibd.gz | head
+./convertBinary_exe ../cpp_example/FastSMC_output_example.1.1.FastSMC.bibd.gz | head

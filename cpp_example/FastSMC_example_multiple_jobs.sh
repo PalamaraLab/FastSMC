@@ -10,7 +10,7 @@ cd ../ASMC_BUILD_DIR/ || exit
 run_single_job() {
   local job=$1
   ./FastSMC_exe --inFileRoot ../FILES/FASTSMC_EXAMPLE/example \
-    --outFileRoot ../c++_example/FastSMC_output_example \
+    --outFileRoot ../cpp_example/FastSMC_output_example \
     --decodingQuantFile ../FILES/FASTSMC_EXAMPLE/example.decodingQuantities.gz \
     --mode array \
     --time 50 \
@@ -34,6 +34,6 @@ wait
 
 # Binary output file can be converted with the following command line
 echo 'Showing first lines of the binary output...'
-./convertBinary_exe ../c++_example/FastSMC_output_example.1.4.FastSMC.bibd.gz | head
+./convertBinary_exe ../cpp_example/FastSMC_output_example.1.4.FastSMC.bibd.gz | head
 
 # Note that there will be the same number of output files as jobs, which will need to be concatenated.
