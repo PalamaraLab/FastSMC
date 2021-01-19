@@ -7,34 +7,35 @@
 [![codecov](https://codecov.io/gh/PalamaraLab/FastSMC/branch/master/graph/badge.svg)](https://codecov.io/gh/PalamaraLab/FastSMC)
 
 ```
-    █████╗   ███████╗  ███╗   ███╗   ██████╗
-   ██╔══██╗  ██╔════╝  ████╗ ████║  ██╔════╝
-   ███████║  ███████╗  ██╔████╔██║  ██║     
-   ██╔══██║  ╚════██║  ██║╚██╔╝██║  ██║     
-   ██║  ██║  ███████║  ██║ ╚═╝ ██║  ╚██████╗
-   ╚═╝  ╚═╝  ╚══════╝  ╚═╝     ╚═╝   ╚═════╝
+   ███████╗  █████╗  ███████╗ ████████╗ ███████╗ ███╗   ███╗  ██████╗
+   ██╔════╝ ██╔══██╗ ██╔════╝ ╚══██╔══╝ ██╔════╝ ████╗ ████║ ██╔════╝
+   █████╗   ███████║ ███████╗    ██║    ███████╗ ██╔████╔██║ ██║     
+   ██╔══╝   ██╔══██║ ╚════██║    ██║    ╚════██║ ██║╚██╔╝██║ ██║     
+   ██║      ██║  ██║ ███████║    ██║    ███████║ ██║ ╚═╝ ██║ ╚██████╗
+   ╚═╝      ╚═╝  ╚═╝ ╚══════╝    ╚═╝    ╚══════╝ ╚═╝     ╚═╝  ╚═════╝
 ```
 
-The Ascertained Sequentially Markovian Coalescent is a method to efficiently estimate pairwise coalescence time along the genome. It can be run using SNP array or whole-genome sequencing (WGS) data.
+The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using an improved version of the GERMLINE algorithm).
+FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
-**This repository contains code, installation instructions, and example files for the ASMC program. A user manual can be found [here](https://palamaralab.github.io/software/ASMC), data and annotations from the ASMC paper can be found [here](https://palamaralab.github.io/data/ASMC).**
+**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
 
 ## Installation
 
-ASMC is regularly built and tested on Ubuntu and macOS.
+FastSMC is regularly built and tested on Ubuntu and macOS.
 It is a C++ library with optional Python bindings.
 
-The ASMC C++ library requires:
+The FastSMC C++ library requires:
 
- - A C++ compiler (C++14 or later)
- - CMake (3.12 or later)
- - Boost (1.62 or later)
- - Eigen (3.3.4 or later)
+- A C++ compiler (C++14 or later)
+- CMake (3.12 or later)
+- Boost (1.62 or later)
+- Eigen (3.3.4 or later)
 
- The Python bindings additionally require:
+The Python bindings additionally require:
 
- - Python (3.5 or later)
- - PyBind11 (distributed with ASMC as a submodule)
+- Python (3.5 or later)
+- PyBind11 (distributed with FastSMC as a submodule)
 
 ### Install dependencies
 
@@ -125,25 +126,6 @@ pip install -r TOOLS/PREPARE_DECODING/requirements.txt
 Basic functionality for generating decoding quantities can be seen in:
 
 ./prepare.sh
-
-
-```
-   ███████╗  █████╗  ███████╗ ████████╗ ███████╗ ███╗   ███╗  ██████╗
-   ██╔════╝ ██╔══██╗ ██╔════╝ ╚══██╔══╝ ██╔════╝ ████╗ ████║ ██╔════╝
-   █████╗   ███████║ ███████╗    ██║    ███████╗ ██╔████╔██║ ██║     
-   ██╔══╝   ██╔══██║ ╚════██║    ██║    ╚════██║ ██║╚██╔╝██║ ██║     
-   ██║      ██║  ██║ ███████║    ██║    ███████║ ██║ ╚═╝ ██║ ╚██████╗
-   ╚═╝      ╚═╝  ╚═╝ ╚══════╝    ╚═╝    ╚══════╝ ╚═╝     ╚═╝  ╚═════╝
-```
-
-The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using an improved version of the GERMLINE algorithm).
-FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
-
-**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
-
-## Installation
-
-FastSMC is compiled with ASMC, using the same instructions as above.
 
 ## Running FastSMC
 
@@ -241,7 +223,7 @@ There are two Jupyter notebooks:
 Following the compilation instructions above will create an executable
 
 ```
-ASMC_BUILD_DIR/FastSMC_exe
+FASTSMC_BUILD_DIR/FastSMC_exe
 ```
 
 which can be used by providing command line arguments summarised above.
@@ -260,6 +242,15 @@ sh cpp_example/FastSMC_example_multiple_jobs.sh
 A binary output file will be generated and then converted to text format using the convertBinary executable. The first 10 lines will be printed.
 
 Either way of running FastSMC (Python bindings or C++) will run it on a simulated dataset as described in the FastSMC paper. An output file with IBD segments will be generated (in notebooks/ or c++\_example/ respectively), and run time should be less than 4s.
+
+## Relationship to ASMC
+
+The Ascertained Sequentially Markovian Coalescent is a method to efficiently estimate pairwise coalescence time along the genome.
+It can be run using SNP array or whole-genome sequencing (WGS) data.
+
+FastSMC builds on ASMC, and this repository can be used to run ASMC analysis.
+A user manual can be found [here](https://palamaralab.github.io/software/ASMC) and data and annotations from the ASMC paper can be found [here](https://palamaralab.github.io/data/ASMC).
+
 
 ## License
 

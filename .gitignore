@@ -25,7 +25,7 @@ Debug
 release
 Release
 ASMC_BUILD_DIR
-FastSMC_BUILD_DIR
+FASTSMC_BUILD_DIR
 
 # Virtual environments
 venv*

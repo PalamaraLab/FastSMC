@@ -5,7 +5,7 @@
 # Note that the standard output will be messy as information will be printed from every job simultaneously.
 total_num_jobs=4
 
-cd ../ASMC_BUILD_DIR/ || exit
+cd ../FASTSMC_BUILD_DIR/ || exit
 
 run_single_job() {
   local job=$1

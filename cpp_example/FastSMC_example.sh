@@ -1,7 +1,7 @@
 # this script will run FastSMC on a simulated data as described in the paper (in FILES/FASTSMC_EXAMPLE/)
 # parameters can be changed if desired
 
-cd ../ASMC_BUILD_DIR/ || exit
+cd ../FASTSMC_BUILD_DIR/ || exit
 
 ./FastSMC_exe --inFileRoot ../FILES/FASTSMC_EXAMPLE/example \
   --outFileRoot ../cpp_example/FastSMC_output_example \
