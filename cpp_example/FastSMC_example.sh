@@ -10,7 +10,7 @@ cd ../ASMC_BUILD_DIR/ || exit
   --time 50 \
   --min_m 1.5 \
   --segmentLength \
-  --GERMLINE \
+  --hashing \
   --perPairPosteriorMeans \
   --perPairMAP \
   --noConditionalAgeEstimates \

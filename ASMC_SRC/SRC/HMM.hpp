@@ -200,7 +200,7 @@ public:
   /// @param i index of first individual
   /// @param j index of second individual
   ///
-  void decodeFromGERMLINE(uint i, uint j, uint fromPosition, uint toPosition);
+  void decodeFromHashing(uint i, uint j, uint fromPosition, uint toPosition);
 
   /// convert generation threshold into state threshold
   uint getStateThreshold();
@@ -228,7 +228,7 @@ public:
    */
   void closeIBDFile();
 
-  void finishFromGERMLINE();
+  void finishFromHashing();
 
   /**
    * @return const ref to the decoding quantities owned by this object

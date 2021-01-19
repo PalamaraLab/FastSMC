@@ -16,7 +16,7 @@ run_single_job() {
     --time 50 \
     --min_m 1.5 \
     --segmentLength \
-    --GERMLINE \
+    --hashing \
     --jobs "${total_num_jobs}" \
     --jobInd "${job}" \
     --perPairPosteriorMeans \

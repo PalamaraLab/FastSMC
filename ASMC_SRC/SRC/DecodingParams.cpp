@@ -92,7 +92,7 @@ DecodingParams::DecodingParams(string _inFileRoot,
       : inFileRoot(std::move(_inFileRoot)), decodingQuantFile(std::move(_decodingQuantFile)),
         outFileRoot(std::move(_outFileRoot)), jobs(1), jobInd(1), decodingModeString("array"),
         decodingModeOverall(DecodingModeOverall::array), decodingMode(DecodingMode::arrayFolded), foldData(true),
-        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), GERMLINE(true), FastSMC(_fastSMC),
+        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), hashing(true), FastSMC(_fastSMC),
         BIN_OUT(false), outputIbdSegmentLength(true), time(50), noConditionalAgeEstimates(true),
         doPerPairPosteriorMean(true), doPerPairMAP(true)
   {
@@ -315,9 +315,9 @@ bool DecodingParams::validateParamsFastSMC()
     exit(1);
   }
 
-  if (GERMLINE) {
+  if (hashing) {
     if (withinOnly) {
-      cerr << del << "GERMLINE & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
+      cerr << del << "hashing & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
            << endl;
       exit(1);
     }
@@ -442,7 +442,7 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "Decoding quantities file : " << decodingQuantFile << endl;
   cout << "Output will have prefix : " << outFileRoot << "." << jobInd << "." << jobs;
 
-  if (GERMLINE) {
+  if (hashing) {
     cout << ".gasmc";
   } else {
     cout << ".asmc";
@@ -471,12 +471,12 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "doPerPairPosteriorMean ? " << doPerPairPosteriorMean << endl;
   cout << "doPerPairMAP ? " << doPerPairMAP << endl;
   cout << "noConditionalAgeEstimates ? " << noConditionalAgeEstimates << endl;
-  cout << "Use GERMLINE as a preprocessing step ? " << GERMLINE << endl;
+  cout << "Use hashing as a preprocessing step ? " << hashing << endl;
 
-  if (GERMLINE) {
+  if (hashing) {
     cout << endl;
     cout << "---------------------------" << endl;
-    cout << "      GERMLINE OPTIONS     " << endl;
+    cout << "      hashing OPTIONS     " << endl;
     cout << "---------------------------" << endl;
     cout << "Minimum match length (in cM) : " << min_m << endl;
     cout << "Skipping words with (seeds/samples) less than " << skip << endl;

@@ -63,8 +63,8 @@ HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
     : data(std::move(_data)), m_decodingQuant(_decodingParams.decodingQuantFile), decodingParams(_decodingParams),
       scalingSkip(_scalingSkip), noBatches(_decodingParams.noBatches)
 {
-  if (decodingParams.GERMLINE && !decodingParams.FastSMC) {
-    cerr << "Identification only is not yet supported Cannot have GERMLINE==true and FastSMC==false.\n";
+  if (decodingParams.hashing && !decodingParams.FastSMC) {
+    cerr << "Identification only is not yet supported Cannot have hashing==true and FastSMC==false.\n";
     exit(1);
   }
 
@@ -155,9 +155,9 @@ PairObservations HMM::makePairObs(int_least8_t iHap, unsigned int ind1, int_leas
   ret.iInd = ind1;
   ret.jInd = ind2;
 
-  //\todo: ideally all calls to makeBits would be in one place, but GERMLINE calls are in addToBatch and runLastBatch
+  //\todo: ideally all calls to makeBits would be in one place, but hashing calls are in addToBatch and runLastBatch
   // because this is where from and to can be calculated
-  const bool makeBitsOnWholeSequence = !(decodingParams.FastSMC && decodingParams.GERMLINE);
+  const bool makeBitsOnWholeSequence = !(decodingParams.FastSMC && decodingParams.hashing);
   if (makeBitsOnWholeSequence || noBatches) {
     makeBits(ret, 0, sequenceLength);
   }
@@ -323,7 +323,7 @@ void HMM::decodeAll(int jobs, int jobInd)
       writeBinaryInfoIntoFile();
     }
 
-    if (decodingParams.GERMLINE) {
+    if (decodingParams.hashing) {
       return;
     }
   }
@@ -460,7 +460,7 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
-void HMM::decodeFromGERMLINE(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
+void HMM::decodeFromHashing(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
 {
   const vector<Individual>& individuals = data.individuals;
 
@@ -521,7 +521,7 @@ void HMM::closeIBDFile()
   gzclose(gzoutIBD);
 }
 
-void HMM::finishFromGERMLINE()
+void HMM::finishFromHashing()
 {
   //  timerASMC.update_time();
 
@@ -557,7 +557,7 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
     unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
-    const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.GERMLINE;
+    const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.hashing;
     if (makeBitsOnlyOnSubsequence) {
       for (auto& obs : obsBatch) {
         makeBits(obs, from, to);
@@ -599,7 +599,7 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   unsigned int from = asmc::getFromPosition(data.geneticPositions, startBatch);
   unsigned int to = asmc::getToPosition(data.geneticPositions, endBatch);
 
-  const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.GERMLINE;
+  const bool makeBitsOnlyOnSubsequence = decodingParams.FastSMC && decodingParams.hashing;
   if (makeBitsOnlyOnSubsequence) {
     for (auto& obs : obsBatch) {
       makeBits(obs, from, to);
@@ -1193,7 +1193,7 @@ void HMM::writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, co
       }
     }
 
-    if (decodingParams.GERMLINE) {
+    if (decodingParams.hashing) {
       // remove these 2 lines if you want the preprocessing step to be less permissive
       // TODO : add a flag for this option
       fromBatch[v] = startBatch;

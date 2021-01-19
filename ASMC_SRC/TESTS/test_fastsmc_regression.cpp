@@ -29,7 +29,7 @@
 
 
 
-TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
+TEST_CASE("test FastSMC + hashing regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
   params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
@@ -41,7 +41,7 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
   params.batchSize = 32;
   params.recallThreshold = 3;
   params.min_m = 1.5;
-  params.GERMLINE = true;
+  params.hashing = true;
   params.FastSMC = true;
   params.BIN_OUT = false;
   params.outputIbdSegmentLength = true;
@@ -94,7 +94,7 @@ TEST_CASE("test FastSMC + GERMLINE regression test", "[FastSMC_regression]")
 }
 
 
-TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]")
+TEST_CASE("test FastSMC without hashing regression test", "[FastSMC_regression]")
 {
   DecodingParams params;
   params.decodingQuantFile = ASMC_FILE_DIR "/FASTSMC_EXAMPLE/example.decodingQuantities.gz";
@@ -106,7 +106,7 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
   params.batchSize = 32;
   params.recallThreshold = 3;
   params.min_m = 1.5;
-  params.GERMLINE = false;
+  params.hashing = false;
   params.FastSMC = true;
   params.BIN_OUT = false;
   params.outputIbdSegmentLength = true;
@@ -132,7 +132,7 @@ TEST_CASE("test FastSMC without GERMLINE regression test", "[FastSMC_regression]
     regressionLines.reserve(expectedNumLines);
     {
       FileUtils::AutoGzIfstream fin_regression;
-      fin_regression.openOrExit(ASMC_FILE_DIR "/FASTSMC_EXAMPLE/regression_output_no_germline.ibd.gz");
+      fin_regression.openOrExit(ASMC_FILE_DIR "/FASTSMC_EXAMPLE/regression_output_no_hashing.ibd.gz");
       for (std::string f_line; getline(fin_regression, f_line);) {
         regressionLines.emplace_back(f_line);
       }
