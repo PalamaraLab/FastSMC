@@ -250,9 +250,9 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
       ("skipCSFSdistance", po::value<float>(&skipCSFSdistance)->default_value(std::numeric_limits<float>::quiet_NaN()),
        "Genetic distance between two CSFS emissions")
 
-      //GERMLINE options
-      ("GERMLINE", po::bool_switch(&GERMLINE)->default_value(false),
-       "Use of GERMLINE to pre-process IBD segments [default 0/off]")
+      //hashing options
+      ("hashing", po::bool_switch(&hashing)->default_value(true),
+       "Use of hashing to pre-process IBD segments [default 1/on]")
       ("min_m", po::value<float>(&min_m)->default_value(1.0),
        "Minimum match length (in cM). [default = 1.0]")
       ("skip", po::value<float>(&skip)->default_value(0.0),

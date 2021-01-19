@@ -160,8 +160,8 @@ Note: default parameter values are likely to change in future versions.
                               	[mandatory]
   --outFileRoot               	Prefix of output file.
                               	[mandatory]
-  --GERMLINE                  	Use of GERMLINE to pre-process IBD segments. If off, no identification step will be performed.
-                              	[default 0/off]
+  --hashing                  	Use of hashing to pre-process IBD segments. If off, no identification step will be performed.
+                              	[default 1/on]
   --min_m arg (=1)		Minimum match length (in cM).
 				[default = 1.0]
   --time arg (=100)		Time threshold to define IBD in number of generations.
