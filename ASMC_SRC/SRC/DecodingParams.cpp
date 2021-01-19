@@ -227,12 +227,12 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
        "Recall level from 0 to 3 (higher value means higher recall). [default = 3]")
 
       // TASKS
-      ("segmentLength", po::bool_switch(&outputIbdSegmentLength)->default_value(false),
-       "Output length in centimorgans of each IBD segment. [default 0/off]")
-      ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(false),
-       "Output per-pair MAP for each IBD segment. [default 0/off]")
-      ("perPairPosteriorMeans", po::bool_switch(&doPerPairPosteriorMean)->default_value(false),
-       "Output per-pair posterior means for each IBD segment. [default 0/off]")
+      ("segmentLength", po::bool_switch(&outputIbdSegmentLength)->default_value(true),
+       "Output length in centimorgans of each IBD segment. [default 1/on]")
+      ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(true),
+       "Output per-pair MAP for each IBD segment. [default 1/on]")
+      ("perPairPosteriorMeans", po::bool_switch(&doPerPairPosteriorMean)->default_value(true),
+       "Output per-pair posterior means for each IBD segment. [default 1/on]")
       ("noConditionalAgeEstimates", po::bool_switch(&noConditionalAgeEstimates)->default_value(false),
        "Do not condition the age estimates on the TMRCA being between present time and t generations ago (where t is the time threshold). [default 0/off]")
       ("withinOnly", po::bool_switch(&withinOnly)->default_value(false),

@@ -177,11 +177,11 @@ Note: default parameter values are likely to change in future versions.
   --recall arg (=3)		Recall level from 0 to 3 (higher value means higher recall).
 				[default = 3]
   --segmentLength		Output length in centimorgans of each IBD segment.
-				[default 0/off]
+				[default 1/on]
   --perPairMAP			Output MAP age estimate for each IBD segment.
-				[default 0/off]
+				[default 1/on]
   --perPairPosteriorMeans	Output posterior mean age estimate for each IBD segment.
-				[default 0/off]
+				[default 1/on]
   --noConditionalAgeEstimates	Do not condition the age estimates on the TMRCA being between present time and t generations ago
 				(where t is the time threshold).
 				[default 0/off]
