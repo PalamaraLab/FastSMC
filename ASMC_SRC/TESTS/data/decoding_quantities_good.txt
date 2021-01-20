@@ -1,0 +1,2 @@
+TransitionType
+This file DOES start with "TransitionType"

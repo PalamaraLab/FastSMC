@@ -31,7 +31,7 @@ run_single_job() {
 
 # Run the jobs in parallel
 for ((i = 1; i <= total_num_jobs; i++)); do
-  # substitute the command below with the appropriate command if running this on a cluster, e.g. qsub "run_single_job $i"
+  # substitute the command below with the appropriate command if running this on a cluster, e.g. "qsub run_single_job $i"
   run_single_job "$i" &
 done
 wait
