@@ -18,6 +18,16 @@ message(STATUS "CMake version: ${CMAKE_VERSION}")
 
 project(ASMC LANGUAGES CXX)
 
+# Set a default build type if none was specified
+if (NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    message(STATUS "  You can specify with the flag -DCMAKE_BUILD_TYPE=<Debug|Release|MinSizeRel|RelWithDebInfo>")
+    message(STATUS "  'Release' will build optimised binaries, but 'Debug' may be better while developing FastSMC.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif ()
+
+message(STATUS "CMake build type is set to ${CMAKE_BUILD_TYPE}")
+
 # ensure C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
