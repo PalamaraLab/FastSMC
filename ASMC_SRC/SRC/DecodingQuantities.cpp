@@ -30,8 +30,30 @@
 using namespace std;
 
 DecodingQuantities::DecodingQuantities(const std::string& fileName) {
+  validateDecodingQuantitiesFile(fileName);
   cout << "Using precomputed decoding info from " << fileName << endl;
   createFromGzippedText(fileName);
+}
+
+void DecodingQuantities::validateDecodingQuantitiesFile(const std::string& fileName) {
+
+  // Fail gracefully if the file does not exist
+  if (!FileUtils::fileExists(fileName)) {
+    cerr << "ERROR: Decoding quantities file " << fileName << " does not exist.\n";
+    exit(1);
+  }
+
+  // Verify the top of the file contains the expected string
+  FileUtils::AutoGzIfstream br;
+  br.openOrExit(fileName);
+
+  std::string firstLine;
+  getline(br, firstLine);
+  if (firstLine != "TransitionType") {
+    cerr << "ERROR: Decoding quantities file " << fileName << " does not seem to contain the correct information.\n";
+    cerr << R"(ERROR: Expected file to begin with "TransitionType", but instead found ")" + firstLine << "\"" << endl;
+    exit(1);
+  }
 }
 
 void DecodingQuantities::createFromGzippedText(const std::string& fileName) {

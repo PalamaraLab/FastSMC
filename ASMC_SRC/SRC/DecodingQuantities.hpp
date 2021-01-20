@@ -73,6 +73,17 @@ private:
   // implemented, but need to update other code
   // void createFromBinary(const char *fileName);
   void createFromGzippedText(const std::string& fileName);
+
+  /**
+   * Validate that an appropriate decoding quantities file has been provided. This is achieved by:
+   *
+   * 1. Verifying the file exists
+   * 2. Verifying the first line of the file contains exactly "TransitionType"
+   *
+   * @param fileName the name of the provided decoding quantities file
+   */
+  void validateDecodingQuantitiesFile(const std::string& fileName);
+
 };
 
 #endif

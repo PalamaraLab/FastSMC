@@ -47,7 +47,7 @@ public:
     if (mlen >= PAR_MIN_MATCH) {
       const int from = mInterval[0] * intWordSize;
       const int to = mInterval[1] * intWordSize + intWordSize - 1;
-      hmm.decodeFromGERMLINE(p.first, p.second, from, to);
+      hmm.decodeFromHashing(p.first, p.second, from, to);
     }
   }
 

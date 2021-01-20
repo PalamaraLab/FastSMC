@@ -44,8 +44,8 @@ void ASMC::FastSMC::run()
 
   mHmm.decodeAll(mParams.jobs, mParams.jobInd);
 
-  // If FastSMC but not GERMLINE we're done
-  if (!mParams.GERMLINE) {
+  // If FastSMC but not hashing we're done
+  if (!mParams.hashing) {
     mHmm.closeIBDFile();
     return;
   }
@@ -229,7 +229,7 @@ void ASMC::FastSMC::run()
     extend.clearAllPairs(PAR_MIN_MATCH, all_markers, mHmm);
     file_haps.close();
 
-    mHmm.finishFromGERMLINE();
+    mHmm.finishFromHashing();
     std::cerr << "processed " << GLOBAL_CURRENT_WORD * mParams.hashingWordSize << " / " << all_markers.size() << " SNPs"
               << std::endl;
   }

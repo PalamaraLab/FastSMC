@@ -92,7 +92,7 @@ DecodingParams::DecodingParams(string _inFileRoot,
       : inFileRoot(std::move(_inFileRoot)), decodingQuantFile(std::move(_decodingQuantFile)),
         outFileRoot(std::move(_outFileRoot)), jobs(1), jobInd(1), decodingModeString("array"),
         decodingModeOverall(DecodingModeOverall::array), decodingMode(DecodingMode::arrayFolded), foldData(true),
-        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), GERMLINE(true), FastSMC(_fastSMC),
+        usingCSFS(true), batchSize(32), recallThreshold(3), min_m(1.5f), hashing(true), FastSMC(_fastSMC),
         BIN_OUT(false), outputIbdSegmentLength(true), time(50), noConditionalAgeEstimates(true),
         doPerPairPosteriorMean(true), doPerPairMAP(true)
   {
@@ -227,12 +227,12 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
        "Recall level from 0 to 3 (higher value means higher recall). [default = 3]")
 
       // TASKS
-      ("segmentLength", po::bool_switch(&outputIbdSegmentLength)->default_value(false),
-       "Output length in centimorgans of each IBD segment. [default 0/off]")
-      ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(false),
-       "Output per-pair MAP for each IBD segment. [default 0/off]")
-      ("perPairPosteriorMeans", po::bool_switch(&doPerPairPosteriorMean)->default_value(false),
-       "Output per-pair posterior means for each IBD segment. [default 0/off]")
+      ("segmentLength", po::bool_switch(&outputIbdSegmentLength)->default_value(true),
+       "Output length in centimorgans of each IBD segment. [default 1/on]")
+      ("perPairMAP", po::bool_switch(&doPerPairMAP)->default_value(true),
+       "Output per-pair MAP for each IBD segment. [default 1/on]")
+      ("perPairPosteriorMeans", po::bool_switch(&doPerPairPosteriorMean)->default_value(true),
+       "Output per-pair posterior means for each IBD segment. [default 1/on]")
       ("noConditionalAgeEstimates", po::bool_switch(&noConditionalAgeEstimates)->default_value(false),
        "Do not condition the age estimates on the TMRCA being between present time and t generations ago (where t is the time threshold). [default 0/off]")
       ("withinOnly", po::bool_switch(&withinOnly)->default_value(false),
@@ -250,9 +250,9 @@ bool DecodingParams::processCommandLineArgsFastSMC(int argc, char *argv[]) {
       ("skipCSFSdistance", po::value<float>(&skipCSFSdistance)->default_value(std::numeric_limits<float>::quiet_NaN()),
        "Genetic distance between two CSFS emissions")
 
-      //GERMLINE options
-      ("GERMLINE", po::bool_switch(&GERMLINE)->default_value(false),
-       "Use of GERMLINE to pre-process IBD segments [default 0/off]")
+      //hashing options
+      ("hashing", po::bool_switch(&hashing)->default_value(true),
+       "Use of hashing to pre-process IBD segments [default 1/on]")
       ("min_m", po::value<float>(&min_m)->default_value(1.0),
        "Minimum match length (in cM). [default = 1.0]")
       ("skip", po::value<float>(&skip)->default_value(0.0),
@@ -315,9 +315,9 @@ bool DecodingParams::validateParamsFastSMC()
     exit(1);
   }
 
-  if (GERMLINE) {
+  if (hashing) {
     if (withinOnly) {
-      cerr << del << "GERMLINE & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
+      cerr << del << "hashing & " << del << "withinOnly cannot be used together. Please remove one of the two flags."
            << endl;
       exit(1);
     }
@@ -442,7 +442,7 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "Decoding quantities file : " << decodingQuantFile << endl;
   cout << "Output will have prefix : " << outFileRoot << "." << jobInd << "." << jobs;
 
-  if (GERMLINE) {
+  if (hashing) {
     cout << ".gasmc";
   } else {
     cout << ".asmc";
@@ -471,12 +471,12 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "doPerPairPosteriorMean ? " << doPerPairPosteriorMean << endl;
   cout << "doPerPairMAP ? " << doPerPairMAP << endl;
   cout << "noConditionalAgeEstimates ? " << noConditionalAgeEstimates << endl;
-  cout << "Use GERMLINE as a preprocessing step ? " << GERMLINE << endl;
+  cout << "Use hashing as a preprocessing step ? " << hashing << endl;
 
-  if (GERMLINE) {
+  if (hashing) {
     cout << endl;
     cout << "---------------------------" << endl;
-    cout << "      GERMLINE OPTIONS     " << endl;
+    cout << "      hashing OPTIONS     " << endl;
     cout << "---------------------------" << endl;
     cout << "Minimum match length (in cM) : " << min_m << endl;
     cout << "Skipping words with (seeds/samples) less than " << skip << endl;

@@ -46,7 +46,7 @@ class TestFastSMCRegression(unittest.TestCase):
         self.params.batchSize = 32
         self.params.recallThreshold = 3
         self.params.min_m = 1.5
-        self.params.GERMLINE = True
+        self.params.hashing = True
         self.params.FastSMC = True
         self.params.BIN_OUT = False
         self.params.outputIbdSegmentLength = True
@@ -70,7 +70,7 @@ class TestFastSMCRegression(unittest.TestCase):
         self.assertEqual(np.allclose(original_text, generated_text), True)
 
 
-class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
+class TestFastSMCRegressionWithoutHashing(unittest.TestCase):
 
     def setUp(self):
         self.file_dir = os.path.join(os.getcwd(), 'FILES', 'FASTSMC_EXAMPLE')
@@ -87,7 +87,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         self.params.batchSize = 32
         self.params.recallThreshold = 3
         self.params.min_m = 1.5
-        self.params.GERMLINE = False
+        self.params.hashing = False
         self.params.FastSMC = True
         self.params.BIN_OUT = False
         self.params.outputIbdSegmentLength = True
@@ -105,7 +105,7 @@ class TestFastSMCRegressionWithoutGermline(unittest.TestCase):
         fast_smc.run()
 
     def test_regression(self):
-        original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output_no_germline.ibd.gz'),
+        original_text = np.loadtxt(os.path.join(self.file_dir, 'regression_output_no_hashing.ibd.gz'),
                                    usecols=(7, 8, 9, 10, 11))
         generated_text = np.loadtxt(self.params.outFileRoot + ".7.9.FastSMC.ibd.gz", usecols=(7, 8, 9, 10, 11))
 

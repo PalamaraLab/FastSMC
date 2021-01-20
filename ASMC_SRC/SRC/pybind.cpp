@@ -146,7 +146,7 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("batchSize", &DecodingParams::batchSize)
         .def_readwrite("recallThreshold", &DecodingParams::recallThreshold)
         .def_readwrite("min_m", &DecodingParams::min_m)
-        .def_readwrite("GERMLINE", &DecodingParams::GERMLINE)
+        .def_readwrite("hashing", &DecodingParams::hashing)
         .def_readwrite("FastSMC", &DecodingParams::FastSMC)
         .def_readwrite("BIN_OUT", &DecodingParams::BIN_OUT)
         .def_readwrite("useKnownSeed", &DecodingParams::useKnownSeed)
