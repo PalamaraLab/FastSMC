@@ -109,6 +109,7 @@ set(ASMC_unit_tests
   ${ASMC_test_dir}/test_HMM.cpp
   ${ASMC_test_dir}/test_hmm_utils.cpp
   ${ASMC_test_dir}/test_decoding_params.cpp
+  ${ASMC_test_dir}/test_decoding_quantities.cpp
   )
 
 set(ASMC_regression

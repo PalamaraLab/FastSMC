@@ -14,15 +14,16 @@
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#include <string>
-#include <vector>
+#include <exception>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
 
-#include "StringUtils.hpp"
 #include "FileUtils.hpp"
+#include "StringUtils.hpp"
 #include "Types.hpp"
 
 #include "DecodingQuantities.hpp"
@@ -39,8 +40,7 @@ void DecodingQuantities::validateDecodingQuantitiesFile(const std::string& fileN
 
   // Fail gracefully if the file does not exist
   if (!FileUtils::fileExists(fileName)) {
-    cerr << "ERROR: Decoding quantities file " << fileName << " does not exist.\n";
-    exit(1);
+    throw std::runtime_error("ERROR: Decoding quantities file " + fileName + " does not exist.\n");
   }
 
   // Verify the top of the file contains the expected string
@@ -50,9 +50,10 @@ void DecodingQuantities::validateDecodingQuantitiesFile(const std::string& fileN
   std::string firstLine;
   getline(br, firstLine);
   if (firstLine != "TransitionType") {
-    cerr << "ERROR: Decoding quantities file " << fileName << " does not seem to contain the correct information.\n";
-    cerr << R"(ERROR: Expected file to begin with "TransitionType", but instead found ")" + firstLine << "\"" << endl;
-    exit(1);
+    std::stringstream err;
+    err << "ERROR: Decoding quantities file " << fileName << " does not seem to contain the correct information.\n"
+        << R"(Expected file to begin with "TransitionType", but instead found ")" + firstLine << "\"\n";
+    throw std::runtime_error(err.str());
   }
 }
 
