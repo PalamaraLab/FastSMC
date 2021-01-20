@@ -86,7 +86,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
   {
     std::vector<float> v1 = {1.23f, 2.34f, -3.45f};
     float answerF = 1.23f + 2.34f - 3.45f;
-    REQUIRE(answerF == asmc::getSumOfVector(v1));
+    REQUIRE(answerF == Approx(asmc::getSumOfVector(v1)));
 
     std::vector<long> v2 = {123l, 234l, -345l};
     long answerL = 123l + 234l - 345l;
@@ -103,7 +103,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     REQUIRE(answer.size() == calculated.size());
 
     for (auto i = 0ul; i < v.size(); ++i) {
-      REQUIRE(answer[i] == calculated[i]);
+      REQUIRE(answer[i] == Approx(calculated[i]));
     }
   }
 
@@ -117,7 +117,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     REQUIRE(answer.size() == calculated.size());
 
     for (auto i = 0ul; i < v1.size(); ++i) {
-      REQUIRE(answer[i] == calculated[i]);
+      REQUIRE(answer[i] == Approx(calculated[i]));
     }
   }
 
@@ -135,7 +135,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 
     for (auto i = 0ul; i < m1.size(); ++i) {
       for (auto j = 0ul; j < m1[0].size(); ++j) {
-        REQUIRE(answer[i][j] == calculated[i][j]);
+        REQUIRE(answer[i][j] == Approx(calculated[i][j]));
       }
     }
   }
@@ -154,7 +154,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 
     for (auto i = 0ul; i < mat.size(); ++i) {
       for (auto j = 0ul; j < mat[0].size(); ++j) {
-        REQUIRE(answer[i][j] == calculated[i][j]);
+        REQUIRE(answer[i][j] == Approx(calculated[i][j]));
       }
     }
   }
@@ -169,7 +169,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 
     for (auto i = 0ul; i < mat.size(); ++i) {
       for (auto j = 0ul; j < mat[0].size(); ++j) {
-        REQUIRE(answer[i][j] == mat[i][j]);
+        REQUIRE(answer[i][j] == Approx(mat[i][j]));
       }
     }
   }
@@ -251,7 +251,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     asmc::calculateScalingBatch(data, scalings, sums, batchSize, numStates);
 
     for (auto i = 0; i < batchSize; ++i) {
-      REQUIRE(scalings[i] == answers.at(i));
+      REQUIRE(scalings[i] == Approx(answers.at(i)));
     }
 
     ALIGNED_FREE(data);
@@ -292,7 +292,7 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     asmc::applyScalingBatch(data, scalings, batchSize, numStates);
 
     for (auto i = 0; i < batchSize * numStates; ++i) {
-      REQUIRE(data[i] == answers.at(i));
+      REQUIRE(data[i] == Approx(answers.at(i)));
     }
 
     ALIGNED_FREE(data);
