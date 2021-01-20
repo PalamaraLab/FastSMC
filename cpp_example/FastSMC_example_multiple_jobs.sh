@@ -1,6 +1,9 @@
 # this script will run FastSMC on a simulated data as described in the paper (in FILES/FASTSMC_EXAMPLE/)
 # parameters can be changed if desired
 
+# This example will run multiple jobs in different threads on the same machine. If you are running FastSMC on a cluster
+# then it may be more appropriate to instead use the job scheduler such as `qsub`.
+
 # The total number of jobs you want to run in parallel (this should be a square number).
 # Note that the standard output will be messy as information will be printed from every job simultaneously.
 total_num_jobs=4

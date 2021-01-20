@@ -239,6 +239,9 @@ To parallelise this run over 4 independent jobs, you can run the following comma
 sh cpp_example/FastSMC_example_multiple_jobs.sh
 ```
 
+This example will run multiple jobs in different threads on the same machine.
+If you are running FastSMC on a cluster then it may be more appropriate to instead use the job scheduler such as `qsub`.
+
 A binary output file will be generated and then converted to text format using the convertBinary executable. The first 10 lines will be printed.
 
 Either way of running FastSMC (Python bindings or C++) will run it on a simulated dataset as described in the FastSMC paper. An output file with IBD segments will be generated (in notebooks/ or c++\_example/ respectively), and run time should be less than 4s.
