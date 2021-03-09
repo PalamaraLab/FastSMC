@@ -183,7 +183,10 @@ Input files are provided to FastSMC with the --inFileRoot option. You may want t
 These files are provided in input to FastSMC. The file format explained [here](https://www.cog-genomics.org/plink/2.0/formats#haps). These files are output by phasing programs like Eagle and Shapeit.
 
 #### Genetic map (.map)
-The genetic map provided in input to FastSMC has 4 columns with format "Physical_position Recombination_rate Genetic_position Mutation_rate". Genetic positions are in centimorgans, physical positions are in bp. The map can be optionally compressed using gzip.
+The genetic map file needs to provide physical positions (in base pairs) and genetic positions (in centimorgans).
+FastSMC expects a tab separated file containing at least 3 columns, with physical positions in the first column and genetic positions in the third column.
+The second column may contain any values.
+The file may be optionally compressed using gzip.
 
 #### Decoding quantities (.decodingQuantities.gz)
 See the instructions above to generate decoding quantities files and the ASMC manual [here](https://palamaralab.github.io/software/ASMC) for more details.
