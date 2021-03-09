@@ -13,6 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -115,8 +116,19 @@ vector<pair<unsigned long, double>> Data::readMapFastSMC(const string& inFileRoo
     ss.clear();
     ss.str(line);
     ss >> map_field[0] >> map_field[1] >> map_field[2];
-    if (map_field[0] == "position" || map_field[0].empty())
+
+    // Identify whether there's a header row
+    // First, if the initial field is empty (e.g. empty header row), continue
+    if (map_field[0].empty()) {
       continue;
+    }
+    // Second, if the initial field is not convertible to an integer, assume it's a header row and continue
+    try {
+      stoi(map_field[0]);
+    } catch (const std::invalid_argument& e) {
+      continue;
+    }
+
     geneticMap.emplace_back(stol(map_field[0]), stod(map_field[2]));
     cur_g++;
   }
