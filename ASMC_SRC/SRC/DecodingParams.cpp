@@ -443,7 +443,7 @@ bool DecodingParams::validateParamsFastSMC()
   cout << "Output will have prefix : " << outFileRoot << "." << jobInd << "." << jobs;
 
   if (hashing) {
-    cout << ".gasmc";
+    cout << ".FastSMC";
   } else {
     cout << ".asmc";
   }
