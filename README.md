@@ -18,7 +18,7 @@
 The Fast Sequentially Markovian Coalescent (FastSMC) algorithm is an extension to the ASMC algorithm, adding an identification step by hashing (currently using an improved version of the GERMLINE algorithm).
 FastSMC is an accurate method to detect Identical-By-Descent segments which enables estimating the time to most recent common ancestor for IBD individuals, and provides an estimate of uncertainty for detected IBD regions.
 
-**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/data/FastSMC).**
+**This document is not intended as an extensive guide, a more detailed user manual is under development, data and annotations from the FastSMC paper can be found [here](https://palamaralab.github.io/software/fastsmc/).**
 
 ## Installation
 
@@ -189,7 +189,7 @@ The second column may contain any values.
 The file may be optionally compressed using gzip.
 
 #### Decoding quantities (.decodingQuantities.gz)
-See the instructions above to generate decoding quantities files and the ASMC manual [here](https://palamaralab.github.io/software/ASMC) for more details.
+See the instructions above to generate decoding quantities files and the ASMC manual [here](https://palamaralab.github.io/software/asmc/) for more details.
 
 ### Output format
 
@@ -255,7 +255,7 @@ The Ascertained Sequentially Markovian Coalescent is a method to efficiently est
 It can be run using SNP array or whole-genome sequencing (WGS) data.
 
 FastSMC builds on ASMC, and this repository can be used to run ASMC analysis.
-A user manual can be found [here](https://palamaralab.github.io/software/ASMC) and data and annotations from the ASMC paper can be found [here](https://palamaralab.github.io/data/ASMC).
+A user manual can be found [here](https://palamaralab.github.io/software/asmc/) and data and annotations from the ASMC paper can be found [here](https://palamaralab.github.io/software/asmc/data/).
 
 
 ## License

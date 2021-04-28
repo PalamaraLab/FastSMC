@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
   const char VERSION_DATE[] = "July 1, 2018";
   const char YEAR[] = "2018";
   const char LICENSE[] = "GNU GPL v3";
-  const char WEBSITE[] = "www.palamaralab.org/software/ASMC";
+  const char WEBSITE[] = "https://palamaralab.github.io/software/fastsmc/";
   const char PROGRAM[] = "Ascertained Sequentially Markovian Coalescent (ASMC)";
 
   DecodingParams params;
