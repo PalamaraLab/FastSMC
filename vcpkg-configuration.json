@@ -1,0 +1,12 @@
+{
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/PalamaraLab/vcpkg-registry",
+      "packages": [
+        "asmc-prepare-decoding",
+        "asmc-data-module"
+      ]
+    }
+  ]
+}
