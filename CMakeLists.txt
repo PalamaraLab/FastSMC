@@ -19,6 +19,8 @@ include(cmake/AutodetectVcpkgToolchainFile.cmake)
 
 project(asmc-fastsmc LANGUAGES CXX)
 
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 # Set a default build type if none was specified
 if (NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -29,8 +31,8 @@ endif ()
 
 message(STATUS "CMake build type is set to ${CMAKE_BUILD_TYPE}")
 
-# ensure C++14
-set(CMAKE_CXX_STANDARD 14)
+# ensure C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -105,6 +107,7 @@ set(convertBinary_main
 
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_ASMC.cpp
   ${ASMC_test_dir}/test_binary_data_reader.cpp
   ${ASMC_test_dir}/test_hashing.cpp
   ${ASMC_test_dir}/test_HMM.cpp
@@ -172,14 +175,18 @@ find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)
 target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
 
-# requires asmc-prepare-decoding
-set(AsmcPrepareDecoding_DIR /home/fergus/GitRepos/PalamaraLab/FastSMC_dev/Debug/vcpkg_installed/x64-linux/share/asmc-prepare-decoding)
-find_package(AsmcPrepareDecoding CONFIG REQUIRED)
-#target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
+# fmt is required for efficient string formatting
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(ASMC PRIVATE fmt::fmt)
+
 
 # requires asmc-prepare-decoding
-find_package(AsmcDataModule CONFIG REQUIRED)
-target_link_libraries(ASMC PRIVATE AsmcDataModule::data_module_lib)
+find_package(AsmcPrepareDecoding CONFIG REQUIRED)
+target_link_libraries(ASMC PRIVATE AsmcPrepareDecoding::prepare_decoding_lib)
+
+# requires asmc-prepare-decoding
+#find_package(AsmcDataModule CONFIG REQUIRED)
+#target_link_libraries(ASMC PRIVATE AsmcDataModule::data_module_lib)
 
 
 # Optionally run regression tests to ensure core functionality remains unchanged

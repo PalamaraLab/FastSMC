@@ -3,8 +3,8 @@
   "version": "0.1",
   "dependencies": [
     "asmc-prepare-decoding",
-    "asmc-data-module",
     "eigen3",
+    "fmt",
     "zlib"
   ]
 }
