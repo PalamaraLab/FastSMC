@@ -218,11 +218,9 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<DecodingParams>(), "decodingParams"_a)
         .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
         .def("run", &ASMC::FastSMC::run);
-    m.def("asmc", &run, "Runs ASMC on HAPS files",
-          "inFileRoot"_a, "decodingQuantFile"_a,
-          "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
-          "jobs"_a = 0, "jobInd"_a = 0,
-          "skipCSFSdistance"_a = 0,
-          "compress"_a = false, "useAncestral"_a = false,
-          "doPosteriorSums"_a = true, "doMajorMinorPosteriorSums"_a = false);
+    py::class_<ASMC::ASMC>(m, "ASMC")
+        .def(py::init<DecodingParams>(), "decodingParams"_a)
+        .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
+        .def("decodeAllInJob", &ASMC::ASMC::decodeAllInJob)
+        .def("decodePairs", &ASMC::ASMC::decodePairs, "individuals_a"_a, "individuals_b"_a);
 }

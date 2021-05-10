@@ -29,4 +29,43 @@ DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_fi
          bool compress, bool use_ancestral,
          bool posterior_sums, bool major_minor_posterior_sums);
 
+namespace ASMC
+{
+
+class ASMC
+{
+
+private:
+
+  DecodingParams mParams;
+  Data mData;
+  HMM mHmm;
+
+public:
+
+  /**
+   * ASMC constructor with full control over parameters, by manually specifying a DecodingParams object.
+   *
+   * @param params the decoding parameters
+   */
+  explicit ASMC(DecodingParams params);
+
+  /**
+   * ASMC constructor that will set sensible defaults. If you wish to fine-tune parameters, use the constructor that
+   * takes a DecodingParams object, which you can configure manually.
+   *
+   * @param inFileRoot the input file root
+   * @param outFileRoot the output file root
+   */
+  ASMC(const std::string& inFileRoot, const std::string& outFileRoot);
+
+  DecodingReturnValues decodeAllInJob();
+
+  DecodingReturnValues decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB);
+
+};
+
+} // namespace ASMC
+
+
 #endif

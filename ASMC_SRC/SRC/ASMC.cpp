@@ -9,71 +9,47 @@
 #include "HMM.hpp"
 
 
-using namespace std;
-
-DecodingReturnValues run(string in_file_root, string decoding_quant_file,
-         string out_file_root = "", DecodingModeOverall mode = DecodingModeOverall::array,
-         int jobs = 0, int job_index = 0,
-         float skip_csfs_distance = 0,
-         bool compress = false, bool use_ancestral = false,
-         bool posterior_sums = false, bool major_minor_posterior_sums = false) {
-
-    srand(1234);
-
-    DecodingParams params;
-    params.inFileRoot = in_file_root;
-    params.decodingQuantFile = decoding_quant_file;
-    params.outFileRoot = out_file_root.empty() ? in_file_root : out_file_root;
-    params.decodingModeOverall = mode;
-    params.compress = compress;
-    params.useAncestral = use_ancestral;
-    params.skipCSFSdistance = skip_csfs_distance;
-    params.doPosteriorSums = posterior_sums;
-    params.doMajorMinorPosteriorSums = major_minor_posterior_sums;
-    if(!params.processOptions()) {
-        cerr << "Error in options processing" << endl;
-        exit(1);
-    }
-    params.decodingModeString = params.decodingModeOverall == DecodingModeOverall::array ? "array" : "sequence";
-
-    cout << "Decoding batch " << params.jobInd << " of " << params.jobs << "\n\n";
-
-    cout << "Will decode " << params.decodingModeString << " data." << endl;
-    cout << "Output will have prefix: " << params.outFileRoot << endl;
-    if (params.compress)
-        cout << "Will use classic emission model (no CSFS)." << endl;
-    else
-        cout << "Minimum marker distance to use CSFS is set to " << params.skipCSFSdistance << "." << endl;
-    if (params.useAncestral)
-        cout << "Assuming ancestral alleles are correctly encoded." << endl;
-    if (params.doPosteriorSums)
-        cout << "Will output sum of posterior tables for all pairs." << endl;
-    if (params.doMajorMinorPosteriorSums)
-        cout << "Will output sum of posterior tables for all pairs, partitioned by major/minor alleles." << endl;
-
-    // if (params.noBatches)
-    //     cout << "Will not process samples in batches (slower)." << endl;
-    // if (!params.withinOnly)
-    //     cout << "Will only decode maternal vs. paternal haplotypes." << endl;
-    // if (params.doPerPairMAP)
-    //     cout << "Will output MAP for all haploid pairs (DANGER: huge files)." << endl;
-    // if (params.doPerPairPosteriorMean)
-    //     cout << "Will output posterior mean for all haploid pairs (DANGER: huge files)." << endl;
-
-    // used for benchmarking
-    Timer timer;
-
-    // read decoding quantities from file
-    std::string str(params.decodingQuantFile.c_str());
-
-    cout << "Data will be loaded from " << params.inFileRoot << "*\n";
-    Data data(params);
-    printf("Read haps in %.9f seconds.\n", timer.update_time());
-
-    HMM hmm(data, params);
-
-    hmm.decodeAll(params.jobs, params.jobInd);
-    return hmm.getDecodingReturnValues();
+ASMC::ASMC::ASMC(DecodingParams params) : mParams{std::move(params)}, mData{mParams}, mHmm{mData, mParams}
+{
 }
 
+ASMC::ASMC::ASMC(const std::string& inFileRoot, const std::string& outFileRoot)
+    : mParams{inFileRoot, inFileRoot + ".decodingQuantities.gz", outFileRoot, true}, mData{mParams}, mHmm{mData,
+                                                                                                          mParams}
+{
+}
 
+DecodingReturnValues ASMC::ASMC::decodeAllInJob() {
+  std::cout << "Decoding job " << mParams.jobInd << " of " << mParams.jobs << "\n\n";
+
+  std::cout << "Will decode " << mParams.decodingModeString << " data." << std::endl;
+  std::cout << "Output will have prefix: " << mParams.outFileRoot << std::endl;
+
+  if (mParams.compress) {
+    std::cout << "Will use classic emission model (no CSFS)." << std::endl;
+  } else {
+    std::cout << "Minimum marker distance to use CSFS is set to " << mParams.skipCSFSdistance << "." << std::endl;
+  }
+
+  if (mParams.useAncestral) {
+    std::cout << "Assuming ancestral alleles are correctly encoded." << std::endl;
+  }
+
+  if (mParams.doPosteriorSums) {
+    std::cout << "Will output sum of posterior tables for all pairs." << std::endl;
+  }
+
+  if (mParams.doMajorMinorPosteriorSums) {
+    std::cout << "Will output sum of posterior tables for all pairs, partitioned by major/minor alleles." << std::endl;
+  }
+
+  mHmm.decodeAll(mParams.jobs, mParams.jobInd);
+  return mHmm.getDecodingReturnValues();
+}
+
+DecodingReturnValues ASMC::ASMC::decodePairs(const std::vector<uint>& individualsA,
+                                             const std::vector<uint>& individualsB)
+{
+  mHmm.decodePairs(individualsA, individualsB);
+  return mHmm.getDecodingReturnValues();
+}
