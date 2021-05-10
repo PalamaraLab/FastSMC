@@ -97,15 +97,18 @@ public:
    */
   bool validateParamsFastSMC();
 
-  /// constructor with default parameters set
+  /**
+   * Constructor requiring only an input file root with all other parameters set to sensible defaults.
+   * Decoding quantities will be generated if they are not specified and do not exist in the input file directory.
+   */
   DecodingParams();
-  DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile, std::string _outFileRoot = "",
-                 int _jobs = 1, int _jobInd = 1, std::string _decodingModeString = "array",
-                 bool _decodingSequence = false, bool _usingCSFS = true, bool _compress = false,
-                 bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,
-                 bool _doPosteriorSums = false, bool _doPerPairPosteriorMean = false,
-                 std::string _expectedCoalTimesFile = "", bool _withinOnly = false,
-                 bool _doMajorMinorPosteriorSums = false);
+  explicit DecodingParams(std::string _inFileRoot, std::string _decodingQuantFile = "", std::string _outFileRoot = "",
+                          int _jobs = 1, int _jobInd = 1, std::string _decodingModeString = "array",
+                          bool _decodingSequence = false, bool _usingCSFS = true, bool _compress = false,
+                          bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,
+                          bool _doPosteriorSums = false, bool _doPerPairPosteriorMean = false,
+                          std::string _expectedCoalTimesFile = "", bool _withinOnly = false,
+                          bool _doMajorMinorPosteriorSums = false);
 
   /**
    * Minimal constructor that sets defaults for FastSMC. An er will occur if you try to use this constructor for
