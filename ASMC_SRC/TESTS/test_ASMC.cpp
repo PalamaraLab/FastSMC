@@ -37,10 +37,8 @@ TEST_CASE("test ASMC decodeAllInJob", "[ASMC]")
 
 TEST_CASE("test ASMC decodePairs", "[ASMC]")
 {
-  DecodingParams params(ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
-                        ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
-
-  ASMC::ASMC asmc(params);
+  ASMC::ASMC asmc(ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
+                  ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
 
   std::vector<unsigned> indA = {1, 2, 3, 4, 5};
   std::vector<unsigned> indB = {2, 3, 4, 5, 6};
