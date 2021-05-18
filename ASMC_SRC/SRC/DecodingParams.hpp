@@ -108,7 +108,7 @@ public:
                           bool _useAncestral = false, float _skipCSFSdistance = 0.f, bool _noBatches = false,
                           bool _doPosteriorSums = false, bool _doPerPairPosteriorMean = false,
                           std::string _expectedCoalTimesFile = "", bool _withinOnly = false,
-                          bool _doMajorMinorPosteriorSums = false);
+                          bool _doMajorMinorPosteriorSums = false, bool _doPerPairMAP = false);
 
   /**
    * Minimal constructor that sets defaults for FastSMC. An er will occur if you try to use this constructor for

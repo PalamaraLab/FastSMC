@@ -55,9 +55,10 @@ public:
    * takes a DecodingParams object, which you can configure manually.
    *
    * @param inFileRoot the input file root
-   * @param outFileRoot the output file root
+   * @param decodingQuantFile the decoding quantities file
+   * @param outFileRoot the output file root, default to the input file root
    */
-  ASMC(const std::string& inFileRoot, const std::string& outFileRoot);
+  ASMC(const std::string& inFileRoot, const std::string& decodingQuantFile, const std::string& outFileRoot = "");
 
   DecodingReturnValues decodeAllInJob();
 

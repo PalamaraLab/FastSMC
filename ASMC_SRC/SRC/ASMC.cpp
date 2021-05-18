@@ -8,14 +8,24 @@
 #include "ASMC.hpp"
 #include "HMM.hpp"
 
+#include <fmt/format.h>
+
 
 ASMC::ASMC::ASMC(DecodingParams params) : mParams{std::move(params)}, mData{mParams}, mHmm{mData, mParams}
 {
 }
 
-ASMC::ASMC::ASMC(const std::string& inFileRoot, const std::string& outFileRoot)
-    : mParams{inFileRoot, inFileRoot + ".decodingQuantities.gz", outFileRoot, true}, mData{mParams}, mHmm{mData,
-                                                                                                          mParams}
+ASMC::ASMC::ASMC(const std::string& inFileRoot, const std::string& decodingQuantFile, const std::string& outFileRoot)
+    : mParams{inFileRoot,  decodingQuantFile,
+              outFileRoot.empty() ? inFileRoot : outFileRoot, 1,
+              1,           "array",
+              false,       true,
+              false,       false,
+              0.f,         false,
+              true,        false,
+              "",          false,
+              true,        true},
+      mData{mParams}, mHmm{mData, mParams}
 {
 }
 
@@ -51,5 +61,6 @@ DecodingReturnValues ASMC::ASMC::decodePairs(const std::vector<uint>& individual
                                              const std::vector<uint>& individualsB)
 {
   mHmm.decodePairs(individualsA, individualsB);
+  mHmm.finishDecoding();
   return mHmm.getDecodingReturnValues();
 }
