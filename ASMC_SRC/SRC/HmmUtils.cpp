@@ -96,7 +96,8 @@ void printPctTime(const std::string& str, double fracTime, std::ostream& os)
      << std::setprecision(1) << std::fixed << 100.0 * fracTime << "%\n" << std::flush;
 }
 
-void calculateScalingBatch(float* vec, float* scalings, float* sums, const int batchSize, const int numStates)
+void calculateScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings,
+                           Eigen::Ref<Eigen::ArrayXf> sums, const int batchSize, const int numStates)
 {
   for (int i = 0; i < batchSize; ++i) {
     sums[i] = 0.f;
@@ -125,7 +126,8 @@ void calculateScalingBatch(float* vec, float* scalings, float* sums, const int b
 #endif
 }
 
-void applyScalingBatch(float* vec, float* scalings, const int batchSize, const int numStates)
+void applyScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings,
+                       const int batchSize, const int numStates)
 {
 #ifdef NO_SSE
   // modify current alpha/beta vector by prescribed scaling

@@ -27,12 +27,12 @@ TEST_CASE("test ASMC decodeAllInJob", "[ASMC]")
 
   ASMC::ASMC asmc(params);
 
-  auto result = asmc.decodeAllInJob();
-
-  SECTION("test decode pair summarize")
-  {
-    REQUIRE(result.sumOverPairs.size() == 466440ul);
-  }
+//  auto result = asmc.decodeAllInJob();
+//
+//  SECTION("test decode pair summarize")
+//  {
+//    REQUIRE(result.sumOverPairs.size() == 466440ul);
+//  }
 }
 
 TEST_CASE("test ASMC decodePairs", "[ASMC]")

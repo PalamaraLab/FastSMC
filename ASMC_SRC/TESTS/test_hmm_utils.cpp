@@ -21,7 +21,8 @@
 
 #include "AvxDefinitions.hpp"
 #include "HmmUtils.hpp"
-#include "MemoryUtils.hpp"
+
+#include "Eigen/Core"
 
 TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 {
@@ -231,9 +232,9 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     const int batchSize = std::max<int>(2, 2 * VECX);
     const int numStates = 2;
 
-    auto data = ALIGNED_MALLOC_FLOATS(batchSize * numStates);
-    auto scalings = ALIGNED_MALLOC_FLOATS(batchSize);
-    auto sums = ALIGNED_MALLOC_FLOATS(batchSize);
+    Eigen::ArrayXf data(batchSize * numStates);
+    Eigen::ArrayXf scalings(batchSize);
+    Eigen::ArrayXf sums(batchSize);
 
     // set up data like 1, 2, 3, ..., 1, 2, 3, ..., ... so that scalings should be 1/(1+1), 1/(2+2), 1/(3+3) etc
     for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
@@ -253,10 +254,6 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     for (auto i = 0; i < batchSize; ++i) {
       REQUIRE(scalings[i] == Approx(answers.at(i)));
     }
-
-    ALIGNED_FREE(data);
-    ALIGNED_FREE(scalings);
-    ALIGNED_FREE(sums);
   }
 
   SECTION("test applyScalingBatch")
@@ -265,8 +262,8 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     const int batchSize = std::max<int>(2, 2 * VECX);
     const int numStates = 2;
 
-    auto data = ALIGNED_MALLOC_FLOATS(batchSize * numStates);
-    auto scalings = ALIGNED_MALLOC_FLOATS(batchSize);
+    Eigen::ArrayXf data(batchSize * numStates);
+    Eigen::ArrayXf scalings(batchSize);
 
     // set up data like 1, 2, 3, ..., 1, 2, 3, ..., ...
     for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
@@ -294,9 +291,6 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     for (auto i = 0; i < batchSize * numStates; ++i) {
       REQUIRE(data[i] == Approx(answers.at(i)));
     }
-
-    ALIGNED_FREE(data);
-    ALIGNED_FREE(scalings);
   }
 
   SECTION("test getFromPosition")

@@ -16,11 +16,14 @@
 #ifndef HMMUTILS_HPP
 #define HMMUTILS_HPP
 
+#include <Eigen/Core>
+
 #include <cassert>
 #include <iostream>
 #include <limits>
 #include <numeric>
 #include <vector>
+
 
 namespace asmc
 {
@@ -264,13 +267,14 @@ void fillMatrixColumn(std::vector<std::vector<RealType>>& matrix, const std::vec
  *
  * The sums buffer is set to zeros in this method.
  *
- * @param vec the buffer of length curBatchSize * numStates containing the data
- * @param scalings a buffer of length curBatchSize to write calculated scaling factors into
- * @param sums a buffer of length curBatchSize for storing intermediate sums
+ * @param vec an array of length curBatchSize * numStates containing the data
+ * @param scalings an array of length curBatchSize to write calculated scaling factors into
+ * @param sums an array of length curBatchSize for storing intermediate sums
  * @param batchSize the number of items in the batch
  * @param numStates the number of states over which to normalize
  */
-void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSize, int numStates);
+void calculateScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings,
+                           Eigen::Ref<Eigen::ArrayXf> sums, int batchSize, int numStates);
 
 /**
  * Apply scaling factors to a contiguous array of curBatchSize * numStates floats. The scale factors are applied per
@@ -280,11 +284,12 @@ void calculateScalingBatch(float* vec, float* scalings, float* sums, int batchSi
  * from.
  *
  * @param vec the buffer of length curBatchSize * numStates containing the data
- * @param scalings a buffer of length curBatchSize containing the prescribed scale factors
+ * @param scalings an array of length curBatchSize containing the prescribed scale factors
  * @param batchSize the number of items in the batch
  * @param numStates the number of states over which to normalize
  */
-void applyScalingBatch(float* vec, float* scalings, int batchSize, int numStates);
+void applyScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings, int batchSize,
+                       int numStates);
 
 /**
  * Calculate the index of a site at least cmDist centimorgans before that with index `from`, defaulting to 0.5 cM.

@@ -19,6 +19,7 @@
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
+#include "EigenTypes.hpp"
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
@@ -70,14 +71,14 @@ class HMM
 
   int m_batchSize = 64;
 
-  float* m_alphaBuffer;
-  float* m_betaBuffer;
-  float* m_scalingBuffer;
-  float* m_allZeros;
+  Eigen::ArrayXf m_alphaBuffer;
+  Eigen::ArrayXf m_betaBuffer;
+  Eigen::ArrayXf m_scalingBuffer;
+  Eigen::ArrayXf m_allZeros;
 
-  float* meanPost;
-  ushort* MAP;
-  float* currentMAPValue;
+  Eigen::ArrayXf meanPost;
+  Eigen::Array<unsigned short, Eigen::Dynamic, 1> MAP;
+  Eigen::ArrayXf currentMAPValue;
 
   // for decoding
   Data data;
@@ -149,8 +150,6 @@ class HMM
 public:
   // constructor
   HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip = 1);
-
-  ~HMM();
 
   /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
   /// states).
@@ -255,23 +254,26 @@ private:
   void decodeBatch(const std::vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
   // forward step
-  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from,
-                    unsigned to);
+  void forwardBatch(Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                    int curBatchSize, unsigned from, unsigned to);
 
   // compute next alpha vector in linear time
-  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
-                           uint pos, const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* AU,
-                           float* nextAlpha, const std::vector<float>& emission1AtSite,
-                           const std::vector<float>& emission0minus1AtSite,
+  void getNextAlphaBatched(float recDistFromPrevious, Eigen::Ref<Eigen::ArrayXf> alphaC, int curBatchSize,
+                           Eigen::Ref<Eigen::ArrayXf> previousAlpha, uint pos,
+                           Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                           Eigen::Ref<Eigen::ArrayXf> AU, Eigen::Ref<Eigen::ArrayXf> nextAlpha,
+                           const std::vector<float>& emission1AtSite, const std::vector<float>& emission0minus1AtSite,
                            const std::vector<float>& emission2minus0AtSite);
   // backward step
-  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from,
+  void backwardBatch(Eigen::ArrayXf obsIsZeroBatch, Eigen::ArrayXf obsIsTwoBatch, int curBatchSize, unsigned from,
                      unsigned to);
 
   // compute previous beta vector in linear time
-  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
-                              const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* vec, float* BU, float* BL,
-                              float* currentBeta, const std::vector<float>& emission1AtSite,
+  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, Eigen::Ref<Eigen::ArrayXf> lastComputedBeta,
+                              int pos, Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch,
+                              Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch, Eigen::Ref<Eigen::ArrayXf> vec,
+                              Eigen::Ref<Eigen::ArrayXf> BU, Eigen::Ref<Eigen::ArrayXf> BL,
+                              Eigen::Ref<Eigen::ArrayXf> currentBeta, const std::vector<float>& emission1AtSite,
                               const std::vector<float>& emission0minus1AtSite,
                               const std::vector<float>& emission2minus0AtSite);
 

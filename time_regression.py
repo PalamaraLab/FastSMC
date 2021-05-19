@@ -1,3 +1,12 @@
+# Before any changes (Release):
+# times: [51.93998432 52.30349731 51.96640849 52.12452006 51.67673945]
+# median: 51.966408491134644
+#
+#
+#
+#
+#
+
 import pathlib
 import subprocess
 import sys
