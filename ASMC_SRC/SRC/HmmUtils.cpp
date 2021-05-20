@@ -100,7 +100,7 @@ void calculateScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::Arr
                            Eigen::Ref<Eigen::ArrayXf> sums, const int batchSize, const int numStates)
 {
   for (int i = 0; i < batchSize; ++i) {
-    sums[i] = 0.f;
+    sums(i) = 0.f;
   }
 
 #ifdef NO_SSE
@@ -117,11 +117,11 @@ void calculateScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::Arr
   // compute scaling (sum of current alpha/beta vector)
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
     for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
-      STORE(&sums[batchItem], ADD(LOAD(&sums[batchItem]), LOAD(&vec[stateIdx * batchSize + batchItem])));
+      STORE(&sums(batchItem), ADD(LOAD(&sums(batchItem)), LOAD(&vec(stateIdx * batchSize + batchItem))));
     }
   }
   for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
-    scalings[batchItem] = 1.0f / sums[batchItem];
+    scalings(batchItem) = 1.0f / sums(batchItem);
   }
 #endif
 }
@@ -140,8 +140,8 @@ void applyScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf
   // modify current alpha/beta vector by prescribed scaling
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
     for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
-      STORE(&vec[stateIdx * batchSize + batchItem],
-            MULT(LOAD(&vec[stateIdx * batchSize + batchItem]), LOAD(&scalings[batchItem])));
+      STORE(&vec(stateIdx * batchSize + batchItem),
+            MULT(LOAD(&vec(stateIdx * batchSize + batchItem)), LOAD(&scalings(batchItem))));
     }
   }
 #endif
