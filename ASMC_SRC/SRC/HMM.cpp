@@ -23,7 +23,9 @@
 #include <limits>
 #include <utility>
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
+
+#include <fmt/format.h>
 
 #include "AvxDefinitions.hpp"
 #include "HmmUtils.hpp"
@@ -112,6 +114,8 @@ HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
   m_scalingBuffer.resize(m_batchSize);
   m_alphaBuffer.resize(sequenceLength * states * m_batchSize);
   m_betaBuffer.resize(sequenceLength * states * m_batchSize);
+
+  fmt::print("########## EIGEN_DEFAULT_ALIGN_BYTES: {}", EIGEN_DEFAULT_ALIGN_BYTES);
 
   m_allZeros.resize(sequenceLength * m_batchSize);
   m_allZeros.setZero();

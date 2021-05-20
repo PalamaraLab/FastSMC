@@ -20,7 +20,7 @@ if not test_exe.is_file():
     print(f'Expected {test_exe} to exist but it does not...')
     sys.exit(1)
 
-num_repeats = 5
+num_repeats = 1
 times = np.zeros(num_repeats)
 
 for i, _ in enumerate(times):

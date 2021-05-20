@@ -16,13 +16,16 @@
 #ifndef ASMC_HMM
 #define ASMC_HMM
 
+
+
 #include "Data.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
-#include "EigenTypes.hpp"
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
+
+#define EIGEN_MAX_ALIGN_BYTES 64
 
 #include <Eigen/Dense>
 
