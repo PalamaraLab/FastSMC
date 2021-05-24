@@ -13,21 +13,20 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #ifndef ASMC_HPP
 #define ASMC_HPP
 
-#include "DecodingQuantities.hpp"
 #include "Data.hpp"
+#include "DecodePairsReturnStruct.hpp"
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
-DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file,
-         std::string out_file_root, DecodingModeOverall mode,
-         int jobs, int job_index,
-         float skip_csfs_distance,
-         bool compress, bool use_ancestral,
-         bool posterior_sums, bool major_minor_posterior_sums);
+#include <string>
+#include <vector>
+
+DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file, std::string out_file_root,
+                         DecodingModeOverall mode, int jobs, int job_index, float skip_csfs_distance, bool compress,
+                         bool use_ancestral, bool posterior_sums, bool major_minor_posterior_sums);
 
 namespace ASMC
 {
@@ -36,13 +35,11 @@ class ASMC
 {
 
 private:
-
   DecodingParams mParams;
   Data mData;
   HMM mHmm;
 
 public:
-
   /**
    * ASMC constructor with full control over parameters, by manually specifying a DecodingParams object.
    *
@@ -62,11 +59,9 @@ public:
 
   DecodingReturnValues decodeAllInJob();
 
-  DecodingReturnValues decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB);
-
+  DecodePairsReturnStruct decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB);
 };
 
 } // namespace ASMC
-
 
 #endif

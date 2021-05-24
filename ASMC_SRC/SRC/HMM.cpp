@@ -1392,6 +1392,23 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
     }
   }
 
+  if (m_decodePairsReturnStruct.isInUse()) {
+    for (int idx = 0; idx < actualBatchSize; ++idx) {
+
+      // Get the index: this is the row we need to write into
+      const auto outIdx = static_cast<Eigen::Index>(m_decodePairsReturnStruct.getNumWritten());
+
+      // Record the index information
+      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 0) = obsBatch[idx].iInd;
+      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 1) = obsBatch[idx].iHap;
+      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 2) = obsBatch[idx].jInd;
+      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 3) = obsBatch[idx].jHap;
+
+      // Increment
+      m_decodePairsReturnStruct.incrementNumWritten();
+    }
+  }
+
   auto t1 = std::chrono::high_resolution_clock::now();
   ticksOutputPerPair += t1 - t0;
 }
@@ -1662,4 +1679,9 @@ void HMM::getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputed
 const DecodingQuantities& HMM::getDecodingQuantities() const
 {
   return m_decodingQuant;
+}
+
+DecodePairsReturnStruct& HMM::getDecodePairsReturnStruct()
+{
+  return m_decodePairsReturnStruct;
 }

@@ -16,16 +16,13 @@
 #ifndef ASMC_HMM
 #define ASMC_HMM
 
-
-
 #include "Data.hpp"
+#include "DecodePairsReturnStruct.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
-
-#define EIGEN_MAX_ALIGN_BYTES 64
 
 #include <Eigen/Dense>
 
@@ -139,6 +136,9 @@ class HMM
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
+  // output when decoding specific pairs
+  DecodePairsReturnStruct m_decodePairsReturnStruct;
+
   gzFile gzoutIBD;
 
   // timing
@@ -218,6 +218,9 @@ public:
   {
     return m_decodingReturnValues;
   }
+
+  /// get the struct holding return values for each pair decoded using decodePairs()
+  DecodePairsReturnStruct& getDecodePairsReturnStruct();
 
   /// finish decoding pairs
   ///

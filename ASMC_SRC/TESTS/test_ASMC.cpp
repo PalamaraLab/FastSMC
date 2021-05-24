@@ -20,6 +20,9 @@
 
 #include "ASMC.hpp"
 
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
 TEST_CASE("test ASMC decodeAllInJob", "[ASMC]")
 {
   DecodingParams params(ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
@@ -40,12 +43,15 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
   ASMC::ASMC asmc(ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
                   ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
 
-  std::vector<unsigned> indA = {1, 2, 3, 4, 5};
-  std::vector<unsigned> indB = {2, 3, 4, 5, 6};
+  std::vector<unsigned> indA = {1, 2, 3};
+  std::vector<unsigned> indB = {2, 3, 4};
   auto result = asmc.decodePairs(indA, indB);
 
   SECTION("test decode pair summarize")
   {
-    REQUIRE(result.sumOverPairs.size() == 466440ul);
+    REQUIRE(result.getIndices().rows() == 12ll);
+    REQUIRE(result.getIndices().cols() == 4ll);
   }
+
+  fmt::print("indices:\n{}", result.getIndices());
 }

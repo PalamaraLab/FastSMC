@@ -77,6 +77,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/HMM.hpp
   ${ASMC_source_dir}/HmmUtils.hpp
   ${ASMC_source_dir}/Data.hpp
+  ${ASMC_source_dir}/DecodePairsReturnStruct.hpp
   ${ASMC_source_dir}/DecodingParams.hpp
   ${ASMC_source_dir}/DecodingQuantities.hpp
   ${ASMC_source_dir}/FastSMC.hpp
