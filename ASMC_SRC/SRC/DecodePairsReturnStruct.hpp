@@ -17,32 +17,35 @@
 #define FASTSMC_DECODE_PAIRS_RETURN_STRUCT_HPP
 
 #include <Eigen/Core>
+#include <fmt/format.h>
 
 #include <vector>
 
 struct DecodePairsReturnStruct {
 
 private:
-
   bool inUse = false;
 
   std::size_t numWritten = 0ul;
 
   Eigen::Array<unsigned int, Eigen::Dynamic, 4, Eigen::RowMajor> indices;
+  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> posteriors;
+  Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MAPs;
 
 public:
-  void resize(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB)
+  void resize(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB, long int numSites)
   {
     Eigen::Index resizeTo = 0ll;
     for (auto idx = 0ul; idx < individualsA.size(); ++idx) {
       if (individualsA[idx] == individualsB[idx]) {
-        resizeTo += 1;
+        resizeTo += 1ll;
       } else {
-        resizeTo += 4;
+        resizeTo += 4ll;
       }
     }
 
     indices.resize(resizeTo, Eigen::NoChange);
+    posteriors.resize(resizeTo, numSites);
     inUse = true;
   }
 
@@ -56,9 +59,29 @@ public:
     return indices;
   }
 
+  [[nodiscard]] const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getPosteriors() const
+  {
+    return posteriors;
+  }
+
+  [[nodiscard]] const Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getMAPs() const
+  {
+    return MAPs;
+  }
+
   [[nodiscard]] Eigen::Array<unsigned int, Eigen::Dynamic, 4, Eigen::RowMajor>& getModifiableIndices()
   {
     return indices;
+  }
+
+  [[nodiscard]] Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiablePosteriors()
+  {
+    return posteriors;
+  }
+
+  [[nodiscard]] Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiableMAPs()
+  {
+    return MAPs;
   }
 
   [[nodiscard]] std::size_t getNumWritten() const

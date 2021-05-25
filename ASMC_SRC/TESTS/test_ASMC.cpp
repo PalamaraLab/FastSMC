@@ -53,5 +53,6 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
     REQUIRE(result.getIndices().cols() == 4ll);
   }
 
-  fmt::print("indices:\n{}", result.getIndices());
+  fmt::print("indices:\n{}\n", result.getIndices());
+  fmt::print("posteriors:\n{}\n", result.getPosteriors());
 }
