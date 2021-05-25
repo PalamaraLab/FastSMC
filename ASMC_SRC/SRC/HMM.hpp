@@ -139,6 +139,15 @@ class HMM
   // output when decoding specific pairs
   DecodePairsReturnStruct m_decodePairsReturnStruct;
 
+  // output options
+  bool m_storePerPairPosteriorMean = false;
+  bool m_writePerPairPosteriorMean = false;
+  bool m_calculatePerPairPosteriorMean = false;
+
+  bool m_storePerPairMAP = false;
+  bool m_writePerPairMAP = false;
+  bool m_calculatePerPairMAP = false;
+
   gzFile gzoutIBD;
 
   // timing
@@ -149,6 +158,9 @@ class HMM
   std::chrono::duration<double> ticksCombine = std::chrono::high_resolution_clock::duration::zero();
   std::chrono::duration<double> ticksSumOverPairs = std::chrono::high_resolution_clock::duration::zero();
   std::chrono::duration<double> ticksOutputPerPair = std::chrono::high_resolution_clock::duration::zero();
+
+  /// Update the size of output structures for per pair posterior mean / MAP
+  void updateOutputStructures();
 
 public:
   // constructor
@@ -240,6 +252,18 @@ public:
    */
   const DecodingQuantities& getDecodingQuantities() const;
 
+  /// Set to true to store per pair posterior mean
+  void setStorePerPairPosteriorMean(bool storePerPairPosteriorMean = true);
+
+  /// Set to true to write per pair posterior mean to file
+  void setWritePerPairPosteriorMean(bool writePerPairPosteriorMean = true);
+
+  /// Set to true to store per pair MAP
+  void setStorePerPairMap(bool storePerPairMAP = true);
+
+  /// Set to true to write per pair MAP to file
+  void setWritePerPairMap(bool writePerPairMAP = true);
+
 private:
   void writeBinaryInfoIntoFile();
 
@@ -319,6 +343,8 @@ private:
                        std::vector<float>& BU, std::vector<float>& currentBeta, std::vector<float>& emission1AtSite,
                        std::vector<float>& emission0minus1AtSite, std::vector<float>& emission2minus0AtSite,
                        float obsIsZero, float obsIsHomMinor);
+
+
 };
 
 #endif // ASMC_HMM

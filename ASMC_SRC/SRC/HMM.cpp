@@ -18,6 +18,7 @@
 #include <cassert>
 #include <chrono>
 #include <exception>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -36,7 +37,7 @@
 using namespace std;
 
 // read expected times from a file
-vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
+vector<float> readExpectedTimesFromIntervalsFile(const char* fileName)
 {
   FileUtils::AutoGzIfstream br;
   br.openOrExit(fileName);
@@ -106,28 +107,20 @@ HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
   startBatch = sequenceLength;
   endBatch = 0;
 
-  if (decodingParams.doPerPairPosteriorMean && !decodingParams.FastSMC) {
-    expectedCoalTimes = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
-  }
-
   // allocate buffers
   m_scalingBuffer.resize(m_batchSize);
   m_alphaBuffer.resize(sequenceLength * states * m_batchSize);
   m_betaBuffer.resize(sequenceLength * states * m_batchSize);
 
-  fmt::print("########## EIGEN_DEFAULT_ALIGN_BYTES: {}", EIGEN_DEFAULT_ALIGN_BYTES);
+  fmt::print("########## EIGEN_DEFAULT_ALIGN_BYTES: {}\n", EIGEN_DEFAULT_ALIGN_BYTES);
 
   m_allZeros.resize(sequenceLength * m_batchSize);
   m_allZeros.setZero();
 
-
-  if (decodingParams.doPerPairPosteriorMean) {
-    meanPost.resize(sequenceLength * m_batchSize);
-  }
-  if (decodingParams.doPerPairMAP) {
-    MAP.resize(sequenceLength * m_batchSize);
-    currentMAPValue.resize(m_batchSize);
-  }
+  // Output variables
+  m_calculatePerPairPosteriorMean = decodingParams.doPerPairPosteriorMean;
+  m_calculatePerPairMAP = decodingParams.doPerPairMAP;
+  updateOutputStructures();
 
   resetDecoding();
 
@@ -1342,38 +1335,41 @@ void HMM::writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, co
 // will eventually write binary output instead of gzipped
 void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch)
 {
-
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  if (decodingParams.doPerPairMAP) {
-    MAP.setZero();
-  }
-  if (decodingParams.doPerPairPosteriorMean) {
+  // Calculate per pair posterior mean
+  if (m_calculatePerPairPosteriorMean) {
     meanPost.setZero();
-  }
-
-  for (long int pos = 0; pos < sequenceLength; pos++) {
-    if (decodingParams.doPerPairMAP) {
-      currentMAPValue.setZero();
-    }
-    for (ushort k = 0; k < states; k++) {
-      for (int v = 0; v < actualBatchSize; v++) {
-        float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
-        if (decodingParams.doPerPairPosteriorMean) {
-          meanPost[pos * actualBatchSize + v] += posterior_pos_state_pair * expectedCoalTimes[k];
-        }
-        if (decodingParams.doPerPairMAP && currentMAPValue[v] < posterior_pos_state_pair) {
-          MAP[pos * actualBatchSize + v] = k;
-          currentMAPValue[v] = posterior_pos_state_pair;
+    for (long int pos = 0; pos < sequenceLength; pos++) {
+      for (int k = 0; k < states; k++) {
+        for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
+          meanPost[pos * actualBatchSize + batchIdx] += posterior_pos_state_pair * expectedCoalTimes[k];
         }
       }
     }
   }
 
-  if (decodingParams.doPerPairPosteriorMean) {
+  // Calculate per pair MAP
+  if (m_calculatePerPairMAP) {
+    MAP.setZero();
+    for (long int pos = 0; pos < sequenceLength; pos++) {
+      currentMAPValue.setZero();
+      for (int k = 0; k < states; k++) {
+        for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
+          if (currentMAPValue[batchIdx] < posterior_pos_state_pair) {
+            MAP[pos * actualBatchSize + batchIdx] = k;
+            currentMAPValue[batchIdx] = posterior_pos_state_pair;
+          }
+        }
+      }
+    }
+  }
+
+  // Write per pair posterior mean to file
+  if (m_writePerPairPosteriorMean) {
     for (int v = 0; v < actualBatchSize; v++) {
-      //      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      //      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutPosteriorMeanPerPair << " " << meanPost[pos * actualBatchSize + v];
       }
@@ -1381,10 +1377,9 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
     }
   }
 
-  if (decodingParams.doPerPairMAP) {
+  // Write per pair MAP to file
+  if (m_writePerPairMAP) {
     for (int v = 0; v < actualBatchSize; v++) {
-      //      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      //      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
       for (long int pos = 0; pos < sequenceLength; pos++) {
         foutMAPPerPair << " " << MAP[pos * actualBatchSize + v];
       }
@@ -1392,7 +1387,8 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
     }
   }
 
-  if (m_decodePairsReturnStruct.isInUse()) {
+  // Store per pair information, if required
+  if (m_storePerPairMAP || m_storePerPairPosteriorMean) {
     for (int idx = 0; idx < actualBatchSize; ++idx) {
 
       // Get the index: this is the row we need to write into
@@ -1403,6 +1399,12 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
       m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 1) = obsBatch[idx].iHap;
       m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 2) = obsBatch[idx].jInd;
       m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 3) = obsBatch[idx].jHap;
+
+      if (m_storePerPairPosteriorMean) {
+        for (long int pos = 0; pos < sequenceLength; pos++) {
+          m_decodePairsReturnStruct.getModifiablePosteriors()(outIdx, pos) = meanPost[pos * actualBatchSize + idx];
+        }
+      }
 
       // Increment
       m_decodePairsReturnStruct.incrementNumWritten();
@@ -1684,4 +1686,52 @@ const DecodingQuantities& HMM::getDecodingQuantities() const
 DecodePairsReturnStruct& HMM::getDecodePairsReturnStruct()
 {
   return m_decodePairsReturnStruct;
+}
+
+void HMM::updateOutputStructures() {
+  m_calculatePerPairPosteriorMean = m_storePerPairPosteriorMean || m_writePerPairPosteriorMean;
+  m_calculatePerPairMAP = m_storePerPairMAP || m_writePerPairMAP;
+
+  if (m_calculatePerPairPosteriorMean) {
+    meanPost.resize(sequenceLength * m_batchSize);
+
+    if (expectedCoalTimes.empty() && !decodingParams.FastSMC) {
+      if (!expectedCoalTimesFile.empty() && std::filesystem::is_regular_file(expectedCoalTimesFile)) {
+        fmt::print("Reading expected coalescent times from {}\n", expectedCoalTimesFile);
+        expectedCoalTimes = readExpectedTimesFromIntervalsFile(expectedCoalTimesFile.c_str());
+      } else {
+        fmt::print("Using expected coalescent times from {}\n", decodingParams.decodingQuantFile);
+        expectedCoalTimes = m_decodingQuant.expectedTimes;
+      }
+    }
+  }
+
+  if (m_calculatePerPairMAP) {
+    MAP.resize(sequenceLength * m_batchSize);
+    currentMAPValue.resize(m_batchSize);
+  }
+}
+
+void HMM::setStorePerPairPosteriorMean(bool storePerPairPosteriorMean)
+{
+  m_storePerPairPosteriorMean = storePerPairPosteriorMean;
+  updateOutputStructures();
+}
+
+void HMM::setWritePerPairPosteriorMean(bool writePerPairPosteriorMean)
+{
+  m_writePerPairPosteriorMean = writePerPairPosteriorMean;
+  updateOutputStructures();
+}
+
+void HMM::setStorePerPairMap(bool storePerPairMAP)
+{
+  m_storePerPairMAP = storePerPairMAP;
+  updateOutputStructures();
+}
+
+void HMM::setWritePerPairMap(bool writePerPairMAP)
+{
+  m_writePerPairMAP = writePerPairMAP;
+  updateOutputStructures();
 }
