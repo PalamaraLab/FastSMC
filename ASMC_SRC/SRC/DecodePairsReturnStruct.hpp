@@ -24,13 +24,11 @@
 struct DecodePairsReturnStruct {
 
 private:
-  bool inUse = false;
-
   std::size_t numWritten = 0ul;
 
-  Eigen::Array<unsigned int, Eigen::Dynamic, 4, Eigen::RowMajor> indices;
+  Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor> indices;
   Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> posteriors;
-  Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MAPs;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MAPs;
 
 public:
   void resize(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB, long int numSites)
@@ -46,7 +44,7 @@ public:
 
     indices.resize(resizeTo, Eigen::NoChange);
     posteriors.resize(resizeTo, numSites);
-    inUse = true;
+    MAPs.resize(resizeTo, numSites);
   }
 
   void incrementNumWritten()
@@ -54,7 +52,7 @@ public:
     numWritten += 1;
   }
 
-  [[nodiscard]] const Eigen::Array<unsigned int, Eigen::Dynamic, 4, Eigen::RowMajor>& getIndices() const
+  [[nodiscard]] const Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor>& getIndices() const
   {
     return indices;
   }
@@ -64,12 +62,12 @@ public:
     return posteriors;
   }
 
-  [[nodiscard]] const Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getMAPs() const
+  [[nodiscard]] const Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getMAPs() const
   {
     return MAPs;
   }
 
-  [[nodiscard]] Eigen::Array<unsigned int, Eigen::Dynamic, 4, Eigen::RowMajor>& getModifiableIndices()
+  [[nodiscard]] Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor>& getModifiableIndices()
   {
     return indices;
   }
@@ -79,7 +77,7 @@ public:
     return posteriors;
   }
 
-  [[nodiscard]] Eigen::Array<unsigned int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiableMAPs()
+  [[nodiscard]] Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiableMAPs()
   {
     return MAPs;
   }
@@ -87,11 +85,6 @@ public:
   [[nodiscard]] std::size_t getNumWritten() const
   {
     return numWritten;
-  }
-
-  [[nodiscard]] bool isInUse() const
-  {
-    return inUse;
   }
 };
 

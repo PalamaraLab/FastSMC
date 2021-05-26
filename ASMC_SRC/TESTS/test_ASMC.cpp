@@ -55,8 +55,9 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
     REQUIRE(result.getPosteriors()(11, 0) == Approx(6108.99414f));
     REQUIRE(result.getPosteriors()(9, 8) == Approx(3151.37231f));
     REQUIRE(result.getPosteriors()(4, 29) == Approx(27580.66016f));
-  }
 
-  fmt::print("indices:\n{}\n", result.getIndices());
-  fmt::print("posteriors:\n{}\n", result.getPosteriors());
+    REQUIRE(result.getMAPs()(0, 0) == 29);
+    REQUIRE(result.getMAPs()(9, 1234) == 29);
+    REQUIRE(result.getMAPs()(11, 7) == 22);
+  }
 }

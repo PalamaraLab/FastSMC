@@ -1357,7 +1357,7 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
         for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
           float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
           if (currentMAPValue[batchIdx] < posterior_pos_state_pair) {
-            MAP[pos * actualBatchSize + batchIdx] = k;
+            MAP(batchIdx, pos) = k;
             currentMAPValue[batchIdx] = posterior_pos_state_pair;
           }
         }
@@ -1372,12 +1372,7 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
   // Write per pair MAP to file
   if (m_writePerPairMAP) {
-    for (int v = 0; v < actualBatchSize; v++) {
-      for (long int pos = 0; pos < sequenceLength; pos++) {
-        foutMAPPerPair << " " << MAP[pos * actualBatchSize + v];
-      }
-      foutMAPPerPair << endl;
-    }
+    foutMAPPerPair << MAP.topRows(actualBatchSize).format(m_eigenOutputFormat);
   }
 
   // Store per pair information, if required
@@ -1395,6 +1390,10 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 
       if (m_storePerPairPosteriorMean) {
         m_decodePairsReturnStruct.getModifiablePosteriors().row(outIdx) = meanPost.row(batchIdx);
+      }
+
+      if (m_storePerPairPosteriorMean) {
+        m_decodePairsReturnStruct.getModifiableMAPs().row(outIdx) = MAP.row(batchIdx);
       }
 
       // Increment
@@ -1698,7 +1697,7 @@ void HMM::updateOutputStructures() {
   }
 
   if (m_calculatePerPairMAP) {
-    MAP.resize(sequenceLength * m_batchSize);
+    MAP.resize(m_batchSize, sequenceLength);
     currentMAPValue.resize(m_batchSize);
   }
 

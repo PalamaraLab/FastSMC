@@ -77,8 +77,7 @@ class HMM
   Eigen::ArrayXf m_allZeros;
 
   Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> meanPost;
-//  Eigen::ArrayXf meanPost;
-  Eigen::Array<unsigned short, Eigen::Dynamic, 1> MAP;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic> MAP;
   Eigen::ArrayXf currentMAPValue;
 
   // for decoding
