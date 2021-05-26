@@ -200,6 +200,7 @@ void AutoGzOfstream::openOrExit(const std::string &file, std::ios_base::openmode
 
 void AutoGzOfstream::close() {
   boost_out.reset();
+  fout.close();
 }
 
 AutoGzOfstream& AutoGzOfstream::operator << (std::ostream & (*manip)(std::ostream&)) {
