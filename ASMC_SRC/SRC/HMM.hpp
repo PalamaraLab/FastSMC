@@ -24,7 +24,7 @@
 #include "Individual.hpp"
 #include "Types.hpp"
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
 #include <chrono>
 #include <cstdint>
@@ -76,7 +76,8 @@ class HMM
   Eigen::ArrayXf m_scalingBuffer;
   Eigen::ArrayXf m_allZeros;
 
-  Eigen::ArrayXf meanPost;
+  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> meanPost;
+//  Eigen::ArrayXf meanPost;
   Eigen::Array<unsigned short, Eigen::Dynamic, 1> MAP;
   Eigen::ArrayXf currentMAPValue;
 
@@ -147,6 +148,8 @@ class HMM
   bool m_storePerPairMAP = false;
   bool m_writePerPairMAP = false;
   bool m_calculatePerPairMAP = false;
+
+  Eigen::IOFormat m_eigenOutputFormat{Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n"};
 
   gzFile gzoutIBD;
 
