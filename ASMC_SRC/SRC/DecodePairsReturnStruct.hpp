@@ -73,21 +73,29 @@ public:
 
     m_perPairIndices.resize(numPairsToDecode, Eigen::NoChange);
 
-    m_perPairPosteriors.resize(numPairsToDecode);
-    for (Eigen::Index i = 0ll; i < m_perPairPosteriors.size(); ++i) {
-      m_perPairPosteriors(i).resize(numStates, numSites);
+    if (m_storeFullPosteriors) {
+      m_perPairPosteriors.resize(numPairsToDecode);
+      for (Eigen::Index i = 0ll; i < m_perPairPosteriors.size(); ++i) {
+        m_perPairPosteriors(i).resize(numStates, numSites);
+      }
     }
 
-    m_sumOfPosteriors.resize(numStates, numSites);
-    m_sumOfPosteriors.setZero();
+    if (m_storeSumOfPosteriors) {
+      m_sumOfPosteriors.resize(numStates, numSites);
+      m_sumOfPosteriors.setZero();
+    }
 
-    m_perPairPosteriorMeans.resize(numPairsToDecode, numSites);
-    m_minPosteriorMeans.resize(numSites);
-    m_argminPosteriorMeans.resize(numSites);
+    if (m_storePerPairPosteriors) {
+      m_perPairPosteriorMeans.resize(numPairsToDecode, numSites);
+      m_minPosteriorMeans.resize(numSites);
+      m_argminPosteriorMeans.resize(numSites);
+    }
 
-    m_perPairMAPs.resize(numPairsToDecode, numSites);
-    m_minMAPs.resize(numSites);
-    m_argminMAPs.resize(numSites);
+    if (m_storePerPairMAPs) {
+      m_perPairMAPs.resize(numPairsToDecode, numSites);
+      m_minMAPs.resize(numSites);
+      m_argminMAPs.resize(numSites);
+    }
   }
 
   void incrementNumWritten()
