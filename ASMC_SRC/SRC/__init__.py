@@ -20,6 +20,7 @@ from .pyASMC import (  # NOQA
     DecodingModeOverall,
     DecodingMode,
     DecodingReturnValues,
+    DecodePairsReturnStruct,
     IbdPairDataLine,
     Individual,
     PairObservations,

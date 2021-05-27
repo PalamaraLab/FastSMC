@@ -61,7 +61,7 @@ public:
 
   DecodePairsReturnStruct decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB,
                                       bool fullPosteriors = false, bool sumOfPosteriors = false,
-                                      bool perPairPosteriors = false, bool perPairMAPs = false);
+                                      bool perPairPosteriorMeans = false, bool perPairMAPs = false);
 };
 
 } // namespace ASMC

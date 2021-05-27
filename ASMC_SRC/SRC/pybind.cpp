@@ -77,7 +77,15 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("states", &DecodingReturnValues::states)
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
     py::class_<DecodePairsReturnStruct>(m, "DecodePairsReturnStruct")
-        .def("getIndices", &DecodePairsReturnStruct::getIndices, py::return_value_policy::reference_internal);
+        .def("per_pair_indices", &DecodePairsReturnStruct::getPerPairIndices, py::return_value_policy::reference_internal)
+//        .def("per_pair_posteriors", &DecodePairsReturnStruct::getPerPairPosteriors, py::return_value_policy::reference_internal)
+        .def("sum_of_posteriors", &DecodePairsReturnStruct::getSumOfPosteriors, py::return_value_policy::reference_internal)
+        .def("per_pair_posterior_means", &DecodePairsReturnStruct::getPerPairPosteriorMeans, py::return_value_policy::reference_internal)
+        .def("min_posterior_means", &DecodePairsReturnStruct::getMinPosteriorMeans, py::return_value_policy::reference_internal)
+        .def("argmin_posterior_means", &DecodePairsReturnStruct::getArgminPosteriorMeans, py::return_value_policy::reference_internal)
+        .def("per_pair_MAPs", &DecodePairsReturnStruct::getPerPairMAPs, py::return_value_policy::reference_internal)
+        .def("min_MAPs", &DecodePairsReturnStruct::getMinMAPs, py::return_value_policy::reference_internal)
+        .def("argmin_MAPs", &DecodePairsReturnStruct::getArgminMAPs, py::return_value_policy::reference_internal);
     py::class_<Individual>(m, "Individual")
         .def(py::init<int>(),
                 "numOfSites"_a = 0)
@@ -228,5 +236,6 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<DecodingParams>(), "decodingParams"_a)
         .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
         .def("decodeAllInJob", &ASMC::ASMC::decodeAllInJob)
-        .def("decodePairs", &ASMC::ASMC::decodePairs, "individuals_a"_a, "individuals_b"_a);
+        .def("decodePairs", &ASMC::ASMC::decodePairs, "individuals_a"_a, "individuals_b"_a, "full_posteriors"_a = false,
+             "sum_of_posteriors"_a = false, "per_pair_posterior_means"_a = false, "per_pair_MAPs"_a = false);
 }
