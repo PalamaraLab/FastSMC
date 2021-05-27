@@ -1407,7 +1407,7 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
       m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 3) = obsBatch[batchIdx].jHap;
 
       if (m_storePerPairPosterior) {
-        m_decodePairsReturnStruct.getModifiablePerPairPosteriors()(outIdx) = posteriors(batchIdx);
+        m_decodePairsReturnStruct.getModifiablePerPairPosteriors().at(outIdx) = posteriors(batchIdx);
       }
 
       if (m_storePerPairPosteriorMean) {

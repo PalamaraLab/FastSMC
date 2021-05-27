@@ -77,7 +77,7 @@ DecodingReturnValues ASMC::ASMC::decodeAllInJob()
 }
 
 DecodePairsReturnStruct ASMC::ASMC::decodePairs(const std::vector<uint>& individualsA,
-                                                const std::vector<uint>& individualsB, bool fullPosteriors,
+                                                const std::vector<uint>& individualsB, bool perPairPosteriors,
                                                 bool sumOfPosteriors, bool perPairPosteriorMeans, bool perPairMAPs)
 {
   if (individualsA.empty() || individualsA.size() != individualsB.size()) {
@@ -86,11 +86,11 @@ DecodePairsReturnStruct ASMC::ASMC::decodePairs(const std::vector<uint>& individ
   }
 
   mHmm.getDecodePairsReturnStruct().initialise(individualsA, individualsB, mData.sites,
-                                               mHmm.getDecodingQuantities().states, fullPosteriors, sumOfPosteriors,
+                                               mHmm.getDecodingQuantities().states, perPairPosteriors, sumOfPosteriors,
                                                perPairPosteriorMeans, perPairMAPs);
   mHmm.setStorePerPairPosteriorMean(perPairPosteriorMeans);
   mHmm.setStorePerPairMap(perPairMAPs);
-  mHmm.setStorePerPairPosterior(fullPosteriors);
+  mHmm.setStorePerPairPosterior(perPairPosteriors);
   mHmm.setStoreSumOfPosterior(sumOfPosteriors);
   mHmm.decodePairs(individualsA, individualsB);
   mHmm.finishDecoding();

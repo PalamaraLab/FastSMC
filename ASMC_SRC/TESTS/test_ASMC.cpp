@@ -62,7 +62,7 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
     REQUIRE(result.getPerPairMAPs()(11, 7) == 22);
 
     for (Eigen::Index idx = 0ll; idx < result.getPerPairPosteriors().size(); ++idx) {
-      REQUIRE((result.getPerPairPosteriors()(idx).colwise().sum() - result.getPerPairPosteriorMeans().row(idx)).isZero(1e-6));
+      REQUIRE((result.getPerPairPosteriors().at(idx).colwise().sum() - result.getPerPairPosteriorMeans().row(idx)).isZero(1e-6));
     }
   }
 }

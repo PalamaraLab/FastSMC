@@ -36,7 +36,7 @@ private:
   Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor> m_perPairIndices;
 
   /// The full set of posteriors: for each pair this is a (states * numSites) matrix
-  Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1> m_perPairPosteriors;
+  std::vector<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> m_perPairPosteriors;
 
   /// The sum of all posteriors in perPairPosteriors: a (states * numSites) matrix
   Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_sumOfPosteriors;
@@ -75,8 +75,8 @@ public:
 
     if (m_storeFullPosteriors) {
       m_perPairPosteriors.resize(numPairsToDecode);
-      for (Eigen::Index i = 0ll; i < m_perPairPosteriors.size(); ++i) {
-        m_perPairPosteriors(i).resize(numStates, numSites);
+      for (auto& arr : m_perPairPosteriors) {
+        arr.resize(numStates, numSites);
       }
     }
 
@@ -123,7 +123,7 @@ public:
     return m_perPairIndices;
   }
 
-  [[nodiscard]] const Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1>& getPerPairPosteriors() const
+  [[nodiscard]] const std::vector<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>& getPerPairPosteriors() const
   {
     return m_perPairPosteriors;
   }
@@ -173,7 +173,7 @@ public:
     return m_sumOfPosteriors;
   }
 
-  [[nodiscard]] Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1>& getModifiablePerPairPosteriors()
+  [[nodiscard]] std::vector<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>& getModifiablePerPairPosteriors()
   {
     return m_perPairPosteriors;
   }
