@@ -1335,14 +1335,29 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
 {
   auto t0 = std::chrono::high_resolution_clock::now();
 
+  Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1> posteriors;
+
   // Calculate per pair posterior mean
   if (m_calculatePerPairPosteriorMean) {
     meanPost.setZero();
+
+    // Store posteriors for batch, but only if requested (large amount of data)
+    if (m_storePerPairPosterior) {
+      posteriors.resize(actualBatchSize);
+      for (Eigen::Index batchIdx = 0ll; batchIdx < actualBatchSize; ++batchIdx) {
+        posteriors(batchIdx).resize(states, sequenceLength);
+      }
+    }
+
     for (long int pos = 0; pos < sequenceLength; pos++) {
       for (int k = 0; k < states; k++) {
         for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
           float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
-          meanPost(batchIdx, pos) += posterior_pos_state_pair * expectedCoalTimes[k];
+          float postValue = posterior_pos_state_pair * expectedCoalTimes[k];
+          meanPost(batchIdx, pos) += postValue;
+          if (m_storePerPairPosterior) {
+            posteriors(batchIdx)(k, pos) = postValue;
+          }
         }
       }
     }
@@ -1383,17 +1398,21 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
       const auto outIdx = static_cast<Eigen::Index>(m_decodePairsReturnStruct.getNumWritten());
 
       // Record the index information
-      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 0) = obsBatch[batchIdx].iInd;
-      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 1) = obsBatch[batchIdx].iHap;
-      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 2) = obsBatch[batchIdx].jInd;
-      m_decodePairsReturnStruct.getModifiableIndices()(outIdx, 3) = obsBatch[batchIdx].jHap;
+      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 0) = obsBatch[batchIdx].iInd;
+      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 1) = obsBatch[batchIdx].iHap;
+      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 2) = obsBatch[batchIdx].jInd;
+      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 3) = obsBatch[batchIdx].jHap;
 
-      if (m_storePerPairPosteriorMean) {
-        m_decodePairsReturnStruct.getModifiablePosteriors().row(outIdx) = meanPost.row(batchIdx);
+      if (m_storePerPairPosterior) {
+        m_decodePairsReturnStruct.getModifiablePerPairPosteriors()(outIdx) = posteriors(batchIdx);
       }
 
       if (m_storePerPairPosteriorMean) {
-        m_decodePairsReturnStruct.getModifiableMAPs().row(outIdx) = MAP.row(batchIdx);
+        m_decodePairsReturnStruct.getModifiablePerPairPosteriorMeans().row(outIdx) = meanPost.row(batchIdx);
+      }
+
+      if (m_storePerPairPosteriorMean) {
+        m_decodePairsReturnStruct.getModifiablePerPairMAPs().row(outIdx) = MAP.row(batchIdx);
       }
 
       // Increment
@@ -1679,7 +1698,8 @@ DecodePairsReturnStruct& HMM::getDecodePairsReturnStruct()
 }
 
 void HMM::updateOutputStructures() {
-  m_calculatePerPairPosteriorMean = m_storePerPairPosteriorMean || m_writePerPairPosteriorMean;
+  m_calculatePerPairPosteriorMean =
+      m_storePerPairPosteriorMean || m_writePerPairPosteriorMean || m_storePerPairPosterior;
   m_calculatePerPairMAP = m_storePerPairMAP || m_writePerPairMAP;
 
   if (m_calculatePerPairPosteriorMean) {
@@ -1725,5 +1745,11 @@ void HMM::setStorePerPairMap(bool storePerPairMAP)
 void HMM::setWritePerPairMap(bool writePerPairMAP)
 {
   m_writePerPairMAP = writePerPairMAP;
+  updateOutputStructures();
+}
+
+void HMM::setStorePerPairPosterior(bool storePerPairPosterior)
+{
+  m_storePerPairPosterior = storePerPairPosterior;
   updateOutputStructures();
 }

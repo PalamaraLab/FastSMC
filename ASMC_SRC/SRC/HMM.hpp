@@ -148,6 +148,8 @@ class HMM
   bool m_writePerPairMAP = false;
   bool m_calculatePerPairMAP = false;
 
+  bool m_storePerPairPosterior = false;
+
   Eigen::IOFormat m_eigenOutputFormat{Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n"};
 
   gzFile gzoutIBD;
@@ -265,6 +267,9 @@ public:
 
   /// Set to true to write per pair MAP to file
   void setWritePerPairMap(bool writePerPairMAP = true);
+
+  /// Set to true to store per pair posterior
+  void setStorePerPairPosterior(bool storePerPairPosterior = true);
 
 private:
   void writeBinaryInfoIntoFile();

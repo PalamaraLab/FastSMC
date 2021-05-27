@@ -84,10 +84,13 @@ DecodePairsReturnStruct ASMC::ASMC::decodePairs(const std::vector<uint>& individ
                                          individualsA.size(), individualsB.size()));
   }
 
-  mHmm.getDecodePairsReturnStruct().resize(individualsA, individualsB, mData.sites);
+  mHmm.getDecodePairsReturnStruct().resize(individualsA, individualsB, mData.sites,
+                                           mHmm.getDecodingQuantities().states);
   mHmm.setStorePerPairPosteriorMean(true);
   mHmm.setStorePerPairMap(true);
+  mHmm.setStorePerPairPosterior(true);
   mHmm.decodePairs(individualsA, individualsB);
   mHmm.finishDecoding();
+  mHmm.getDecodePairsReturnStruct().finaliseCalculations();
   return mHmm.getDecodePairsReturnStruct();
 }

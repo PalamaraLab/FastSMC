@@ -20,6 +20,7 @@
 
 #include "ASMC.hpp"
 
+#include <Eigen/Core>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -49,15 +50,19 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
 
   SECTION("test decode pair summarize")
   {
-    REQUIRE(result.getIndices().rows() == 12ll);
-    REQUIRE(result.getIndices().cols() == 4ll);
+    REQUIRE(result.getPerPairIndices().rows() == 12ll);
+    REQUIRE(result.getPerPairIndices().cols() == 4ll);
 
-    REQUIRE(result.getPosteriors()(11, 0) == Approx(6108.99414f));
-    REQUIRE(result.getPosteriors()(9, 8) == Approx(3151.37231f));
-    REQUIRE(result.getPosteriors()(4, 29) == Approx(27580.66016f));
+    REQUIRE(result.getPerPairPosteriorMeans()(11, 0) == Approx(6108.99414f));
+    REQUIRE(result.getPerPairPosteriorMeans()(9, 8) == Approx(3151.37231f));
+    REQUIRE(result.getPerPairPosteriorMeans()(4, 29) == Approx(27580.66016f));
 
-    REQUIRE(result.getMAPs()(0, 0) == 29);
-    REQUIRE(result.getMAPs()(9, 1234) == 29);
-    REQUIRE(result.getMAPs()(11, 7) == 22);
+    REQUIRE(result.getPerPairMAPs()(0, 0) == 29);
+    REQUIRE(result.getPerPairMAPs()(9, 1234) == 29);
+    REQUIRE(result.getPerPairMAPs()(11, 7) == 22);
+
+    for (Eigen::Index idx = 0ll; idx < result.getPerPairPosteriors().size(); ++idx) {
+      REQUIRE((result.getPerPairPosteriors()(idx).colwise().sum() - result.getPerPairPosteriorMeans().row(idx)).isZero(1e-6));
+    }
   }
 }
