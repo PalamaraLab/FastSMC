@@ -77,18 +77,20 @@ DecodingReturnValues ASMC::ASMC::decodeAllInJob()
 }
 
 DecodePairsReturnStruct ASMC::ASMC::decodePairs(const std::vector<uint>& individualsA,
-                                                const std::vector<uint>& individualsB)
+                                                const std::vector<uint>& individualsB, bool fullPosteriors,
+                                                bool sumOfPosteriors, bool perPairPosteriors, bool perPairMAPs)
 {
   if (individualsA.empty() || individualsA.size() != individualsB.size()) {
     throw std::runtime_error(fmt::format("Expected two vectors of indices the same length, but got {} and {}",
                                          individualsA.size(), individualsB.size()));
   }
 
-  mHmm.getDecodePairsReturnStruct().resize(individualsA, individualsB, mData.sites,
-                                           mHmm.getDecodingQuantities().states);
-  mHmm.setStorePerPairPosteriorMean(true);
-  mHmm.setStorePerPairMap(true);
-  mHmm.setStorePerPairPosterior(true);
+  mHmm.getDecodePairsReturnStruct().initialise(individualsA, individualsB, mData.sites,
+                                               mHmm.getDecodingQuantities().states, fullPosteriors, sumOfPosteriors,
+                                               perPairPosteriors, perPairMAPs);
+  mHmm.setStorePerPairPosteriorMean(perPairPosteriors);
+  mHmm.setStorePerPairMap(perPairMAPs);
+  mHmm.setStorePerPairPosterior(fullPosteriors);
   mHmm.decodePairs(individualsA, individualsB);
   mHmm.finishDecoding();
   mHmm.getDecodePairsReturnStruct().finaliseCalculations();

@@ -1358,6 +1358,9 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
           if (m_storePerPairPosterior) {
             posteriors(batchIdx)(k, pos) = postValue;
           }
+          if (m_storeSumOfPosterior) {
+            m_decodePairsReturnStruct.getModifiableSumOfPosteriors()(k, pos) += postValue;
+          }
         }
       }
     }
@@ -1751,5 +1754,11 @@ void HMM::setWritePerPairMap(bool writePerPairMAP)
 void HMM::setStorePerPairPosterior(bool storePerPairPosterior)
 {
   m_storePerPairPosterior = storePerPairPosterior;
+  updateOutputStructures();
+}
+
+void HMM::setStoreSumOfPosterior(bool storeSumOfPosterior)
+{
+  m_storeSumOfPosterior = storeSumOfPosterior;
   updateOutputStructures();
 }

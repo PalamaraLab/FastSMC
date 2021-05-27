@@ -46,7 +46,7 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
 
   std::vector<unsigned> indA = {1, 2, 3};
   std::vector<unsigned> indB = {2, 3, 4};
-  auto result = asmc.decodePairs(indA, indB);
+  auto result = asmc.decodePairs(indA, indB, true, true, true, true);
 
   SECTION("test decode pair summarize")
   {

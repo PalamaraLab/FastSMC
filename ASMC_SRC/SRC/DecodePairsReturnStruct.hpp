@@ -24,32 +24,44 @@
 struct DecodePairsReturnStruct {
 
 private:
+
+  bool m_storeFullPosteriors = false;
+  bool m_storeSumOfPosteriors = false;
+  bool m_storePerPairPosteriors = false;
+  bool m_storePerPairMAPs = false;
+
   std::size_t numWritten = 0ul;
 
   /// The pair indices: iInd, iHap, jInd, jHap
-  Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor> perPairIndices;
+  Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor> m_perPairIndices;
 
   /// The full set of posteriors: for each pair this is a (states * numSites) matrix
-  Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1> perPairPosteriors;
+  Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1> m_perPairPosteriors;
 
   /// The sum of all posteriors in perPairPosteriors: a (states * numSites) matrix
-  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> sumOfPosteriors;
+  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_sumOfPosteriors;
 
   /// Posterior means: each row is an array of length numSites
-  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> perPairPosteriorMeans;
+  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_perPairPosteriorMeans;
 
-  Eigen::Array<float, 1, Eigen::Dynamic, Eigen::RowMajor> minPosteriorMeans;
-  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> argminPosteriorMeans;
+  Eigen::Array<float, 1, Eigen::Dynamic, Eigen::RowMajor> m_minPosteriorMeans;
+  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> m_argminPosteriorMeans;
 
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> perPairMAPs;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_perPairMAPs;
 
-  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> minMAPs;
-  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> argminMAPs;
+  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> m_minMAPs;
+  Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor> m_argminMAPs;
 
 public:
-  void resize(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB, long int numSites,
-              long int numStates)
+  void initialise(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB, long int numSites,
+                  long int numStates, bool fullPosteriors = false, bool sumOfPosteriors = false,
+                  bool perPairPosteriors = false, bool perPairMAPs = false)
   {
+    m_storeFullPosteriors = fullPosteriors;
+    m_storeSumOfPosteriors = sumOfPosteriors;
+    m_storePerPairPosteriors = perPairPosteriors;
+    m_storePerPairMAPs = perPairMAPs;
+
     Eigen::Index numPairsToDecode = 0ll;
     for (auto idx = 0ul; idx < individualsA.size(); ++idx) {
       if (individualsA[idx] == individualsB[idx]) {
@@ -59,22 +71,23 @@ public:
       }
     }
 
-    perPairIndices.resize(numPairsToDecode, Eigen::NoChange);
+    m_perPairIndices.resize(numPairsToDecode, Eigen::NoChange);
 
-    perPairPosteriors.resize(numPairsToDecode);
-    for (Eigen::Index i = 0ll; i < perPairPosteriors.size(); ++i) {
-      perPairPosteriors(i).resize(numStates, numSites);
+    m_perPairPosteriors.resize(numPairsToDecode);
+    for (Eigen::Index i = 0ll; i < m_perPairPosteriors.size(); ++i) {
+      m_perPairPosteriors(i).resize(numStates, numSites);
     }
 
-    sumOfPosteriors.resize(numStates, numSites);
+    m_sumOfPosteriors.resize(numStates, numSites);
+    m_sumOfPosteriors.setZero();
 
-    perPairPosteriorMeans.resize(numPairsToDecode, numSites);
-    minPosteriorMeans.resize(numSites);
-    argminPosteriorMeans.resize(numSites);
+    m_perPairPosteriorMeans.resize(numPairsToDecode, numSites);
+    m_minPosteriorMeans.resize(numSites);
+    m_argminPosteriorMeans.resize(numSites);
 
-    perPairMAPs.resize(numPairsToDecode, numSites);
-    minMAPs.resize(numSites);
-    argminMAPs.resize(numSites);
+    m_perPairMAPs.resize(numPairsToDecode, numSites);
+    m_minMAPs.resize(numSites);
+    m_argminMAPs.resize(numSites);
   }
 
   void incrementNumWritten()
@@ -84,87 +97,87 @@ public:
 
   void finaliseCalculations()
   {
-    sumOfPosteriors.setZero();
-    for (Eigen::Index pairIdx = 0ll; pairIdx < perPairPosteriors.size(); ++pairIdx) {
-      sumOfPosteriors += perPairPosteriors(pairIdx);
+    for (Eigen::Index siteIdx = 0ll; siteIdx < m_perPairPosteriorMeans.cols(); ++siteIdx) {
+      Eigen::Index argmin{};
+      m_minPosteriorMeans(siteIdx) = m_perPairPosteriorMeans.col(siteIdx).minCoeff(&argmin);
+      m_argminPosteriorMeans(siteIdx) = static_cast<int>(argmin);
     }
 
-    for (Eigen::Index siteIdx = 0ll; siteIdx < perPairPosteriorMeans.cols(); ++siteIdx) {
+    for (Eigen::Index siteIdx = 0ll; siteIdx < m_perPairMAPs.cols(); ++siteIdx) {
       Eigen::Index argmin{};
-      minPosteriorMeans(siteIdx) = perPairPosteriorMeans.col(siteIdx).minCoeff(&argmin);
-      argminPosteriorMeans(siteIdx) = static_cast<int>(argmin);
-    }
-
-    for (Eigen::Index siteIdx = 0ll; siteIdx < perPairMAPs.cols(); ++siteIdx) {
-      Eigen::Index argmin{};
-      minMAPs(siteIdx) = perPairMAPs.col(siteIdx).minCoeff(&argmin);
-      argminMAPs(siteIdx) = static_cast<int>(argmin);
+      m_minMAPs(siteIdx) = m_perPairMAPs.col(siteIdx).minCoeff(&argmin);
+      m_argminMAPs(siteIdx) = static_cast<int>(argmin);
     }
   }
 
   [[nodiscard]] const Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor>& getPerPairIndices() const
   {
-    return perPairIndices;
+    return m_perPairIndices;
   }
 
   [[nodiscard]] const Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1>& getPerPairPosteriors() const
   {
-    return perPairPosteriors;
+    return m_perPairPosteriors;
   }
 
   [[nodiscard]] const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getSumOfPosteriors() const
   {
-    return sumOfPosteriors;
+    return m_sumOfPosteriors;
   }
 
   [[nodiscard]] const Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getPerPairPosteriorMeans() const
   {
-    return perPairPosteriorMeans;
+    return m_perPairPosteriorMeans;
   }
 
   [[nodiscard]] const Eigen::Array<float, 1, Eigen::Dynamic, Eigen::RowMajor>& getMinPosteriorMeans() const
   {
-    return minPosteriorMeans;
+    return m_minPosteriorMeans;
   }
 
   [[nodiscard]] const Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor>& getArgminPosteriorMeans() const
   {
-    return argminPosteriorMeans;
+    return m_argminPosteriorMeans;
   }
 
   [[nodiscard]] const Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getPerPairMAPs() const
   {
-    return perPairMAPs;
+    return m_perPairMAPs;
   }
 
   [[nodiscard]] const Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor>& getMinMAPs() const
   {
-    return minMAPs;
+    return m_minMAPs;
   }
 
   [[nodiscard]] const Eigen::Array<int, 1, Eigen::Dynamic, Eigen::RowMajor>& getArgminMAPs() const
   {
-    return argminMAPs;
+    return m_argminMAPs;
   }
 
   [[nodiscard]] Eigen::Array<int, Eigen::Dynamic, 4, Eigen::RowMajor>& getModifiablePerPairIndices()
   {
-    return perPairIndices;
+    return m_perPairIndices;
+  }
+
+  [[nodiscard]] Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiableSumOfPosteriors()
+  {
+    return m_sumOfPosteriors;
   }
 
   [[nodiscard]] Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1>& getModifiablePerPairPosteriors()
   {
-    return perPairPosteriors;
+    return m_perPairPosteriors;
   }
 
   [[nodiscard]] Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiablePerPairPosteriorMeans()
   {
-    return perPairPosteriorMeans;
+    return m_perPairPosteriorMeans;
   }
 
   [[nodiscard]] Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getModifiablePerPairMAPs()
   {
-    return perPairMAPs;
+    return m_perPairMAPs;
   }
 
   [[nodiscard]] std::size_t getNumWritten() const

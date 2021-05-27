@@ -149,6 +149,7 @@ class HMM
   bool m_calculatePerPairMAP = false;
 
   bool m_storePerPairPosterior = false;
+  bool m_storeSumOfPosterior = false;
 
   Eigen::IOFormat m_eigenOutputFormat{Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n"};
 
@@ -270,6 +271,9 @@ public:
 
   /// Set to true to store per pair posterior
   void setStorePerPairPosterior(bool storePerPairPosterior = true);
+
+  /// Set to true to store the sum of posteriors
+  void setStoreSumOfPosterior(bool storeSumOfPosterior = true);
 
 private:
   void writeBinaryInfoIntoFile();
