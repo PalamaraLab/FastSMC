@@ -441,6 +441,34 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
+void HMM::decodeHapPair(const unsigned long i, const unsigned long j)
+{
+  auto numHaps = 2ul * data.individuals.size();
+  assert(i < numHaps);
+  assert(j < numHaps);
+
+  auto [iInd, iHap] = asmc::hapToDipId(i);
+  auto [jInd, jHap] = asmc::hapToDipId(j);
+
+  PairObservations obs = makePairObs(static_cast<int_least8_t>(iHap), iInd, static_cast<int_least8_t>(jHap), jInd);
+
+  if (noBatches) {
+    decode(obs);
+  } else {
+    addToBatch(m_observationsBatch, obs);
+  }
+}
+
+void HMM::decodeHapPairs(const std::vector<unsigned long>& hapsA, const std::vector<unsigned long>& hapsB)
+{
+  if (hapsA.size() != hapsB.size()) {
+    throw std::runtime_error("vector of A indices must be the same size as vector of B indices");
+  }
+  for (size_t i = 0; i < hapsA.size(); ++i) {
+    decodeHapPair(hapsA[i], hapsB[i]);
+  }
+}
+
 void HMM::decodeFromHashing(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
 {
   const vector<Individual>& individuals = data.individuals;
@@ -1359,7 +1387,7 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
             posteriors(batchIdx)(k, pos) = postValue;
           }
           if (m_storeSumOfPosterior) {
-            m_decodePairsReturnStruct.getModifiableSumOfPosteriors()(k, pos) += postValue;
+            m_decodePairsReturnStruct.sumOfPosteriors(k, pos) += postValue;
           }
         }
       }
@@ -1401,21 +1429,25 @@ void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vec
       const auto outIdx = static_cast<Eigen::Index>(m_decodePairsReturnStruct.getNumWritten());
 
       // Record the index information
-      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 0) = obsBatch[batchIdx].iInd;
-      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 1) = obsBatch[batchIdx].iHap;
-      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 2) = obsBatch[batchIdx].jInd;
-      m_decodePairsReturnStruct.getModifiablePerPairIndices()(outIdx, 3) = obsBatch[batchIdx].jHap;
+      unsigned long hapA = asmc::dipToHapId(obsBatch[batchIdx].iInd, obsBatch[batchIdx].iHap);
+      unsigned long hapB = asmc::dipToHapId(obsBatch[batchIdx].jInd, obsBatch[batchIdx].jHap);
+      std::string indIdA =
+          asmc::indPlusHapToCombinedId(data.IIDList.at(obsBatch[batchIdx].iInd), obsBatch[batchIdx].iHap);
+      std::string indIdB =
+          asmc::indPlusHapToCombinedId(data.IIDList.at(obsBatch[batchIdx].jInd), obsBatch[batchIdx].jHap);
+
+      m_decodePairsReturnStruct.perPairIndices.at(outIdx) = std::make_tuple(hapA, indIdA, hapB, indIdB);
 
       if (m_storePerPairPosterior) {
-        m_decodePairsReturnStruct.getModifiablePerPairPosteriors().at(outIdx) = posteriors(batchIdx);
+        m_decodePairsReturnStruct.perPairPosteriors.at(outIdx) = posteriors(batchIdx);
       }
 
       if (m_storePerPairPosteriorMean) {
-        m_decodePairsReturnStruct.getModifiablePerPairPosteriorMeans().row(outIdx) = meanPost.row(batchIdx);
+        m_decodePairsReturnStruct.perPairPosteriorMeans.row(outIdx) = meanPost.row(batchIdx);
       }
 
       if (m_storePerPairPosteriorMean) {
-        m_decodePairsReturnStruct.getModifiablePerPairMAPs().row(outIdx) = MAP.row(batchIdx);
+        m_decodePairsReturnStruct.perPairMAPs.row(outIdx) = MAP.row(batchIdx);
       }
 
       // Increment

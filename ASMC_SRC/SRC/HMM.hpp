@@ -196,17 +196,40 @@ public:
   ///
   void decodePair(const uint i, const uint j);
 
+  /// decode a single hap pair
+  ///
+  /// i and j must be a valid index in 2 * num_individuals
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full
+  ///
+  /// @param i hap index of first hap
+  /// @param j hap index of second hap
+  ///
+  void decodeHapPair(unsigned long i, unsigned long j);
+
   /// decode a list of pairs
   ///
-  /// the input pairs are described using two vectors of indicies of `individuals`.
+  /// the input pairs are described using two vectors of indices of `individuals`.
   /// if noBatches is not set then the pairs are processed in batches for efficiency.
   /// This means that after the call to `decodePairs` there might be unprocessed pairs
   /// waiting for the buffer to be full. Use `finishDecoding` to process these.
   ///
-  /// @param individualsA vector of indicies of first individual
-  /// @param individualsB vector of indicies of second individual
+  /// @param individualsA vector of indices of first individual
+  /// @param individualsB vector of indices of second individual
   ///
   void decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB);
+
+  /// decode a list of pairs index by their haplotype indices
+  ///
+  /// the input pairs are described using two vectors of indices of `haplotypes`.
+  /// if noBatches is not set then the pairs are processed in batches for efficiency.
+  /// This means that after the call to `decodePairs` there might be unprocessed pairs
+  /// waiting for the buffer to be full. Use `finishDecoding` to process these.
+  ///
+  /// @param individualsA vector of indices of first hap
+  /// @param individualsB vector of indices of second hap
+  ///
+  void decodeHapPairs(const std::vector<unsigned long>& individualsA, const std::vector<unsigned long>& individualsB);
 
   /// decode a single pair over a segment of the genome
   ///
@@ -354,7 +377,6 @@ private:
                        std::vector<float>& BU, std::vector<float>& currentBeta, std::vector<float>& emission1AtSite,
                        std::vector<float>& emission0minus1AtSite, std::vector<float>& emission2minus0AtSite,
                        float obsIsZero, float obsIsHomMinor);
-
 
 };
 
