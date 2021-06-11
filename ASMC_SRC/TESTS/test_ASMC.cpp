@@ -44,25 +44,25 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
   ASMC::ASMC asmc(ASMC_FILE_DIR "/EXAMPLE/exampleFile.n300.array",
                   ASMC_FILE_DIR "/DECODING_QUANTITIES/30-100-2000.decodingQuantities.gz");
 
-  std::vector<unsigned> indA = {1, 2, 3};
-  std::vector<unsigned> indB = {2, 3, 4};
-  auto result = asmc.decodePairs(indA, indB, true, true, true, true);
+  std::vector<unsigned long> indA = {1, 2, 3};
+  std::vector<unsigned long> indB = {2, 3, 4};
+  asmc.decodePairs(indA, indB, true, true, true, true);
+  auto result = asmc.getRefOfResults();
 
   SECTION("test decode pair summarize")
   {
-    REQUIRE(result.getPerPairIndices().rows() == 12ll);
-    REQUIRE(result.getPerPairIndices().cols() == 4ll);
+    REQUIRE(result.perPairIndices.size() == 3ul);
 
-    REQUIRE(result.getPerPairPosteriorMeans()(11, 0) == Approx(6108.99414f));
-    REQUIRE(result.getPerPairPosteriorMeans()(9, 8) == Approx(3151.37231f));
-    REQUIRE(result.getPerPairPosteriorMeans()(4, 29) == Approx(27580.66016f));
+    REQUIRE(result.perPairPosteriorMeans(0, 0) == Approx(7444.42236f));
+    REQUIRE(result.perPairPosteriorMeans(1, 8) == Approx(12891.93066f));
+    REQUIRE(result.perPairPosteriorMeans(2, 29) == Approx(27244.82812f));
 
-    REQUIRE(result.getPerPairMAPs()(0, 0) == 29);
-    REQUIRE(result.getPerPairMAPs()(9, 1234) == 29);
-    REQUIRE(result.getPerPairMAPs()(11, 7) == 22);
+    REQUIRE(result.perPairMAPs(0, 0) == 29);
+    REQUIRE(result.perPairMAPs(1, 1234) == 64);
+    REQUIRE(result.perPairMAPs(2, 7) == 29);
 
-    for (Eigen::Index idx = 0ll; idx < result.getPerPairPosteriors().size(); ++idx) {
-      REQUIRE((result.getPerPairPosteriors().at(idx).colwise().sum() - result.getPerPairPosteriorMeans().row(idx)).isZero(1e-6));
+    for (Eigen::Index idx = 0ll; idx < result.perPairPosteriors.size(); ++idx) {
+      REQUIRE((result.perPairPosteriors.at(idx).colwise().sum() - result.perPairPosteriorMeans.row(idx)).isZero(1e-6));
     }
   }
 }

@@ -24,6 +24,8 @@
 
 #include "Eigen/Core"
 
+using Catch::Matchers::StartsWith;
+
 TEST_CASE("test HMM utility free functions", "[HmmUtils]")
 {
 
@@ -327,5 +329,26 @@ TEST_CASE("test HMM utility free functions", "[HmmUtils]")
     REQUIRE(asmc::getToPosition(geneticPositions, 6u, 1e-6f) == 6u);
     REQUIRE(asmc::getToPosition(geneticPositions, 6u, 1.f) == 6u);
     REQUIRE(asmc::getToPosition(geneticPositions, 6u, 10.f) == 6u);
+  }
+
+  SECTION("test combinedIdToIndPlusHap")
+  {
+    CHECK_THROWS_WITH(asmc::combinedIdToIndPlusHap(""), StartsWith("Expected combined ID in form <id>#1"));
+    CHECK_THROWS_WITH(asmc::combinedIdToIndPlusHap("abcde"), StartsWith("Expected combined ID in form <id>#1"));
+    CHECK_THROWS_WITH(asmc::combinedIdToIndPlusHap("abcde#3"), StartsWith("Expected combined ID in form <id>#1"));
+    CHECK_THROWS_WITH(asmc::combinedIdToIndPlusHap("#1"), StartsWith("Expected combined ID in form <id>#1"));
+
+    CHECK(asmc::combinedIdToIndPlusHap("1_24#1") == std::make_pair<std::string, unsigned long>("1_24", 1ul));
+    CHECK(asmc::combinedIdToIndPlusHap("1#2") == std::make_pair<std::string, unsigned long>("1", 2ul));
+  }
+
+  SECTION("test indPlusHapToCombinedId")
+  {
+    CHECK_THROWS_WITH(asmc::indPlusHapToCombinedId("", 1), StartsWith("Expected an individual ID and"));
+    CHECK_THROWS_WITH(asmc::indPlusHapToCombinedId("123", 3), StartsWith("Expected an individual ID and"));
+    CHECK_THROWS_WITH(asmc::indPlusHapToCombinedId("123", 0), StartsWith("Expected an individual ID and"));
+
+    CHECK(asmc::indPlusHapToCombinedId("1_24", 1) == "1_24#1");
+    CHECK(asmc::indPlusHapToCombinedId("1", 2) == "1#2");
   }
 }
