@@ -14,6 +14,7 @@
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ASMC.hpp"
+#include "HmmUtils.hpp"
 
 #include <fmt/format.h>
 
@@ -76,24 +77,62 @@ DecodingReturnValues ASMC::ASMC::decodeAllInJob()
   return mHmm.getDecodingReturnValues();
 }
 
-DecodePairsReturnStruct ASMC::ASMC::decodePairs(const std::vector<uint>& individualsA,
-                                                const std::vector<uint>& individualsB, bool perPairPosteriors,
-                                                bool sumOfPosteriors, bool perPairPosteriorMeans, bool perPairMAPs)
+void ASMC::ASMC::decodePairs(const std::vector<unsigned long>& hapIndicesA,
+                             const std::vector<unsigned long>& hapIndicesB, bool perPairPosteriors,
+                             bool sumOfPosteriors, bool perPairPosteriorMeans, bool perPairMAPs)
 {
-  if (individualsA.empty() || individualsA.size() != individualsB.size()) {
-    throw std::runtime_error(fmt::format("Expected two vectors of indices the same length, but got {} and {}",
-                                         individualsA.size(), individualsB.size()));
+  if (hapIndicesA.empty() || hapIndicesA.size() != hapIndicesB.size()) {
+    throw std::runtime_error(
+        fmt::format("Vector of A indices ({}) must be the same size as vector of B indices ({}).\n", hapIndicesA.size(),
+                    hapIndicesB.size()));
   }
 
-  mHmm.getDecodePairsReturnStruct().initialise(individualsA, individualsB, mData.sites,
+  mHmm.getDecodePairsReturnStruct().initialise(hapIndicesA, hapIndicesB, mData.sites,
                                                mHmm.getDecodingQuantities().states, perPairPosteriors, sumOfPosteriors,
                                                perPairPosteriorMeans, perPairMAPs);
   mHmm.setStorePerPairPosteriorMean(perPairPosteriorMeans);
   mHmm.setStorePerPairMap(perPairMAPs);
   mHmm.setStorePerPairPosterior(perPairPosteriors);
   mHmm.setStoreSumOfPosterior(sumOfPosteriors);
-  mHmm.decodePairs(individualsA, individualsB);
+  mHmm.decodeHapPairs(hapIndicesA, hapIndicesB);
   mHmm.finishDecoding();
   mHmm.getDecodePairsReturnStruct().finaliseCalculations();
+}
+
+void ASMC::ASMC::decodePairs(const std::vector<std::string>& hapIdsA, const std::vector<std::string>& hapIdsB,
+                             bool perPairPosteriors, bool sumOfPosteriors, bool perPairPosteriorMeans, bool perPairMAPs)
+{
+  if (hapIdsA.size() != hapIdsB.size()) {
+    throw std::runtime_error(fmt::format("Vector of A IDs ({}) must be the same size as vector of B IDs ({}).\n",
+                                         hapIdsA.size(), hapIdsB.size()));
+  }
+
+  std::vector<unsigned long> hapsIndicesA;
+  std::vector<unsigned long> hapsIndicesB;
+
+  hapsIndicesA.resize(hapIdsA.size());
+  hapsIndicesB.resize(hapIdsB.size());
+
+  for (auto i = 0ul; i < hapIdsA.size(); ++i) {
+    auto [strIdA, hapA] = asmc::combinedIdToIndPlusHap(hapIdsA.at(i));
+    auto [strIdB, hapB] = asmc::combinedIdToIndPlusHap(hapIdsB.at(i));
+
+    unsigned long indIdA = asmc::getIndIdxFromIdString(mData.IIDList, strIdA);
+    unsigned long indIdB = asmc::getIndIdxFromIdString(mData.IIDList, strIdB);
+
+    hapsIndicesA.at(i) = asmc::dipToHapId(indIdA, hapA);
+    hapsIndicesB.at(i) = asmc::dipToHapId(indIdB, hapB);
+  }
+
+  decodePairs(hapsIndicesA, hapsIndicesB, perPairPosteriors, sumOfPosteriors, perPairPosteriorMeans, perPairMAPs);
+}
+
+DecodePairsReturnStruct ASMC::ASMC::getCopyOfResults()
+{
+  return mHmm.getDecodePairsReturnStruct();
+}
+
+const DecodePairsReturnStruct& ASMC::ASMC::getRefOfResults()
+{
   return mHmm.getDecodePairsReturnStruct();
 }

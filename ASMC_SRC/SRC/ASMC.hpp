@@ -24,10 +24,6 @@
 #include <string>
 #include <vector>
 
-DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file, std::string out_file_root,
-                         DecodingModeOverall mode, int jobs, int job_index, float skip_csfs_distance, bool compress,
-                         bool use_ancestral, bool posterior_sums, bool major_minor_posterior_sums);
-
 namespace ASMC
 {
 
@@ -59,11 +55,18 @@ public:
 
   DecodingReturnValues decodeAllInJob();
 
-  DecodePairsReturnStruct decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB,
-                                      bool fullPosteriors = false, bool sumOfPosteriors = false,
-                                      bool perPairPosteriorMeans = false, bool perPairMAPs = false);
-};
+  void decodePairs(const std::vector<unsigned long>& hapIndicesA, const std::vector<unsigned long>& hapIndicesB,
+                   bool perPairPosteriors = false, bool sumOfPosteriors = false, bool perPairPosteriorMeans = false,
+                   bool perPairMAPs = false);
 
+  void decodePairs(const std::vector<std::string>& hapIdsA, const std::vector<std::string>& hapIdsB,
+                   bool perPairPosteriors = false, bool sumOfPosteriors = false, bool perPairPosteriorMeans = false,
+                   bool perPairMAPs = false);
+
+  DecodePairsReturnStruct getCopyOfResults();
+
+  const DecodePairsReturnStruct& getRefOfResults();
+};
 } // namespace ASMC
 
 #endif
