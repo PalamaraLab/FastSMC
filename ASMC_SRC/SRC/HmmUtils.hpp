@@ -319,6 +319,53 @@ unsigned getFromPosition(const std::vector<float>& geneticPositions, unsigned fr
  */
 unsigned getToPosition(const std::vector<float>& geneticPositions, unsigned to, float cmDist = 0.5f);
 
+/**
+ * Convert haploid ID to diploid ID (individual ID + hap ID) pair
+ * Mapping:
+ *   0 -> (0, 1)
+ *   1 -> (0, 2)
+ *   2 -> (1, 1), ...
+ * Note that individual ID is zero-indexed but hap ID is 1-indexed.
+ * @param hapId index of the column in the hap file corresponding to this hap
+ * @return the individual ID + hap ID pair corresponding to the provided hap ID
+ */
+std::pair<unsigned long, unsigned long> hapToDipId(unsigned long hapId);
+
+/**
+ * Convert diploid ID (individual ID + hap ID) pair to haploid ID
+ * Mapping:
+ *   (0, 1) -> 0
+ *   (0, 2) -> 1
+ *   (1, 1) -> 2, ...
+ * @param ind the individual ID
+ * @param hap the id of the hap for this individual (either 1 or 2)
+ * @return the hap ID corresponding to the provided diploid ID pair
+ */
+unsigned long dipToHapId(unsigned long ind, unsigned long hap);
+
+/**
+ * Create a combined individual plus hap ID from an individual ID and a hap index.
+ * E.g. indID "1_24" and hap 2 -> "1_24#2"
+ * @param indId the individual ID string
+ * @param hap the hap ID (1 or 2)
+ * @return the combined ID containing the individual ID and the hap number, e.g. "1_24#2"
+ */
+std::string indPlusHapToCombinedId(std::string_view indId, unsigned long hap);
+
+/// Convert a combined individual plus hap ID to an individual and hap ID.
+/// E.g. "1_24#2" -> ("1_24", 2)
+/// \param combinedId the combined ID containing the individual ID and the hap number, e.g. "1_24#2"
+/// \return the individual ID (string) and hap ID (unsigned integer, either 1 or 2)
+/**
+ * Convert a combined individual plus hap ID to an individual and hap ID.
+ * E.g. "1_24#2" -> ("1_24", 2)
+ * @param combinedId the combined ID containing the individual ID and the hap number, e.g. "1_24#2"
+ * @return the individual ID (string) and hap ID (unsigned integer, either 1 or 2)
+ */
+std::pair<std::string, unsigned long> combinedIdToIndPlusHap(std::string_view combinedId);
+
+unsigned long getIndIdxFromIdString(const std::vector<std::string>& idStrings, std::string_view idString);
+
 } // namespace asmc
 
 #endif // HMMUTILS_HPP
