@@ -583,3 +583,8 @@ std::vector<std::vector<int>> Data::calculateUndistinguishedCounts(const int num
 
   return undistinguished;
 }
+
+const vector<std::string>& Data::getSnpIDs() const
+{
+  return SNP_IDs;
+}

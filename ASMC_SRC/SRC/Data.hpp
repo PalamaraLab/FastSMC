@@ -72,6 +72,8 @@ public:
    */
   std::vector<std::vector<int>> calculateUndistinguishedCounts(int numCsfsSamples) const;
 
+  const std::vector<std::string>& getSnpIDs() const;
+
 private:
 
   /**
