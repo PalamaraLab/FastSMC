@@ -112,8 +112,6 @@ HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
   m_alphaBuffer.resize(sequenceLength * states * m_batchSize);
   m_betaBuffer.resize(sequenceLength * states * m_batchSize);
 
-  fmt::print("########## EIGEN_DEFAULT_ALIGN_BYTES: {}\n", EIGEN_DEFAULT_ALIGN_BYTES);
-
   m_allZeros.resize(sequenceLength * m_batchSize);
   m_allZeros.setZero();
 
