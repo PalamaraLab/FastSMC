@@ -180,11 +180,6 @@ target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(ASMC PRIVATE fmt::fmt)
 
-
-# requires asmc-prepare-decoding
-find_package(AsmcPrepareDecoding CONFIG REQUIRED)
-target_link_libraries(ASMC PRIVATE AsmcPrepareDecoding::prepare_decoding_lib)
-
 # requires asmc-prepare-decoding
 #find_package(AsmcDataModule CONFIG REQUIRED)
 #target_link_libraries(ASMC PRIVATE AsmcDataModule::data_module_lib)

@@ -2,7 +2,6 @@
   "name": "asmc-fastsmc",
   "version": "0.1",
   "dependencies": [
-    "asmc-prepare-decoding",
     "eigen3",
     "fmt",
     "zlib"
