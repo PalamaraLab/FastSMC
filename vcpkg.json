@@ -2,6 +2,11 @@
   "name": "asmc-fastsmc",
   "version": "0.1",
   "dependencies": [
+    "boost-algorithm",
+    "boost-iostreams",
+    "boost-math",
+    "boost-program-options",
+    "boost-unordered",
     "eigen3",
     "fmt",
     "zlib"
