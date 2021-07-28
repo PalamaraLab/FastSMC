@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include "FileUtils.hpp"
 #include "StringUtils.hpp"
 #include "Types.hpp"
@@ -416,7 +418,8 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
   totalSamplesCount = vector<int>(sites);
   derivedAlleleCounts = vector<int>(sites);
   string chr, snpID;
-  unsigned long bp;
+  unsigned long bp = 0ul;
+  unsigned long largest_bp = bp;
   string line;
   string alleleA;
   string alleleB;
@@ -426,9 +429,20 @@ void Data::readHaps(string inFileRoot, bool foldToMinorAlleles, int jobID, int j
     getline(hapsBr, line);
     int DAcount = 0;
     if (!(line.length() == 4 * sampleSize || line.length() == 4 * sampleSize + 1)) {
-      cerr << "ERROR: haps line has wrong length. Length is " << line.length() << ", should be 4*"
-           << famAndIndNameList.size() << " = " << 4 * famAndIndNameList.size() << "." << endl;
-      cerr << "\thaps line is: " << line << endl;
+      fmt::print(stderr,
+                 "ERROR: haps line has wrong length. Length is {}, but should be 4 * {} = {}.\n\tHaps line is: {}\n",
+                 line.length(), famAndIndNameList.size(), 4 * famAndIndNameList.size(), line);
+      exit(1);
+    }
+
+    // it is required that the rows in the haps file are sorted by increasing physical position
+    if (bp > largest_bp) {
+      largest_bp = bp;
+    } else {
+      fmt::print(stderr,
+                 "ERROR: rows in haps data file must be ordered by increasing physical position, but two consecutive "
+                 "values were {} and {}\n",
+                 largest_bp, bp);
       exit(1);
     }
 
