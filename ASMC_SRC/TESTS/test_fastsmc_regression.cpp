@@ -58,7 +58,7 @@ TEST_CASE("test FastSMC + hashing regression test", "[FastSMC_regression]")
 
   SECTION("regression test")
   {
-    const auto expectedNumLines = 1512ul;
+    const auto expectedNumLines = 1524ul;
 
     // Read lines from existing regression test output into a vector of strings
     std::vector<std::string> regressionLines;
@@ -125,7 +125,7 @@ TEST_CASE("test FastSMC without hashing regression test", "[FastSMC_regression]"
 
   SECTION("regression test")
   {
-    const auto expectedNumLines = 3056ul;
+    const auto expectedNumLines = 2986ul;
 
     // Read lines from existing regression test output into a vector of strings
     std::vector<std::string> regressionLines;

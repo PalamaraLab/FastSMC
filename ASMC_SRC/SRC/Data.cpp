@@ -151,7 +151,7 @@ int Data::sampleHypergeometric(int populationSize, int numberOfSuccesses, int sa
   for (int i = 0; i < numberOfSuccesses; i++) {
     samplingVector[i] = 1;
   }
-  std::shuffle(samplingVector.begin(), samplingVector.end(), std::mt19937(std::random_device()()));
+  std::shuffle(samplingVector.begin(), samplingVector.end(), std::mt19937(std::rand()));
   int ret = 0;
   for (int i = 0; i < sampleSize; i++) {
     ret += samplingVector[i];
