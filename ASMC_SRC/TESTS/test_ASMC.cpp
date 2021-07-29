@@ -53,16 +53,16 @@ TEST_CASE("test ASMC decodePairs", "[ASMC]")
   {
     REQUIRE(result.perPairIndices.size() == 3ul);
 
-    REQUIRE(result.perPairPosteriorMeans(0, 0) == Approx(7444.42236f));
-    REQUIRE(result.perPairPosteriorMeans(1, 8) == Approx(12891.93066f));
-    REQUIRE(result.perPairPosteriorMeans(2, 29) == Approx(27244.82812f));
+    REQUIRE(result.perPairPosteriorMeans(0, 0) == Approx(7444.42236f).margin(1.f));
+    REQUIRE(result.perPairPosteriorMeans(1, 8) == Approx(12891.93066f).margin(1.f));
+    REQUIRE(result.perPairPosteriorMeans(2, 29) == Approx(27244.82812f).margin(1.f));
 
     REQUIRE(result.perPairMAPs(0, 0) == 29);
     REQUIRE(result.perPairMAPs(1, 1234) == 64);
     REQUIRE(result.perPairMAPs(2, 7) == 29);
 
     for (Eigen::Index idx = 0ll; idx < result.perPairPosteriors.size(); ++idx) {
-      REQUIRE((result.perPairPosteriors.at(idx).colwise().sum() - result.perPairPosteriorMeans.row(idx)).isZero(1e-6));
+      REQUIRE((result.perPairPosteriors.at(idx).colwise().sum() - result.perPairPosteriorMeans.row(idx)).isZero(1e-2));
     }
   }
 }
