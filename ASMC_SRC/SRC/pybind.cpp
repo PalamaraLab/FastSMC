@@ -13,19 +13,22 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <pybind11/pybind11.h>
-#include <vector>
-#include <pybind11/stl_bind.h>
-#include <pybind11/stl.h>
-#include <pybind11/eigen.h>
 #include "ASMC.hpp"
-#include "Individual.hpp"
-#include "HMM.hpp"
 #include "BinaryDataReader.hpp"
 #include "Data.hpp"
-#include "DecodingQuantities.hpp"
+#include "DecodePairsReturnStruct.hpp"
 #include "DecodingParams.hpp"
+#include "DecodingQuantities.hpp"
 #include "FastSMC.hpp"
+#include "HMM.hpp"
+#include "Individual.hpp"
+
+#include <pybind11/eigen.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
+
+#include <vector>
 
 PYBIND11_MAKE_OPAQUE(std::vector<bool>)
 PYBIND11_MAKE_OPAQUE(std::vector<float>)
@@ -35,6 +38,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<PairObservations>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<float, std::vector<float>>)
 PYBIND11_MAKE_OPAQUE(std::unordered_map<int, std::vector<float>>)
 PYBIND11_MAKE_OPAQUE(DecodingQuantities)
+PYBIND11_MAKE_OPAQUE(DecodePairsReturnStruct)
 PYBIND11_MAKE_OPAQUE(DecodingReturnValues)
 PYBIND11_MAKE_OPAQUE(PairObservations)
 PYBIND11_MAKE_OPAQUE(Individual)
@@ -72,6 +76,16 @@ PYBIND11_MODULE(pyASMC, m) {
         .def_readwrite("sites", &DecodingReturnValues::sites)
         .def_readwrite("states", &DecodingReturnValues::states)
         .def_readwrite("siteWasFlippedDuringFolding", &DecodingReturnValues::siteWasFlippedDuringFolding);
+    py::class_<DecodePairsReturnStruct>(m, "DecodePairsReturnStruct")
+        .def_readwrite("per_pair_indices", &DecodePairsReturnStruct::perPairIndices, py::return_value_policy::reference_internal)
+        .def_readwrite("per_pair_posteriors", &DecodePairsReturnStruct::perPairPosteriors, py::return_value_policy::reference_internal)
+        .def_readwrite("sum_of_posteriors", &DecodePairsReturnStruct::sumOfPosteriors, py::return_value_policy::reference_internal)
+        .def_readwrite("per_pair_posterior_means", &DecodePairsReturnStruct::perPairPosteriorMeans, py::return_value_policy::reference_internal)
+        .def_readwrite("min_posterior_means", &DecodePairsReturnStruct::minPosteriorMeans, py::return_value_policy::reference_internal)
+        .def_readwrite("argmin_posterior_means", &DecodePairsReturnStruct::argminPosteriorMeans, py::return_value_policy::reference_internal)
+        .def_readwrite("per_pair_MAPs", &DecodePairsReturnStruct::perPairMAPs, py::return_value_policy::reference_internal)
+        .def_readwrite("min_MAPs", &DecodePairsReturnStruct::minMAPs, py::return_value_policy::reference_internal)
+        .def_readwrite("argmin_MAPs", &DecodePairsReturnStruct::argminMAPs, py::return_value_policy::reference_internal);
     py::class_<Individual>(m, "Individual")
         .def(py::init<int>(),
                 "numOfSites"_a = 0)
@@ -218,11 +232,21 @@ PYBIND11_MODULE(pyASMC, m) {
         .def(py::init<DecodingParams>(), "decodingParams"_a)
         .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
         .def("run", &ASMC::FastSMC::run);
-    m.def("asmc", &run, "Runs ASMC on HAPS files",
-          "inFileRoot"_a, "decodingQuantFile"_a,
-          "outFileRoot"_a = "", "mode"_a = DecodingModeOverall::array,
-          "jobs"_a = 0, "jobInd"_a = 0,
-          "skipCSFSdistance"_a = 0,
-          "compress"_a = false, "useAncestral"_a = false,
-          "doPosteriorSums"_a = true, "doMajorMinorPosteriorSums"_a = false);
+    py::class_<ASMC::ASMC>(m, "ASMC")
+        .def(py::init<DecodingParams>(), "decodingParams"_a)
+        .def(py::init<const std::string&, const std::string&>(), "in_dir"_a, "out_dir"_a)
+        .def("decodeAllInJob", &ASMC::ASMC::decodeAllInJob)
+        .def("decodePairs",
+             py::overload_cast<const std::vector<unsigned long>&, const std::vector<unsigned long>&, bool, bool, bool,
+                               bool>(&ASMC::ASMC::decodePairs),
+             "hap_indices_a"_a, "hap_indices_b"_a, "per_pair_posteriors"_a = false, "sum_of_posteriors"_a = false,
+             "per_pair_posterior_means"_a = false, "per_pair_MAPs"_a = false)
+        .def(
+            "decodePairs",
+            py::overload_cast<const std::vector<std::string>&, const std::vector<std::string>&, bool, bool, bool, bool>(
+                &ASMC::ASMC::decodePairs),
+            "hap_ids_a"_a, "hap_ids_b"_a, "per_pair_posteriors"_a = false, "sum_of_posteriors"_a = false,
+            "per_pair_posterior_means"_a = false, "per_pair_MAPs"_a = false)
+        .def("get_copy_of_results", &ASMC::ASMC::getCopyOfResults, py::return_value_policy::copy)
+        .def("get_ref_of_results", &ASMC::ASMC::getRefOfResults, py::return_value_policy::reference_internal);
 }

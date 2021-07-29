@@ -18,12 +18,15 @@
 #include <cassert>
 #include <chrono>
 #include <exception>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <utility>
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
+
+#include <fmt/format.h>
 
 #include "AvxDefinitions.hpp"
 #include "HmmUtils.hpp"
@@ -34,7 +37,7 @@
 using namespace std;
 
 // read expected times from a file
-vector<float> readExpectedTimesFromIntervalsFil(const char* fileName)
+vector<float> readExpectedTimesFromIntervalsFile(const char* fileName)
 {
   FileUtils::AutoGzIfstream br;
   br.openOrExit(fileName);
@@ -104,47 +107,23 @@ HMM::HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip)
   startBatch = sequenceLength;
   endBatch = 0;
 
-  if (decodingParams.doPerPairPosteriorMean && !decodingParams.FastSMC) {
-    expectedCoalTimes = readExpectedTimesFromIntervalsFil(expectedCoalTimesFile.c_str());
-  }
-
   // allocate buffers
-  m_scalingBuffer = ALIGNED_MALLOC_FLOATS(m_batchSize);
-  m_alphaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
-  m_betaBuffer = ALIGNED_MALLOC_FLOATS(sequenceLength * states * m_batchSize);
-  m_allZeros = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
-  memset(m_allZeros, 0, sequenceLength * m_batchSize * sizeof(m_allZeros[0]));
+  m_scalingBuffer.resize(m_batchSize);
+  m_alphaBuffer.resize(sequenceLength * states * m_batchSize);
+  m_betaBuffer.resize(sequenceLength * states * m_batchSize);
 
-  if (decodingParams.doPerPairPosteriorMean) {
-    meanPost = ALIGNED_MALLOC_FLOATS(sequenceLength * m_batchSize);
-  }
-  if (decodingParams.doPerPairMAP) {
-    MAP = ALIGNED_MALLOC_USHORTS(sequenceLength * m_batchSize);
-    currentMAPValue = ALIGNED_MALLOC_FLOATS(m_batchSize);
-  }
+  m_allZeros.resize(sequenceLength * m_batchSize);
+  m_allZeros.setZero();
 
-  resetDecoding();
+  // Output variables
+  m_calculatePerPairPosteriorMean = decodingParams.doPerPairPosteriorMean;
+  m_calculatePerPairMAP = decodingParams.doPerPairMAP;
+  updateOutputStructures();
 
   // output for python interface (TODO: not sure if this is the right place)
   m_decodingReturnValues.sites = data.sites;
   m_decodingReturnValues.states = m_decodingQuant.states;
   m_decodingReturnValues.siteWasFlippedDuringFolding = data.siteWasFlippedDuringFolding;
-}
-
-HMM::~HMM()
-{
-  ALIGNED_FREE(m_betaBuffer);
-  ALIGNED_FREE(m_alphaBuffer);
-  ALIGNED_FREE(m_scalingBuffer);
-  ALIGNED_FREE(m_allZeros);
-
-  if (decodingParams.doPerPairPosteriorMean) {
-    ALIGNED_FREE(meanPost);
-  }
-  if (decodingParams.doPerPairMAP) {
-    ALIGNED_FREE(MAP);
-    ALIGNED_FREE(currentMAPValue);
-  }
 }
 
 PairObservations HMM::makePairObs(int_least8_t iHap, unsigned int ind1, int_least8_t jHap, unsigned int ind2)
@@ -278,13 +257,13 @@ void HMM::prepareEmissions()
 
 void HMM::resetDecoding()
 {
-  if (decodingParams.doPerPairPosteriorMean && !decodingParams.FastSMC) {
+  if (m_writePerPairPosteriorMean && !decodingParams.FastSMC) {
     if (foutPosteriorMeanPerPair) {
       foutPosteriorMeanPerPair.close();
     }
     foutPosteriorMeanPerPair.openOrExit(outFileRoot + ".perPairPosteriorMeans.gz");
   }
-  if (decodingParams.doPerPairMAP && !decodingParams.FastSMC) {
+  if (m_writePerPairMAP && !decodingParams.FastSMC) {
     if (foutMAPPerPair) {
       foutMAPPerPair.close();
     }
@@ -460,6 +439,34 @@ void HMM::decodePair(const uint i, const uint j)
   }
 }
 
+void HMM::decodeHapPair(const unsigned long i, const unsigned long j)
+{
+  auto numHaps = 2ul * data.individuals.size();
+  assert(i < numHaps);
+  assert(j < numHaps);
+
+  auto [iInd, iHap] = asmc::hapToDipId(i);
+  auto [jInd, jHap] = asmc::hapToDipId(j);
+
+  PairObservations obs = makePairObs(static_cast<int_least8_t>(iHap), iInd, static_cast<int_least8_t>(jHap), jInd);
+
+  if (noBatches) {
+    decode(obs);
+  } else {
+    addToBatch(m_observationsBatch, obs);
+  }
+}
+
+void HMM::decodeHapPairs(const std::vector<unsigned long>& hapsA, const std::vector<unsigned long>& hapsB)
+{
+  if (hapsA.size() != hapsB.size()) {
+    throw std::runtime_error("vector of A indices must be the same size as vector of B indices");
+  }
+  for (size_t i = 0; i < hapsA.size(); ++i) {
+    decodeHapPair(hapsA[i], hapsB[i]);
+  }
+}
+
 void HMM::decodeFromHashing(const uint indivID1, const uint indivID2, const uint fromPosition, const uint toPosition)
 {
   const vector<Individual>& individuals = data.individuals;
@@ -508,10 +515,10 @@ uint HMM::getStateThreshold()
 void HMM::finishDecoding()
 {
   runLastBatch(m_observationsBatch);
-  if (decodingParams.doPerPairPosteriorMean) {
+  if (m_writePerPairPosteriorMean) {
     foutPosteriorMeanPerPair.close();
   }
-  if (decodingParams.doPerPairMAP) {
+  if (m_writePerPairMAP) {
     foutMAPPerPair.close();
   }
 }
@@ -568,7 +575,7 @@ void HMM::addToBatch(vector<PairObservations>& obsBatch, const PairObservations&
     decodeBatch(obsBatch, from, to);
 
     augmentSumOverPairs(obsBatch, m_batchSize, m_batchSize);
-    if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.FastSMC) {
+    if ((m_calculatePerPairMAP || m_calculatePerPairPosteriorMean) && !decodingParams.FastSMC) {
       writePerPairOutput(m_batchSize, m_batchSize, obsBatch);
     }
 
@@ -617,7 +624,7 @@ void HMM::runLastBatch(vector<PairObservations>& obsBatch)
   decodeBatch(obsBatch, from, to);
   augmentSumOverPairs(obsBatch, actualBatchSize, paddedBatchSize);
 
-  if ((decodingParams.doPerPairMAP || decodingParams.doPerPairPosteriorMean) && !decodingParams.FastSMC) {
+  if ((m_calculatePerPairMAP || m_calculatePerPairPosteriorMean) && !decodingParams.FastSMC) {
     writePerPairOutput(actualBatchSize, paddedBatchSize, obsBatch);
   }
 
@@ -634,8 +641,8 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
 
   int curBatchSize = static_cast<int>(obsBatch.size());
 
-  float* obsIsZeroBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
-  float* obsIsTwoBatch = ALIGNED_MALLOC_FLOATS(sequenceLength * curBatchSize);
+  Eigen::ArrayXf obsIsZeroBatch(sequenceLength * curBatchSize);
+  Eigen::ArrayXf obsIsTwoBatch(sequenceLength * curBatchSize);
 
   for (long int pos = from; pos < to; pos++) {
     for (int v = 0; v < curBatchSize; v++) {
@@ -659,8 +666,8 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
   ticksBackward += t2 - t1;
 
   // combine (alpha * beta), normalize and store
-  float* scale = obsIsZeroBatch; // reuse buffer but rename to be less confusing
-  memset(scale, 0, sequenceLength * curBatchSize * sizeof(scale[0]));
+  Eigen::Map<Eigen::ArrayXf> scale(obsIsZeroBatch.data(), obsIsZeroBatch.size()); // reuse buffer but rename to be less confusing
+  scale.setZero();
 #ifdef NO_SSE
   for (long int pos = from; pos < to; pos++) {
     for (int k = 0; k < states; k++) {
@@ -712,19 +719,18 @@ void HMM::decodeBatch(const vector<PairObservations>& obsBatch, const unsigned f
 
   auto t3 = std::chrono::high_resolution_clock::now();
   ticksCombine += t3 - t2;
-  ALIGNED_FREE(obsIsZeroBatch);
-  ALIGNED_FREE(obsIsTwoBatch);
 }
 
 // forward step
-void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, const unsigned from,
-                       const unsigned to)
+void HMM::forwardBatch(Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                       int curBatchSize, const unsigned from, const unsigned to)
 {
 
   assert(curBatchSize % VECX == 0);
 
-  float* alphaC = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
-  float* AU = ALIGNED_MALLOC_FLOATS(curBatchSize);
+  Eigen::ArrayXf alphaC(states * curBatchSize);
+  Eigen::ArrayXf AU(curBatchSize);
+  Eigen::ArrayXf sums(curBatchSize);
 
   // fill pos=0 in alpha
   for (int k = 0; k < states; k++) {
@@ -736,8 +742,7 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
     }
   }
 
-  float* sums = AU; // reuse buffer but rename to be less confusing
-  float* currentAlpha = &m_alphaBuffer[states * from * curBatchSize];
+  Eigen::Map<Eigen::ArrayXf> currentAlpha(&m_alphaBuffer[states * from * curBatchSize], states * curBatchSize);
   asmc::calculateScalingBatch(currentAlpha, m_scalingBuffer, sums, curBatchSize, states);
   asmc::applyScalingBatch(currentAlpha, m_scalingBuffer, curBatchSize, states);
 
@@ -749,8 +754,8 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
     // get distances and rates
     float recDistFromPrevious = asmc::roundMorgans(data.geneticPositions[pos] - lastGeneticPos, precision, minGenetic);
     float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
-    float* previousAlpha = &m_alphaBuffer[(pos - 1) * states * curBatchSize];
-    float* nextAlpha = &m_alphaBuffer[pos * states * curBatchSize];
+    Eigen::Map<Eigen::ArrayXf> previousAlpha(&m_alphaBuffer[(pos - 1) * states * curBatchSize], states * curBatchSize);
+    Eigen::Map<Eigen::ArrayXf> nextAlpha(&m_alphaBuffer[pos * states * curBatchSize], states * curBatchSize);
 
     if (decodingParams.decodingSequence) {
       int physDistFromPreviousMinusOne =
@@ -767,7 +772,6 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
       getNextAlphaBatched(recDistFromPrevious, alphaC, curBatchSize, previousAlpha, pos, obsIsZeroBatch, obsIsTwoBatch,
                           AU, nextAlpha, emission1AtSite[pos], emission0minus1AtSite[pos], emission2minus0AtSite[pos]);
     }
-    float* sums = AU; // reuse buffer but rename to be less confusing
 
     if (pos % scalingSkip == 0) {
       asmc::calculateScalingBatch(nextAlpha, m_scalingBuffer, sums, curBatchSize, states);
@@ -777,16 +781,15 @@ void HMM::forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, 
     lastGeneticPos = data.geneticPositions[pos];
     lastPhysicalPos = data.physicalPositions[pos];
   }
-
-  ALIGNED_FREE(AU);
-  ALIGNED_FREE(alphaC);
 }
 
 // compute next alpha vector in linear time
-void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
-                              uint pos, const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* AU,
-                              float* nextAlpha, const vector<float>& emission1AtSite,
-                              const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite)
+void HMM::getNextAlphaBatched(float recDistFromPrevious, Eigen::Ref<Eigen::ArrayXf> alphaC, int curBatchSize,
+                              Eigen::Ref<Eigen::ArrayXf> previousAlpha, uint pos,
+                              Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                              Eigen::Ref<Eigen::ArrayXf> AU, Eigen::Ref<Eigen::ArrayXf> nextAlpha,
+                              const std::vector<float>& emission1AtSite, const std::vector<float>& emission0minus1AtSite,
+                              const std::vector<float>& emission2minus0AtSite)
 {
 
   const float* B = &m_decodingQuant.Bvectors.at(recDistFromPrevious)[0];
@@ -810,7 +813,7 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curB
 #endif
   }
 
-  memset(AU, 0, curBatchSize * sizeof(AU[0]));
+  AU.setZero();
   for (int k = 0; k < states; k++) {
 
 #ifdef NO_SSE
@@ -876,8 +879,8 @@ void HMM::getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curB
 }
 
 // backward step
-void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, const unsigned from,
-                        const unsigned to)
+void HMM::backwardBatch(Eigen::ArrayXf obsIsZeroBatch, Eigen::ArrayXf obsIsTwoBatch, int curBatchSize,
+                        const unsigned from, const unsigned to)
 {
 
   // fill pos=sequenceLenght-1 in beta
@@ -886,16 +889,17 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
       m_betaBuffer[((to - 1) * states + k) * curBatchSize + v] = 1.0f;
     }
   }
-  float* sums = ALIGNED_MALLOC_FLOATS(curBatchSize);
 
-  float* currentBeta = &m_betaBuffer[states * (to - 1) * curBatchSize];
+  Eigen::ArrayXf sums(curBatchSize);
+  Eigen::Map<Eigen::ArrayXf> currentBeta(&m_betaBuffer[states * (to - 1) * curBatchSize], states * curBatchSize);
+
   asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
   asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
 
   // Induction Step:
-  float* BL = ALIGNED_MALLOC_FLOATS(curBatchSize);
-  float* BU = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
-  float* vec = ALIGNED_MALLOC_FLOATS(states * curBatchSize);
+  Eigen::ArrayXf BL(curBatchSize);
+  Eigen::ArrayXf BU(states * curBatchSize);
+  Eigen::ArrayXf vec(states * curBatchSize);
 
   float lastGeneticPos = data.geneticPositions[to - 1];
   int lastPhysicalPos = data.physicalPositions[to - 1];
@@ -904,8 +908,9 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
     // get distances and rates
     float recDistFromPrevious = asmc::roundMorgans(lastGeneticPos - data.geneticPositions[pos], precision, minGenetic);
     float currentRecRate = asmc::roundMorgans(data.recRateAtMarker[pos], precision, minGenetic);
-    float* currentBeta = &m_betaBuffer[pos * states * curBatchSize];
-    float* lastComputedBeta = &m_betaBuffer[(pos + 1) * states * curBatchSize];
+
+    Eigen::Map<Eigen::ArrayXf> previousBeta(&m_betaBuffer[pos * states * curBatchSize], states * curBatchSize);
+    Eigen::Map<Eigen::ArrayXf> lastComputedBeta(&m_betaBuffer[(pos + 1) * states * curBatchSize], states * curBatchSize);
 
     if (decodingParams.decodingSequence) {
       int physDistFromPreviousMinusOne =
@@ -913,37 +918,35 @@ void HMM::backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch,
       float recDistFromPreviousMinusOne = asmc::roundMorgans(recDistFromPrevious - currentRecRate, precision, minGenetic);
       vector<float> homozEmission = m_decodingQuant.homozygousEmissionMap.at(physDistFromPreviousMinusOne);
       getPreviousBetaBatched(recDistFromPreviousMinusOne, curBatchSize, lastComputedBeta, pos, m_allZeros, m_allZeros,
-                             vec, BU, BL, currentBeta, homozEmission, homozEmission, homozEmission);
-      lastComputedBeta = currentBeta;
+                             vec, BU, BL, previousBeta, homozEmission, homozEmission, homozEmission);
+      lastComputedBeta = previousBeta;
       getPreviousBetaBatched(currentRecRate, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch, vec,
-                             BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
+                             BU, BL, previousBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
                              emission2minus0AtSite[pos + 1]);
     } else {
       getPreviousBetaBatched(recDistFromPrevious, curBatchSize, lastComputedBeta, pos, obsIsZeroBatch, obsIsTwoBatch,
-                             vec, BU, BL, currentBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
+                             vec, BU, BL, previousBeta, emission1AtSite[pos + 1], emission0minus1AtSite[pos + 1],
                              emission2minus0AtSite[pos + 1]);
     }
     if (pos % scalingSkip == 0) {
       // normalize betas using alpha scaling
-      asmc::calculateScalingBatch(currentBeta, m_scalingBuffer, sums, curBatchSize, states);
-      asmc::applyScalingBatch(currentBeta, m_scalingBuffer, curBatchSize, states);
+      asmc::calculateScalingBatch(previousBeta, m_scalingBuffer, sums, curBatchSize, states);
+      asmc::applyScalingBatch(previousBeta, m_scalingBuffer, curBatchSize, states);
     }
     // update distances
     lastGeneticPos = data.geneticPositions[pos];
     lastPhysicalPos = data.physicalPositions[pos];
   }
-
-  ALIGNED_FREE(sums);
-  ALIGNED_FREE(vec);
-  ALIGNED_FREE(BU);
-  ALIGNED_FREE(BL);
 }
 
 // compute previous beta vector in linear time
-void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
-                                 const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* vec, float* BU,
-                                 float* BL, float* currentBeta, const vector<float>& emission1AtSite,
-                                 const vector<float>& emission0minus1AtSite, const vector<float>& emission2minus0AtSite)
+void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, Eigen::Ref<Eigen::ArrayXf> lastComputedBeta,
+                                 int pos, Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch,
+                                 Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch, Eigen::Ref<Eigen::ArrayXf> vec,
+                                 Eigen::Ref<Eigen::ArrayXf> BU, Eigen::Ref<Eigen::ArrayXf> BL,
+                                 Eigen::Ref<Eigen::ArrayXf> currentBeta, const std::vector<float>& emission1AtSite,
+                                 const std::vector<float>& emission0minus1AtSite,
+                                 const std::vector<float>& emission2minus0AtSite)
 {
   const vector<float>& B = m_decodingQuant.Bvectors.at(recDistFromPrevious);
   const vector<float>& U = m_decodingQuant.Uvectors.at(recDistFromPrevious);
@@ -980,7 +983,7 @@ void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, co
   }
 #endif
 
-  memset(BU + (states - 1) * curBatchSize, 0, curBatchSize * sizeof(BU[0]));
+  BU.setZero();
 #ifdef NO_SSE
   for (int k = states - 2; k >= 0; k--)
     for (int v = 0; v < curBatchSize; v++)
@@ -1002,7 +1005,7 @@ void HMM::getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, co
   }
 #endif
 
-  memset(BL, 0, curBatchSize * sizeof(BL[0]));
+  BL.setZero();
 #ifdef NO_SSE
   for (int k = 0; k < states; k++) {
     for (int v = 0; v < curBatchSize; v++) {
@@ -1356,53 +1359,97 @@ void HMM::writePerPairOutputFastSMC(int actualBatchSize, int paddedBatchSize, co
 // will eventually write binary output instead of gzipped
 void HMM::writePerPairOutput(int actualBatchSize, int paddedBatchSize, const vector<PairObservations>& obsBatch)
 {
-
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  if (decodingParams.doPerPairMAP) {
-    memset(MAP, 0, sequenceLength * actualBatchSize * sizeof(MAP[0]));
-  }
-  if (decodingParams.doPerPairPosteriorMean) {
-    memset(meanPost, 0, sequenceLength * actualBatchSize * sizeof(meanPost[0]));
-  }
+  Eigen::Array<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>, Eigen::Dynamic, 1> posteriors;
 
-  for (long int pos = 0; pos < sequenceLength; pos++) {
-    if (decodingParams.doPerPairMAP) {
-      memset(currentMAPValue, 0, actualBatchSize * sizeof(currentMAPValue[0]));
+  // Calculate per pair posterior mean
+  if (m_calculatePerPairPosteriorMean) {
+    meanPost.setZero();
+
+    // Store posteriors for batch, but only if requested (large amount of data)
+    if (m_storePerPairPosterior) {
+      posteriors.resize(actualBatchSize);
+      for (Eigen::Index batchIdx = 0ll; batchIdx < actualBatchSize; ++batchIdx) {
+        posteriors(batchIdx).resize(states, sequenceLength);
+      }
     }
-    for (ushort k = 0; k < states; k++) {
-      for (int v = 0; v < actualBatchSize; v++) {
-        float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + v];
-        if (decodingParams.doPerPairPosteriorMean) {
-          meanPost[pos * actualBatchSize + v] += posterior_pos_state_pair * expectedCoalTimes[k];
+
+    for (long int pos = 0; pos < sequenceLength; pos++) {
+      for (int k = 0; k < states; k++) {
+        for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
+          float postValue = posterior_pos_state_pair * expectedCoalTimes[k];
+          meanPost(batchIdx, pos) += postValue;
+          if (m_storePerPairPosterior) {
+            posteriors(batchIdx)(k, pos) = postValue;
+          }
+          if (m_storeSumOfPosterior) {
+            m_decodePairsReturnStruct.sumOfPosteriors(k, pos) += postValue;
+          }
         }
-        if (decodingParams.doPerPairMAP && currentMAPValue[v] < posterior_pos_state_pair) {
-          MAP[pos * actualBatchSize + v] = k;
-          currentMAPValue[v] = posterior_pos_state_pair;
+      }
+    }
+  }
+
+  // Calculate per pair MAP
+  if (m_calculatePerPairMAP) {
+    MAP.setZero();
+    for (long int pos = 0; pos < sequenceLength; pos++) {
+      currentMAPValue.setZero();
+      for (int k = 0; k < states; k++) {
+        for (int batchIdx = 0; batchIdx < actualBatchSize; batchIdx++) {
+          float posterior_pos_state_pair = m_alphaBuffer[(pos * states + k) * paddedBatchSize + batchIdx];
+          if (currentMAPValue[batchIdx] < posterior_pos_state_pair) {
+            MAP(batchIdx, pos) = k;
+            currentMAPValue[batchIdx] = posterior_pos_state_pair;
+          }
         }
       }
     }
   }
 
-  if (decodingParams.doPerPairPosteriorMean) {
-    for (int v = 0; v < actualBatchSize; v++) {
-      //      foutPosteriorMeanPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      //      foutPosteriorMeanPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
-      for (long int pos = 0; pos < sequenceLength; pos++) {
-        foutPosteriorMeanPerPair << " " << meanPost[pos * actualBatchSize + v];
-      }
-      foutPosteriorMeanPerPair << endl;
-    }
+  // Write per pair posterior mean to file
+  if (m_writePerPairPosteriorMean) {
+    foutPosteriorMeanPerPair << meanPost.topRows(actualBatchSize).format(m_eigenOutputFormat);
   }
 
-  if (decodingParams.doPerPairMAP) {
-    for (int v = 0; v < actualBatchSize; v++) {
-      //      foutMAPPerPair << obsBatch[v].iName << " " << obsBatch[v].iHap << " ";
-      //      foutMAPPerPair << obsBatch[v].jName << " " << obsBatch[v].jHap;
-      for (long int pos = 0; pos < sequenceLength; pos++) {
-        foutMAPPerPair << " " << MAP[pos * actualBatchSize + v];
+  // Write per pair MAP to file
+  if (m_writePerPairMAP) {
+    foutMAPPerPair << MAP.topRows(actualBatchSize).format(m_eigenOutputFormat);
+  }
+
+  // Store per pair information, if required
+  if (m_storePerPairMAP || m_storePerPairPosteriorMean) {
+    for (int batchIdx = 0; batchIdx < actualBatchSize; ++batchIdx) {
+
+      // Get the index: this is the row we need to write into
+      const auto outIdx = static_cast<Eigen::Index>(m_decodePairsReturnStruct.getNumWritten());
+
+      // Record the index information
+      unsigned long hapA = asmc::dipToHapId(obsBatch[batchIdx].iInd, obsBatch[batchIdx].iHap);
+      unsigned long hapB = asmc::dipToHapId(obsBatch[batchIdx].jInd, obsBatch[batchIdx].jHap);
+      std::string indIdA =
+          asmc::indPlusHapToCombinedId(data.IIDList.at(obsBatch[batchIdx].iInd), obsBatch[batchIdx].iHap);
+      std::string indIdB =
+          asmc::indPlusHapToCombinedId(data.IIDList.at(obsBatch[batchIdx].jInd), obsBatch[batchIdx].jHap);
+
+      m_decodePairsReturnStruct.perPairIndices.at(outIdx) = std::make_tuple(hapA, indIdA, hapB, indIdB);
+
+      if (m_storePerPairPosterior) {
+        m_decodePairsReturnStruct.perPairPosteriors.at(outIdx) = posteriors(batchIdx);
       }
-      foutMAPPerPair << endl;
+
+      if (m_storePerPairPosteriorMean) {
+        m_decodePairsReturnStruct.perPairPosteriorMeans.row(outIdx) = meanPost.row(batchIdx);
+      }
+
+      if (m_storePerPairPosteriorMean) {
+        m_decodePairsReturnStruct.perPairMAPs.row(outIdx) = MAP.row(batchIdx);
+      }
+
+      // Increment
+      m_decodePairsReturnStruct.incrementNumWritten();
     }
   }
 
@@ -1676,4 +1723,72 @@ void HMM::getPreviousBeta(float recDistFromPrevious, vector<float>& lastComputed
 const DecodingQuantities& HMM::getDecodingQuantities() const
 {
   return m_decodingQuant;
+}
+
+DecodePairsReturnStruct& HMM::getDecodePairsReturnStruct()
+{
+  return m_decodePairsReturnStruct;
+}
+
+void HMM::updateOutputStructures() {
+  m_calculatePerPairPosteriorMean =
+      m_storePerPairPosteriorMean || m_writePerPairPosteriorMean || m_storePerPairPosterior;
+  m_calculatePerPairMAP = m_storePerPairMAP || m_writePerPairMAP;
+
+  if (m_calculatePerPairPosteriorMean) {
+    meanPost.resize(m_batchSize, sequenceLength);
+
+    if (expectedCoalTimes.empty() && !decodingParams.FastSMC) {
+      if (!expectedCoalTimesFile.empty() && std::filesystem::is_regular_file(expectedCoalTimesFile)) {
+        fmt::print("Reading expected coalescent times from {}\n", expectedCoalTimesFile);
+        expectedCoalTimes = readExpectedTimesFromIntervalsFile(expectedCoalTimesFile.c_str());
+      } else {
+        fmt::print("Using expected coalescent times from {}\n", decodingParams.decodingQuantFile);
+        expectedCoalTimes = m_decodingQuant.expectedTimes;
+      }
+    }
+  }
+
+  if (m_calculatePerPairMAP) {
+    MAP.resize(m_batchSize, sequenceLength);
+    currentMAPValue.resize(m_batchSize);
+  }
+
+  resetDecoding();
+}
+
+void HMM::setStorePerPairPosteriorMean(bool storePerPairPosteriorMean)
+{
+  m_storePerPairPosteriorMean = storePerPairPosteriorMean;
+  updateOutputStructures();
+}
+
+void HMM::setWritePerPairPosteriorMean(bool writePerPairPosteriorMean)
+{
+  m_writePerPairPosteriorMean = writePerPairPosteriorMean;
+  updateOutputStructures();
+}
+
+void HMM::setStorePerPairMap(bool storePerPairMAP)
+{
+  m_storePerPairMAP = storePerPairMAP;
+  updateOutputStructures();
+}
+
+void HMM::setWritePerPairMap(bool writePerPairMAP)
+{
+  m_writePerPairMAP = writePerPairMAP;
+  updateOutputStructures();
+}
+
+void HMM::setStorePerPairPosterior(bool storePerPairPosterior)
+{
+  m_storePerPairPosterior = storePerPairPosterior;
+  updateOutputStructures();
+}
+
+void HMM::setStoreSumOfPosterior(bool storeSumOfPosterior)
+{
+  m_storeSumOfPosterior = storeSumOfPosterior;
+  updateOutputStructures();
 }

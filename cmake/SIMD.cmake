@@ -34,6 +34,7 @@ if(ASMC_FORCE_PURE)
 
 elseif(ASMC_ENABLE_SIMD_AVX)
   add_definitions(-DAVX)
+  add_compile_definitions(EIGEN_MAX_ALIGN_BYTES=64)
 
   if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     add_compile_options(-mavx)

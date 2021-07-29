@@ -17,13 +17,14 @@
 #define ASMC_HMM
 
 #include "Data.hpp"
+#include "DecodePairsReturnStruct.hpp"
 #include "DecodingParams.hpp"
 #include "DecodingQuantities.hpp"
 #include "FileUtils.hpp"
 #include "Individual.hpp"
 #include "Types.hpp"
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
 #include <chrono>
 #include <cstdint>
@@ -70,14 +71,14 @@ class HMM
 
   int m_batchSize = 64;
 
-  float* m_alphaBuffer;
-  float* m_betaBuffer;
-  float* m_scalingBuffer;
-  float* m_allZeros;
+  Eigen::ArrayXf m_alphaBuffer;
+  Eigen::ArrayXf m_betaBuffer;
+  Eigen::ArrayXf m_scalingBuffer;
+  Eigen::ArrayXf m_allZeros;
 
-  float* meanPost;
-  ushort* MAP;
-  float* currentMAPValue;
+  Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> meanPost;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic> MAP;
+  Eigen::ArrayXf currentMAPValue;
 
   // for decoding
   Data data;
@@ -135,6 +136,23 @@ class HMM
   FileUtils::AutoGzOfstream foutPosteriorMeanPerPair;
   FileUtils::AutoGzOfstream foutMAPPerPair;
 
+  // output when decoding specific pairs
+  DecodePairsReturnStruct m_decodePairsReturnStruct;
+
+  // output options
+  bool m_storePerPairPosteriorMean = false;
+  bool m_writePerPairPosteriorMean = false;
+  bool m_calculatePerPairPosteriorMean = false;
+
+  bool m_storePerPairMAP = false;
+  bool m_writePerPairMAP = false;
+  bool m_calculatePerPairMAP = false;
+
+  bool m_storePerPairPosterior = false;
+  bool m_storeSumOfPosterior = false;
+
+  Eigen::IOFormat m_eigenOutputFormat{Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n"};
+
   gzFile gzoutIBD;
 
   // timing
@@ -146,11 +164,12 @@ class HMM
   std::chrono::duration<double> ticksSumOverPairs = std::chrono::high_resolution_clock::duration::zero();
   std::chrono::duration<double> ticksOutputPerPair = std::chrono::high_resolution_clock::duration::zero();
 
+  /// Update the size of output structures for per pair posterior mean / MAP
+  void updateOutputStructures();
+
 public:
   // constructor
   HMM(Data _data, const DecodingParams& _decodingParams, int _scalingSkip = 1);
-
-  ~HMM();
 
   /// Decodes all pairs. Returns a sum of all decoded posteriors (sequenceLength x
   /// states).
@@ -177,17 +196,40 @@ public:
   ///
   void decodePair(const uint i, const uint j);
 
+  /// decode a single hap pair
+  ///
+  /// i and j must be a valid index in 2 * num_individuals
+  /// if noBatches is not set then the pair is saved and processing is delayed until the
+  /// observationBatch array is full
+  ///
+  /// @param i hap index of first hap
+  /// @param j hap index of second hap
+  ///
+  void decodeHapPair(unsigned long i, unsigned long j);
+
   /// decode a list of pairs
   ///
-  /// the input pairs are described using two vectors of indicies of `individuals`.
+  /// the input pairs are described using two vectors of indices of `individuals`.
   /// if noBatches is not set then the pairs are processed in batches for efficiency.
   /// This means that after the call to `decodePairs` there might be unprocessed pairs
   /// waiting for the buffer to be full. Use `finishDecoding` to process these.
   ///
-  /// @param individualsA vector of indicies of first individual
-  /// @param individualsB vector of indicies of second individual
+  /// @param individualsA vector of indices of first individual
+  /// @param individualsB vector of indices of second individual
   ///
   void decodePairs(const std::vector<uint>& individualsA, const std::vector<uint>& individualsB);
+
+  /// decode a list of pairs index by their haplotype indices
+  ///
+  /// the input pairs are described using two vectors of indices of `haplotypes`.
+  /// if noBatches is not set then the pairs are processed in batches for efficiency.
+  /// This means that after the call to `decodePairs` there might be unprocessed pairs
+  /// waiting for the buffer to be full. Use `finishDecoding` to process these.
+  ///
+  /// @param individualsA vector of indices of first hap
+  /// @param individualsB vector of indices of second hap
+  ///
+  void decodeHapPairs(const std::vector<unsigned long>& individualsA, const std::vector<unsigned long>& individualsB);
 
   /// decode a single pair over a segment of the genome
   ///
@@ -217,6 +259,9 @@ public:
     return m_decodingReturnValues;
   }
 
+  /// get the struct holding return values for each pair decoded using decodePairs()
+  DecodePairsReturnStruct& getDecodePairsReturnStruct();
+
   /// finish decoding pairs
   ///
   /// tells HMM object to finish processing whatever pairs are stored in the
@@ -234,6 +279,24 @@ public:
    * @return const ref to the decoding quantities owned by this object
    */
   const DecodingQuantities& getDecodingQuantities() const;
+
+  /// Set to true to store per pair posterior mean
+  void setStorePerPairPosteriorMean(bool storePerPairPosteriorMean = true);
+
+  /// Set to true to write per pair posterior mean to file
+  void setWritePerPairPosteriorMean(bool writePerPairPosteriorMean = true);
+
+  /// Set to true to store per pair MAP
+  void setStorePerPairMap(bool storePerPairMAP = true);
+
+  /// Set to true to write per pair MAP to file
+  void setWritePerPairMap(bool writePerPairMAP = true);
+
+  /// Set to true to store per pair posterior
+  void setStorePerPairPosterior(bool storePerPairPosterior = true);
+
+  /// Set to true to store the sum of posteriors
+  void setStoreSumOfPosterior(bool storeSumOfPosterior = true);
 
 private:
   void writeBinaryInfoIntoFile();
@@ -255,23 +318,26 @@ private:
   void decodeBatch(const std::vector<PairObservations>& obsBatch, unsigned from, unsigned to);
 
   // forward step
-  void forwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from,
-                    unsigned to);
+  void forwardBatch(Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                    int curBatchSize, unsigned from, unsigned to);
 
   // compute next alpha vector in linear time
-  void getNextAlphaBatched(float recDistFromPrevious, float* alphaC, int curBatchSize, const float* previousAlpha,
-                           uint pos, const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* AU,
-                           float* nextAlpha, const std::vector<float>& emission1AtSite,
-                           const std::vector<float>& emission0minus1AtSite,
+  void getNextAlphaBatched(float recDistFromPrevious, Eigen::Ref<Eigen::ArrayXf> alphaC, int curBatchSize,
+                           Eigen::Ref<Eigen::ArrayXf> previousAlpha, uint pos,
+                           Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch, Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch,
+                           Eigen::Ref<Eigen::ArrayXf> AU, Eigen::Ref<Eigen::ArrayXf> nextAlpha,
+                           const std::vector<float>& emission1AtSite, const std::vector<float>& emission0minus1AtSite,
                            const std::vector<float>& emission2minus0AtSite);
   // backward step
-  void backwardBatch(const float* obsIsZeroBatch, const float* obsIsTwoBatch, int curBatchSize, unsigned from,
+  void backwardBatch(Eigen::ArrayXf obsIsZeroBatch, Eigen::ArrayXf obsIsTwoBatch, int curBatchSize, unsigned from,
                      unsigned to);
 
   // compute previous beta vector in linear time
-  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, const float* lastComputedBeta, int pos,
-                              const float* obsIsZeroBatch, const float* obsIsTwoBatch, float* vec, float* BU, float* BL,
-                              float* currentBeta, const std::vector<float>& emission1AtSite,
+  void getPreviousBetaBatched(float recDistFromPrevious, int curBatchSize, Eigen::Ref<Eigen::ArrayXf> lastComputedBeta,
+                              int pos, Eigen::Ref<Eigen::ArrayXf> obsIsZeroBatch,
+                              Eigen::Ref<Eigen::ArrayXf> obsIsTwoBatch, Eigen::Ref<Eigen::ArrayXf> vec,
+                              Eigen::Ref<Eigen::ArrayXf> BU, Eigen::Ref<Eigen::ArrayXf> BL,
+                              Eigen::Ref<Eigen::ArrayXf> currentBeta, const std::vector<float>& emission1AtSite,
                               const std::vector<float>& emission0minus1AtSite,
                               const std::vector<float>& emission2minus0AtSite);
 
@@ -311,6 +377,7 @@ private:
                        std::vector<float>& BU, std::vector<float>& currentBeta, std::vector<float>& emission1AtSite,
                        std::vector<float>& emission0minus1AtSite, std::vector<float>& emission2minus0AtSite,
                        float obsIsZero, float obsIsHomMinor);
+
 };
 
 #endif // ASMC_HMM

@@ -11,8 +11,10 @@ on:
 jobs:
 
   build-and-test:
-    name: Unit tests via Python on Ubuntu latest
-    runs-on: ubuntu-latest
+    name: Unit tests via Python on Ubuntu
+    runs-on: ubuntu-20.04
+    env:
+      CXX: g++-9
     if: ${{ github.event_name == 'pull_request' || github.repository == 'PalamaraLab/FastSMC' }}
 
     strategy:
@@ -22,18 +24,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
+
+      - name: cache vcpkg installed packages
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            vcpkg/
+            build_dir/vcpkg_installed/
+          key: ${{ runner.os }}-${{ env.CXX }}-${{ hashFiles('vcpkg.json', 'vcpkg/CHANGELOG.md') }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-
-      - name: install dependencies
-        run: |
-          sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
-          sudo apt install libeigen3-dev
 
       - name: install python bindings
         run: |

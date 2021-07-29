@@ -13,20 +13,60 @@
 //    You should have received a copy of the GNU General Public License
 //    along with ASMC.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #ifndef ASMC_HPP
 #define ASMC_HPP
 
-#include "DecodingQuantities.hpp"
 #include "Data.hpp"
+#include "DecodePairsReturnStruct.hpp"
 #include "DecodingParams.hpp"
 #include "HMM.hpp"
 
-DecodingReturnValues run(std::string in_file_root, std::string decoding_quant_file,
-         std::string out_file_root, DecodingModeOverall mode,
-         int jobs, int job_index,
-         float skip_csfs_distance,
-         bool compress, bool use_ancestral,
-         bool posterior_sums, bool major_minor_posterior_sums);
+#include <string>
+#include <vector>
+
+namespace ASMC
+{
+
+class ASMC
+{
+
+private:
+  DecodingParams mParams;
+  Data mData;
+  HMM mHmm;
+
+public:
+  /**
+   * ASMC constructor with full control over parameters, by manually specifying a DecodingParams object.
+   *
+   * @param params the decoding parameters
+   */
+  explicit ASMC(DecodingParams params);
+
+  /**
+   * ASMC constructor that will set sensible defaults. If you wish to fine-tune parameters, use the constructor that
+   * takes a DecodingParams object, which you can configure manually.
+   *
+   * @param inFileRoot the input file root
+   * @param decodingQuantFile the decoding quantities file
+   * @param outFileRoot the output file root, default to the input file root
+   */
+  ASMC(const std::string& inFileRoot, const std::string& decodingQuantFile, const std::string& outFileRoot = "");
+
+  DecodingReturnValues decodeAllInJob();
+
+  void decodePairs(const std::vector<unsigned long>& hapIndicesA, const std::vector<unsigned long>& hapIndicesB,
+                   bool perPairPosteriors = false, bool sumOfPosteriors = false, bool perPairPosteriorMeans = false,
+                   bool perPairMAPs = false);
+
+  void decodePairs(const std::vector<std::string>& hapIdsA, const std::vector<std::string>& hapIdsB,
+                   bool perPairPosteriors = false, bool sumOfPosteriors = false, bool perPairPosteriorMeans = false,
+                   bool perPairMAPs = false);
+
+  DecodePairsReturnStruct getCopyOfResults();
+
+  const DecodePairsReturnStruct& getRefOfResults();
+};
+} // namespace ASMC
 
 #endif

@@ -72,7 +72,7 @@ setup(
     package_dir={'':'src'},
     long_description=readme,
     long_description_content_type="text/markdown",
-    install_requires=['jupyter', 'numpy', 'pandas'],
+    install_requires=['jupyter', 'numpy', 'pandas', 'asmc-preparedecoding', 'matplotlib'],
     ext_modules=[CMakeExtension('asmc/asmc')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,

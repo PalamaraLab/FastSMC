@@ -20,7 +20,10 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <exception>
 #include <iomanip>
+
+#include <fmt/format.h>
 
 namespace asmc
 {
@@ -96,10 +99,11 @@ void printPctTime(const std::string& str, double fracTime, std::ostream& os)
      << std::setprecision(1) << std::fixed << 100.0 * fracTime << "%\n" << std::flush;
 }
 
-void calculateScalingBatch(float* vec, float* scalings, float* sums, const int batchSize, const int numStates)
+void calculateScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings,
+                           Eigen::Ref<Eigen::ArrayXf> sums, const int batchSize, const int numStates)
 {
   for (int i = 0; i < batchSize; ++i) {
-    sums[i] = 0.f;
+    sums(i) = 0.f;
   }
 
 #ifdef NO_SSE
@@ -116,16 +120,17 @@ void calculateScalingBatch(float* vec, float* scalings, float* sums, const int b
   // compute scaling (sum of current alpha/beta vector)
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
     for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
-      STORE(&sums[batchItem], ADD(LOAD(&sums[batchItem]), LOAD(&vec[stateIdx * batchSize + batchItem])));
+      STORE(&sums(batchItem), ADD(LOAD(&sums(batchItem)), LOAD(&vec(stateIdx * batchSize + batchItem))));
     }
   }
   for (int batchItem = 0; batchItem < batchSize; ++batchItem) {
-    scalings[batchItem] = 1.0f / sums[batchItem];
+    scalings(batchItem) = 1.0f / sums(batchItem);
   }
 #endif
 }
 
-void applyScalingBatch(float* vec, float* scalings, const int batchSize, const int numStates)
+void applyScalingBatch(Eigen::Ref<Eigen::ArrayXf> vec, Eigen::Ref<Eigen::ArrayXf> scalings,
+                       const int batchSize, const int numStates)
 {
 #ifdef NO_SSE
   // modify current alpha/beta vector by prescribed scaling
@@ -138,8 +143,8 @@ void applyScalingBatch(float* vec, float* scalings, const int batchSize, const i
   // modify current alpha/beta vector by prescribed scaling
   for (int stateIdx = 0; stateIdx < numStates; ++stateIdx) {
     for (int batchItem = 0; batchItem < batchSize; batchItem += VECX) {
-      STORE(&vec[stateIdx * batchSize + batchItem],
-            MULT(LOAD(&vec[stateIdx * batchSize + batchItem]), LOAD(&scalings[batchItem])));
+      STORE(&vec(stateIdx * batchSize + batchItem),
+            MULT(LOAD(&vec(stateIdx * batchSize + batchItem)), LOAD(&scalings(batchItem))));
     }
   }
 #endif
@@ -169,6 +174,46 @@ unsigned getToPosition(const std::vector<float>& geneticPositions, unsigned to, 
     cumGenDist += (geneticPositions[to] - geneticPositions[to - 1u]) * 100.f;
   }
   return std::min<unsigned>(to + 1u, static_cast<unsigned>(geneticPositions.size()));
+}
+
+std::pair<unsigned long, unsigned long> hapToDipId(unsigned long hapId)
+{
+  return std::make_pair(hapId / 2ul, 1ul + (hapId % 2ul));
+}
+
+unsigned long dipToHapId(unsigned long ind, unsigned long hap)
+{
+  assert(hap > 0ul);
+  return 2ul * ind + hap - 1ul;
+}
+
+std::string indPlusHapToCombinedId(std::string_view indId, unsigned long hap)
+{
+  if (indId.empty() || !(hap == 1ul || hap == 2ul)) {
+    throw std::runtime_error(
+        fmt::format("Expected an individual ID and either 1 or 2, but got {} and {}\n", indId, hap));
+  }
+
+  return fmt::format("{}#{}", indId, hap);
+}
+
+std::pair<std::string, unsigned long> combinedIdToIndPlusHap(std::string_view combinedId)
+{
+  if (combinedId.length() < 3 || !(combinedId.substr(combinedId.length() - 2, 2) == "#1" ||
+                                   combinedId.substr(combinedId.length() - 2, 2) == "#2")) {
+    throw std::runtime_error(fmt::format("Expected combined ID in form <id>#1 OR <id>#2, but got {}\n", combinedId));
+  }
+  return std::make_pair(std::string{combinedId.substr(0, combinedId.length() - 2)},
+                        combinedId.back() == '1' ? 1ul : 2ul);
+}
+
+unsigned long getIndIdxFromIdString(const std::vector<std::string>& idStrings, std::string_view idString)
+{
+  auto it = std::find(idStrings.begin(), idStrings.end(), idString);
+  if (it == idStrings.end()) {
+    throw std::runtime_error(fmt::format("The ID string {} is not in the list of IDs\n", idString));
+  }
+  return std::distance(idStrings.begin(), it);
 }
 
 } // namespace asmc

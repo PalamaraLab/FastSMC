@@ -15,8 +15,11 @@
 
 cmake_minimum_required(VERSION 3.12)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
+include(cmake/AutodetectVcpkgToolchainFile.cmake)
 
-project(ASMC LANGUAGES CXX)
+project(asmc-fastsmc LANGUAGES CXX)
+
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Set a default build type if none was specified
 if (NOT CMAKE_BUILD_TYPE)
@@ -28,8 +31,8 @@ endif ()
 
 message(STATUS "CMake build type is set to ${CMAKE_BUILD_TYPE}")
 
-# ensure C++14
-set(CMAKE_CXX_STANDARD 14)
+# ensure C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -46,9 +49,9 @@ endif()
 # Set SIMD compiler options
 include(cmake/SIMD.cmake)
 
-set(ASMC_source_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/SRC)
-set(ASMC_test_dir ${ASMC_SOURCE_DIR}/ASMC_SRC/TESTS)
-set(ASMC_file_dir ${ASMC_SOURCE_DIR}/FILES)
+set(ASMC_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/ASMC_SRC/SRC)
+set(ASMC_test_dir ${CMAKE_CURRENT_SOURCE_DIR}/ASMC_SRC/TESTS)
+set(ASMC_file_dir ${CMAKE_CURRENT_SOURCE_DIR}/FILES)
 add_definitions(-DASMC_TEST_DIR=\"${ASMC_test_dir}\")
 add_definitions(-DASMC_FILE_DIR=\"${ASMC_file_dir}\")
 
@@ -74,6 +77,7 @@ set(ASMC_headers
   ${ASMC_source_dir}/HMM.hpp
   ${ASMC_source_dir}/HmmUtils.hpp
   ${ASMC_source_dir}/Data.hpp
+  ${ASMC_source_dir}/DecodePairsReturnStruct.hpp
   ${ASMC_source_dir}/DecodingParams.hpp
   ${ASMC_source_dir}/DecodingQuantities.hpp
   ${ASMC_source_dir}/FastSMC.hpp
@@ -104,6 +108,7 @@ set(convertBinary_main
 
 set(ASMC_unit_tests
   ${ASMC_test_dir}/unit_tests.cpp
+  ${ASMC_test_dir}/test_ASMC.cpp
   ${ASMC_test_dir}/test_binary_data_reader.cpp
   ${ASMC_test_dir}/test_hashing.cpp
   ${ASMC_test_dir}/test_HMM.cpp
@@ -158,7 +163,7 @@ target_link_libraries(ASMC PRIVATE ${Boost_LIBRARIES})
 target_include_directories(ASMC PUBLIC ${Boost_INCLUDE_DIR})
 
 # Eigen is required
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 target_include_directories(ASMC PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 # zlib is required (at least on Linux) for boost iostreams
@@ -170,6 +175,14 @@ target_include_directories(ASMC PUBLIC ${ZLIB_INCLUDE_DIRS})
 find_package(OpenMP REQUIRED)
 add_definitions(-DHAVE_OPENMP)
 target_link_libraries(ASMC PRIVATE OpenMP::OpenMP_CXX)
+
+# fmt is required for efficient string formatting
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(ASMC PRIVATE fmt::fmt)
+
+# requires asmc-prepare-decoding
+#find_package(AsmcDataModule CONFIG REQUIRED)
+#target_link_libraries(ASMC PRIVATE AsmcDataModule::data_module_lib)
 
 
 # Optionally run regression tests to ensure core functionality remains unchanged

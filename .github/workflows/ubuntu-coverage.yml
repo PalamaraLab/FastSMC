@@ -8,33 +8,43 @@ on:
 jobs:
 
   build-and-test:
-    name: Coverage on Ubuntu latest
-    runs-on: ubuntu-latest
+    name: Coverage on Ubuntu
+    runs-on: ubuntu-20.04
+    env:
+      CXX: g++-10
     if: ${{ github.repository == 'PalamaraLab/FastSMC' }}
 
     steps:
-      - uses: actions/checkout@v2
 
-      - name: install dependencies
+      - name: checkout repo & vcpkg submodule
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: cache vcpkg installed packages
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            vcpkg/
+            build_dir/vcpkg_installed/
+          key: ${{ runner.os }}-${{ env.CXX }}-${{ hashFiles('vcpkg.json', 'vcpkg/CHANGELOG.md') }}
+
+      - name: install tools
         run: |
-          sudo apt install libboost-python-dev libboost-math-dev libboost-iostreams-dev libboost-program-options-dev
-          sudo apt install lcov
-          sudo apt install libeigen3-dev
+          sudo apt -y update
+          sudo apt -y install g++-10 lcov libcurl4-openssl-dev
 
       - name: make build directory
-        run: mkdir fastsmc_build_dir
+        run: mkdir build_dir
+        if: steps.cache.outputs.cache-hit != 'true'
 
-      - name: cmake configure
-        run: cmake .. -DASMC_ENABLE_COVERAGE:BOOL=TRUE
-        working-directory: fastsmc_build_dir
-
-      - name: cmake build
-        run: cmake --build . --parallel 2 --target ASMC_unit_tests
-        working-directory: fastsmc_build_dir
-
-      - name: cmake test
-        run: ctest -j2 -R Asmc_unit_tests --output-on-failure
-        working-directory: fastsmc_build_dir
+      - name: run unit tests with coverage
+        run: |
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+          cmake --build . --parallel 2 --target ASMC_unit_tests
+          ctest -j2 -R Asmc_unit_tests --output-on-failure
+        working-directory: build_dir
 
       - name: upload coverage results
         run: |
@@ -44,4 +54,4 @@ jobs:
           bash <(curl https://codecov.io/bash) -f coverage.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        working-directory: fastsmc_build_dir
+        working-directory: build_dir
