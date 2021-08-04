@@ -574,7 +574,7 @@ std::vector<std::vector<int>> Data::calculateUndistinguishedCounts(const int num
     const int totalSamples = totalSamplesCount[i];
 
     if (decodingUsesCSFS && numCsfsSamples > totalSamples) {
-      cerr << "ERROR. SNP " << SNP_IDs[i] << " has " << totalSamples
+      cerr << "ERROR. SNP with numerical ID " << i << " has " << totalSamples
            << " non-missing individuals, but the CSFS requires " << numCsfsSamples << endl;
       exit(1);
     }
