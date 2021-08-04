@@ -136,7 +136,7 @@ target_include_directories(ASMC PUBLIC ${ASMC_source_dir})
 # Link against std filesystem on GCC < 8.4
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.4)
-        target_link_libraries(ASMC stdc++fs)
+        target_link_libraries(ASMC PRIVATE stdc++fs)
     endif ()
 endif ()
 
