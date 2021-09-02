@@ -28,14 +28,17 @@ It is a C++ library with optional Python bindings.
 The FastSMC C++ library requires:
 
 - A C++ compiler (C++17 or later)
-- CMake (3.12 or later)
+- CMake (3.15 or later)
 - Boost (1.62 or later)
 - Eigen (3.3.4 or later)
+- {fmt}
+- OpenMP
+- zlib
 
-The Python bindings additionally require:
+Building the optional Python bindings additionally requires:
 
-- Python (3.5 or later)
-- PyBind11 (distributed with FastSMC as a submodule)
+- Python (3.6 or later) with development files
+- PyBind11 (distributed with this repository as a submodule)
 
 ### Install dependencies
 
@@ -57,13 +60,13 @@ First, get the code.
 
 **For code users**
 ```bash
-git clone https://github.com/PalamaraLab/FastSMC
+git clone --recurse-submodules https://github.com/PalamaraLab/FastSMC
 cd FastSMC
 ```
 
 **For code developers**
 ```bash
-git clone https://github.com/PalamaraLab/FastSMC_dev
+git clone --recurse-submodules https://github.com/PalamaraLab/FastSMC
 cd FastSMC_dev
 ```
 
